@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin Orders</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
+    .order { background: #222; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+  </style>
+</head>
+<body>
+  <h1>Admin Order Management</h1>
+  <div id="adminOrdersContainer"></div>
+
+  <script>
+    function loadAllOrders() {
+      let container = document.getElementById("adminOrdersContainer");
+      container.innerHTML = "";
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith("macx_orders_")) {
+          const username = key.replace("macx_orders_", "");
+          const orders = JSON.parse(localStorage.getItem(key));
+          orders.forEach(order => {
+            let itemsHtml = order.items.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join("<br>");
+            container.innerHTML += `
+              <div class="order">
+                <strong>User:</strong> ${username}<br>
+                <strong>Order ID:</strong> ${order.orderId}<br>
+                <strong>Status:</strong> ${order.status}<br>
+                ${itemsHtml}<br>
+                <button onclick="updateStatus('${username}','${order.orderId}')">Update Status</button>
+              </div>
+            `;
+          });
+        }
+      });
+    }
+
+    function updateStatus(username, orderId) {
+      const newStatus = prompt("Enter new status:");
+      let orders = JSON.parse(localStorage.getItem(`macx_orders_${username}`)) || [];
+      orders = orders.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
+      localStorage.setItem(`macx_orders_${username}`, JSON.stringify(orders));
+      loadAllOrders();
+    }
+
+    loadAllOrders();
+  </script>
+</body>
+</html>
