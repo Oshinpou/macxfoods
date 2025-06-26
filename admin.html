@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MACX Admin Panel</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script defer src="admin.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background: #f9f9f9;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    input[type="text"] {
+      padding: 0.5rem;
+      width: 300px;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+
+    th, td {
+      padding: 0.75rem;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #333;
+      color: white;
+    }
+
+    button {
+      padding: 0.4rem 0.7rem;
+      background: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <h1>MACX Admin Panel</h1>
+  <input type="text" id="searchInput" placeholder="Search by username...">
+ <br>
+  <input type="text" id="searchInput2" placeholder="Search by email....">
+<button onclick="searchEmail()">Search</button>
+  <table>
+    <thead>
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="userTableBody"></tbody>
+  </table>
+  
+<script>
+function searchEmail() {
+  const input = document.getElementById("searchInput2").value.trim().toLowerCase();
+  if (!input) {
+    alert("Please enter an email address.");
+    return;
+  }
+
+  const tableBody = document.getElementById("userTableBody");
+  const tableRows = tableBody.querySelectorAll("tr");
+  let found = false;
+
+  // Reset all rows
+  tableRows.forEach(row => {
+    row.style.backgroundColor = "";
+  });
+
+  tableRows.forEach(row => {
+    const emailCell = row.cells[1]; // 2nd cell = email
+    if (emailCell && emailCell.textContent.trim().toLowerCase() === input) {
+      row.style.backgroundColor = "lightyellow";
+      tableBody.insertBefore(row, tableBody.firstChild);
+      window.scrollTo({ top: tableBody.offsetTop - 100, behavior: "smooth" });
+      found = true;
+    }
+  });
+
+  if (!found) {
+    alert("No account found with this email.");
+  }
+}
+
+
+
+</script>
+
+</body>
+</html>
