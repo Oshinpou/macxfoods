@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Support Form - MACX</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f9f9f9; }
+    form { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    input, textarea { width: 100%; padding: 10px; margin: 10px 0; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 10px 20px; background: #2ecc71; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #27ae60; }
+  </style>
+</head>
+<body>
+
+  <h2>Submit a Support Request</h2>
+  <form id="supportForm">
+    <input type="text" id="fullName" placeholder="Full Name" required>
+    <input type="tel" id="phone" placeholder="Phone (with country code)" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="text" id="issueTitle" placeholder="Issue Title" required>
+    <textarea id="messageText" rows="10" maxlength="5000" placeholder="Describe your issue (up to 5000 words)" required></textarea>
+    <button type="submit">Submit</button>
+  </form>
+
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const support = gun.get('macx_support_global');
+
+    document.getElementById('supportForm').addEventListener('submit', e => {
+      e.preventDefault();
+
+      const ticket = {
+        fullName: document.getElementById('fullName').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        issueTitle: document.getElementById('issueTitle').value.trim(),
+        messageText: document.getElementById('messageText').value.trim(),
+        timestamp: Date.now()
+      };
+
+      const ticketID = `ticket_${ticket.timestamp}_${Math.random().toString(36).substring(2)}`;
+      support.get(ticketID).put(ticket, ack => {
+        if (!ack.err) {
+          alert("Support request submitted successfully.");
+          document.getElementById('supportForm').reset();
+        } else {
+          alert("Submission failed. Please try again.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
