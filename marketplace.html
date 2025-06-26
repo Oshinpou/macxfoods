@@ -2,65 +2,47 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>MACX Marketplace</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Marketplace</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+      padding: 20px;
+    }
+    .container {
+      background: #222;
+      padding: 20px;
+      border-radius: 8px;
+    }
+    button {
+      padding: 10px 15px;
+      background: #444;
+      border: none;
+      border-radius: 5px;
+      color: #fff;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #666;
+    }
+  </style>
 </head>
 <body>
-  <!-- Login status sticker -->
   <div id="loginStatusWrapper"></div>
 
-  <!-- Marketplace content can go here -->
-  <h1>Welcome to the Marketplace</h1>
+  <h1>Welcome to MACX Marketplace</h1>
+  <p>Shop our exclusive items below...</p>
 
+  <script src="login-status.js"></script>
   <script>
-    // Load login-status.html into the wrapper
     fetch('login-status.html')
-      .then(response => response.text())
-      .then(data => {
-        document.getElementById('loginStatusWrapper').innerHTML = data;
-        initializeLoginStatus();
-
-        // After initializing, check and log the status
-        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-        const username = localStorage.getItem('username');
-        console.log("Login status:", isLoggedIn, "Username:", username);
-
-        // Example: you can use this info further
-        if (isLoggedIn) {
-          console.log(`Welcome, ${username}! Enjoy shopping.`);
-        } else {
-          console.log(`Guest user. Please login for full access.`);
-        }
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById("loginStatusWrapper").innerHTML = html;
+        initializeLoginStatusUI();
       });
-
-    // Example of what initializeLoginStatus could look like:
-    function initializeLoginStatus() {
-      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-      const username = localStorage.getItem('username') || 'User';
-
-      const notLoggedIn = document.getElementById('notLoggedIn');
-      const loggedInSection = document.getElementById('loggedInSection');
-      const userDisplay = document.getElementById('userDisplay');
-
-      if (isLoggedIn) {
-        notLoggedIn.style.display = 'none';
-        loggedInSection.style.display = 'block';
-        userDisplay.textContent = `Welcome, ${username}`;
-      } else {
-        notLoggedIn.style.display = 'block';
-        loggedInSection.style.display = 'none';
-      }
-
-      document.getElementById('loginRedirectBtn').onclick = function() {
-        window.location.href = 'login.html'; // replace with your login page
-      };
-
-      document.getElementById('logoutBtn').onclick = function() {
-        localStorage.setItem('isLoggedIn', 'false');
-        localStorage.removeItem('username');
-        location.reload();
-      };
-    }
   </script>
 </body>
 </html>
