@@ -1,30 +1,35 @@
-function initializeLoginStatus() {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-  const username = localStorage.getItem('username') || 'User';
+function initializeLoginStatusUI() {
+  const username = localStorage.getItem("macx_loggedInUser");
+  const userDisplay = document.getElementById("userDisplay");
+  const loggedInSection = document.getElementById("loggedInSection");
+  const notLoggedIn = document.getElementById("notLoggedIn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
 
-  const notLoggedIn = document.getElementById('notLoggedIn');
-  const loggedInSection = document.getElementById('loggedInSection');
-  const userDisplay = document.getElementById('userDisplay');
+  if (username) {
+    if (userDisplay) userDisplay.textContent = `Welcome, ${username}`;
+    if (loggedInSection) loggedInSection.style.display = "block";
+    if (notLoggedIn) notLoggedIn.style.display = "none";
 
-  if (isLoggedIn) {
-    notLoggedIn.style.display = 'none';
-    loggedInSection.style.display = 'block';
-    userDisplay.textContent = `Welcome, ${username}`;
+    if (logoutBtn) {
+      logoutBtn.onclick = () => {
+        localStorage.removeItem("macx_loggedInUser");
+        window.location.reload();
+      };
+    }
   } else {
-    notLoggedIn.style.display = 'block';
-    loggedInSection.style.display = 'none';
+    if (loggedInSection) loggedInSection.style.display = "none";
+    if (notLoggedIn) notLoggedIn.style.display = "block";
+
+    if (loginRedirectBtn) {
+      loginRedirectBtn.onclick = () => {
+        // Simulate login with prompt — replace with real login page if needed
+        const enteredUsername = prompt("Enter your username:");
+        if (enteredUsername) {
+          localStorage.setItem("macx_loggedInUser", enteredUsername);
+          window.location.reload();
+        }
+      };
+    }
   }
-
-  document.getElementById('loginRedirectBtn').onclick = function() {
-    window.location.href = 'login.html'; // or your login page
-  };
-
-  document.getElementById('logoutBtn').onclick = function() {
-    localStorage.setItem('isLoggedIn', 'false');
-    localStorage.removeItem('username');
-    location.reload();
-  };
 }
-
-// Optionally export if using module system
-// export { initializeLoginStatus };
