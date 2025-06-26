@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Support Panel - MACX</title>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 20px; }
+    h2 { text-align: center; }
+    .ticket {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 15px;
+      margin: 15px auto;
+      max-width: 800px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      position: relative;
+    }
+    .ticket h3 { margin-top: 0; }
+    .ticket p, .ticket small { margin: 5px 0; }
+    .ticket button {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: #e74c3c;
+      border: none;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .ticket button:hover {
+      background: #c0392b;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>MACX Global Admin Support Panel</h2>
+  <div id="ticketList"></div>
+
+  <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const support = gun.get('macx_support_global');
+    const ticketList = document.getElementById('ticketList');
+    const seen = new Set();
+
+    function renderTicket(ticket, key) {
+      if (seen.has(key)) return;
+      seen.add(key);
+
+      const div = document.createElement('div');
+      div.className = 'ticket';
+      div.id = key;
+
+      div.innerHTML = `
+        <h3>${ticket.issueTitle}</h3>
+        <p><strong>Name:</strong> ${ticket.fullName}</p>
+        <p><strong>Phone:</strong> ${ticket.phone}</p>
+        <p><strong>Email:</strong> ${ticket.email}</p>
+        <p><strong>Message:</strong> ${ticket.messageText}</p>
+        <small>Submitted: ${new Date(ticket.timestamp).toLocaleString()}</small>
+        <button onclick="deleteTicket('${key}')">Delete</button>
+      `;
+
+      ticketList.prepend(div);
+    }
+
+    function deleteTicket(key) {
+      support.get(key).put(null, ack => {
+        if (!ack.err) {
+          const el = document.getElementById(key);
+          if (el) el.remove();
+          seen.delete(key);
+          alert("Ticket deleted globally.");
+        } else {
+          alert("Failed to delete ticket.");
+        }
+      });
+    }
+
+    support.map().on((data, key) => {
+      if (!data || data === null) {
+        const el = document.getElementById(key);
+        if (el) el.remove();
+        seen.delete(key);
+        return;
+      }
+      renderTicket(data, key);
+    });
+  </script>
+</body>
+</html>
