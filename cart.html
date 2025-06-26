@@ -4,26 +4,20 @@
   <meta charset="UTF-8" />
   <title>MACX Cart</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-  <!-- Gun.js + SEA -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-
-  <!-- Optional login UI script -->
-  <script src="login-status.js"></script>
-  <script src="macx-commerce.js"></script>
-
+ <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="macx-commerce.js"></script>
+  
   <style>
     body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #333; text-align: center; }
-    button { padding: 6px 12px; }
+    th, td { padding: 10px; border: 1px solid #333; }
+    button { padding: 5px 10px; }
   </style>
 </head>
 <body>
   <div id="loginStatusWrapper"></div>
-  <h1>Your Cart</h1>
 
+  <h1>Your Cart</h1>
   <table id="cartTable">
     <thead>
       <tr>
@@ -36,90 +30,61 @@
   <h2 id="grandTotal">Grand Total: ₹0</h2>
   <button onclick="placeOrder()">Place Order</button>
 
+  <script src="login-status.js"></script>
   <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // Global sync relay
-
-    let username = localStorage.getItem("macx_loggedInUser");
-    if (!username) {
-      username = prompt("Enter your username:");
-      localStorage.setItem("macx_loggedInUser", username);
-    }
-
-    const userCart = gun.get("accounts").get(username).get("cart");
-    const userOrders = gun.get("accounts").get(username).get("orders");
-    const allOrders = gun.get("allOrders");
+    fetch('login-status.html').then(r => r.text()).then(html => {
+      document.getElementById('loginStatusWrapper').innerHTML = html;
+      initializeLoginStatusUI();
+      loadCart();
+    });
 
     function loadCart() {
+      const username = localStorage.getItem("macx_loggedInUser");
+      if (!username) return;
+      const cart = JSON.parse(localStorage.getItem(`macx_cart_${username}`)) || [];
       const tbody = document.querySelector("#cartTable tbody");
       tbody.innerHTML = "";
       let total = 0;
-
-      const cartItems = [];
-
-      userCart.map().once((item, key) => {
-        if (!item || !item.name) return; // skip invalid
-
-        cartItems.push({ key, ...item });
-
+      cart.forEach((item, i) => {
         const itemTotal = item.price * item.quantity;
         total += itemTotal;
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>₹${item.price}</td>
-          <td>${item.quantity}</td>
-          <td>₹${itemTotal}</td>
-          <td><button onclick="deleteItem('${key}')">Delete</button></td>
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>₹${item.price}</td>
+            <td>${item.quantity}</td>
+            <td>₹${itemTotal}</td>
+            <td><button onclick="deleteItem(${i})">Delete</button></td>
+          </tr>
         `;
-        tbody.appendChild(row);
-        document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
       });
+      document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
     }
 
-    function deleteItem(key) {
-      userCart.get(key).put(null); // remove from Gun
-      setTimeout(loadCart, 500);
+    function deleteItem(index) {
+      const username = localStorage.getItem("macx_loggedInUser");
+      let cart = JSON.parse(localStorage.getItem(`macx_cart_${username}`)) || [];
+      cart.splice(index, 1);
+      localStorage.setItem(`macx_cart_${username}`, JSON.stringify(cart));
+      loadCart();
     }
 
     function placeOrder() {
-      const cart = [];
-      userCart.map().once((item, key) => {
-        if (item && item.name) cart.push(item);
+      const username = localStorage.getItem("macx_loggedInUser");
+      const cart = JSON.parse(localStorage.getItem(`macx_cart_${username}`)) || [];
+      if (!cart.length) return alert("Cart is empty");
+
+      // Simulate Razorpay (you'd integrate their API here)
+      const orderId = `MACX-${Date.now()}`;
+      const orders = JSON.parse(localStorage.getItem(`macx_orders_${username}`)) || [];
+      orders.push({
+        orderId, items: cart, status: "Payment Done", date: new Date().toLocaleString()
       });
-
-      setTimeout(() => {
-        if (!cart.length) return alert("Cart is empty");
-
-        const orderId = `MACX-${Date.now()}`;
-        const orderData = {
-          orderId,
-          items: cart,
-          status: "Payment Done",
-          date: new Date().toLocaleString()
-        };
-
-        userOrders.set(orderData);
-        allOrders.set({ username, ...orderData });
-
-        // Clear cart
-        userCart.map().once((_, key) => {
-          userCart.get(key).put(null);
-        });
-
-        alert("Payment done. Order placed!");
-        window.location.href = "myorders.html";
-      }, 1000);
+      localStorage.setItem(`macx_orders_${username}`, JSON.stringify(orders));
+      localStorage.removeItem(`macx_cart_${username}`);
+      alert("Payment done. Order placed!");
+      window.location.href = "myorders.html";
     }
-
-    // Initial UI Load
-    fetch('login-status.html')
-      .then(r => r.text())
-      .then(html => {
-        document.getElementById('loginStatusWrapper').innerHTML = html;
-        initializeLoginStatusUI();
-        loadCart();
-      });
   </script>
 </body>
 </html>
