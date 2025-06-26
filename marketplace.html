@@ -44,5 +44,19 @@
         initializeLoginStatusUI();
       });
   </script>
+<button onclick="openMarketplaceFeature()">Buy Now</button>
+
+<script>
+  function openMarketplaceFeature() {
+    const username = localStorage.getItem("macx_loggedInUser");
+    if (username) {
+      alert(`Hello ${username}, accessing the feature.`);
+      // window.location.href = 'some-feature.html';
+    } else {
+      alert("Please login first to access this feature.");
+    }
+  }
+</script>
+
 </body>
 </html>
