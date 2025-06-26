@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (loginRedirectBtn) {
       loginRedirectBtn.addEventListener("click", () => {
-        window.location.href = "index.html";
+        window.location.href = "login.html";
       });
     }
   }
