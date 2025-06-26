@@ -6,18 +6,19 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <style>
     body {
-      font-family: Arial, sans-serif;
       background: #111;
       color: #fff;
+      font-family: Arial, sans-serif;
       padding: 20px;
     }
     .container {
       background: #222;
-      padding: 20px;
+      padding: 15px;
       border-radius: 8px;
+      margin-bottom: 20px;
     }
     button {
-      padding: 10px 15px;
+      padding: 8px 12px;
       background: #444;
       border: none;
       border-radius: 5px;
@@ -30,33 +31,35 @@
   </style>
 </head>
 <body>
+
   <div id="loginStatusWrapper"></div>
 
   <h1>Welcome to MACX Marketplace</h1>
-  <p>Shop our exclusive items below...</p>
+  <p>Explore premium cosmetics and accessories tailored just for you!</p>
+
+  <button onclick="accessPremiumFeature()">Access Premium Feature</button>
 
   <script src="login-status.js"></script>
   <script>
+    // Load the reusable login status UI
     fetch('login-status.html')
-      .then(r => r.text())
+      .then(res => res.text())
       .then(html => {
         document.getElementById("loginStatusWrapper").innerHTML = html;
         initializeLoginStatusUI();
       });
-  </script>
-<button onclick="openMarketplaceFeature()">Buy Now</button>
 
-<script>
-  function openMarketplaceFeature() {
-    const username = localStorage.getItem("macx_loggedInUser");
-    if (username) {
-      alert(`Hello ${username}, accessing the feature.`);
-      // window.location.href = 'some-feature.html';
-    } else {
-      alert("Please login first to access this feature.");
+    function accessPremiumFeature() {
+      const username = localStorage.getItem("macx_loggedInUser");
+      if (username) {
+        alert(`Welcome ${username}, accessing premium features!`);
+        // Replace with your actual feature URL or logic
+        // window.location.href = "premium-feature.html";
+      } else {
+        alert("Please log in to access premium features.");
+      }
     }
-  }
-</script>
+  </script>
 
 </body>
 </html>
