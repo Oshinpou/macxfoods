@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marketplace</title>
+</head>
+<body>
+  <!-- Login status sticker -->
+  <div id="loginStatusWrapper"></div>
+
+  <!-- Marketplace content can go here -->
+  <h1>Welcome to the Marketplace</h1>
+
+  <script>
+    // Load login-status.html into the wrapper
+    fetch('login-status.html')
+      .then(response => response.text())
+      .then(data => {
+        document.getElementById('loginStatusWrapper').innerHTML = data;
+        initializeLoginStatus();
+
+        // After initializing, check and log the status
+        const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+        const username = localStorage.getItem('username');
+        console.log("Login status:", isLoggedIn, "Username:", username);
+
+        // Example: you can use this info further
+        if (isLoggedIn) {
+          console.log(`Welcome, ${username}! Enjoy shopping.`);
+        } else {
+          console.log(`Guest user. Please login for full access.`);
+        }
+      });
+
+    // Example of what initializeLoginStatus could look like:
+    function initializeLoginStatus() {
+      const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+      const username = localStorage.getItem('username') || 'User';
+
+      const notLoggedIn = document.getElementById('notLoggedIn');
+      const loggedInSection = document.getElementById('loggedInSection');
+      const userDisplay = document.getElementById('userDisplay');
+
+      if (isLoggedIn) {
+        notLoggedIn.style.display = 'none';
+        loggedInSection.style.display = 'block';
+        userDisplay.textContent = `Welcome, ${username}`;
+      } else {
+        notLoggedIn.style.display = 'block';
+        loggedInSection.style.display = 'none';
+      }
+
+      document.getElementById('loginRedirectBtn').onclick = function() {
+        window.location.href = 'login.html'; // replace with your login page
+      };
+
+      document.getElementById('logoutBtn').onclick = function() {
+        localStorage.setItem('isLoggedIn', 'false');
+        localStorage.removeItem('username');
+        location.reload();
+      };
+    }
+  </script>
+</body>
+</html>
