@@ -68,34 +68,34 @@
     let total = 0;
 
     if (!cart.length) {
-      tbody.innerHTML = `
-        <tr><td colspan="5" style="text-align:center; padding:20px;">
-          Your bag is feeling lonely!
-        </td></tr>`;
-      document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
-      togglePlaceBtn();
-      return;
+        tbody.innerHTML = `
+            <tr><td colspan="5" style="text-align:center; padding:20px;">
+                Your bag is feeling lonely!
+            </td></tr>`;
+        document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
+        togglePlaceBtn();
+        return;
     }
 
     cart.forEach((item, i) => {
-      const itemTotal = item.price * item.quantity;
-      total += itemTotal;
-      tbody.innerHTML += `
-        <tr data-index="${i}">
-          <td>${sanitize(item.name)}</td>
-          <td>₹${item.price}</td>
-          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px"></td>
-          <td>₹${itemTotal}</td>
-          <td><button class="delete-btn">Delete</button></td>
-        </tr>`;
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+        tbody.innerHTML += `
+            <tr data-index="${i}">
+                <td>${sanitize(item.name)}</td>
+                <td>₹${item.price}</td>
+                <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px"></td>
+                <td>₹${itemTotal}</td>
+                <td><button class="delete-btn">Delete</button></td>
+            </tr>`;
     });
 
     document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
     togglePlaceBtn();
-  }
+}
 
-  // ─── SAVE CART (localStorage + GunDB map) ─────────────────────────────
-  function saveCart(cart) {
+// ─── SAVE CART (localStorage + GunDB map) ─────────────────────────────
+function saveCart(cart) {
     const user = userKey();
     if (!user) return;
     localStorage.setItem(`macx_cart_${user}`, JSON.stringify(cart));
@@ -104,7 +104,7 @@
     cartNode().map().once((_, key) => cartNode().get(key).put(null));
     // re-put each item keyed by item.id
     cart.forEach(item => cartNode().get(item.id).put(item));
-  }
+}
 
   // ─── SYNC REMOTE → LOCAL on change ────────────────────────────────────
   gun.get("carts")
@@ -128,32 +128,44 @@
      });
 
   // ─── ITEM UPDATE & DELETE LOGIC ──────────────────────────────────────
-  function updateItem(idx, qty) {
+  document.querySelector("#cartTable tbody")
+    .addEventListener("change", e => {
+        if (!e.target.matches(".qty-input")) return;
+        const tr = e.target.closest("tr[data-index]");
+        const idx = +tr.dataset.index;
+        const newQuantity = Math.max(1, +e.target.value);
+        updateItem(idx, newQuantity);
+    });
+
+function updateItem(idx, qty) {
     const user = userKey();
     let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
     cart[idx].quantity = qty;
     saveCart(cart);
     loadCart();
-  }
+}
 
-  function deleteItem(idx) {
+ document.querySelector("#cartTable tbody")
+    .addEventListener("click", e => {
+        const tr = e.target.closest("tr[data-index]");
+        if (!tr) return;
+        const idx = +tr.dataset.index;
+        if (e.target.matches(".delete-btn")) {
+            deleteItem(idx);
+        }
+    });
+
+function deleteItem(idx) {
     const user = userKey();
     let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
     const [item] = cart.splice(idx, 1);
     saveCart(cart);
     loadCart();
     cartNode().get(item.id).put(null);
-  }
+}
 
-  document.querySelector("#cartTable tbody")
-    .addEventListener("click", e => {
-      const tr = e.target.closest("tr[data-index]");
-      if (!tr) return;
-      const idx = +tr.dataset.index;
-      if (e.target.matches(".delete-btn")) deleteItem(idx);
-    });
 
-  document.querySelector("#cartTable tbody")
+   document.querySelector("#cartTable tbody")
     .addEventListener("change", e => {
       if (!e.target.matches(".qty-input")) return;
       const tr = e.target.closest("tr[data-index]");
