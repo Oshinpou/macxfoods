@@ -68,3 +68,24 @@ function renderAdminOrders(orders, targetId = "adminOrdersContainer") { const el
 
 // Export for console testing (optional) window.macxCommerce = { addToCart, loadCart, renderCart, placeOrder, loadUserOrders, renderOrders, loadAdminOrders, renderAdminOrders, cancelOrder, updateOrderStatus, renderGlobalCartUI, bindCartEvents, togglePlaceBtn };
 
+function addToCart(product, quantity = 1) {
+  const username = localStorage.getItem("macx_loggedInUser");
+  if (!username) return alert("Please login to add to cart");
+
+  if (!product?.id || !product?.price || !product?.name) {
+    return alert("Invalid product data");
+  }
+
+  const cartNode = gun.get("macx_cart").get(username).get(product.id);
+
+  cartNode.once(existing => {
+    const currentQty = existing?.quantity || 0;
+    cartNode.put({
+      ...product,
+      quantity: currentQty + quantity
+    });
+
+    alert("Product added to cart globally!");
+  });
+}
+
