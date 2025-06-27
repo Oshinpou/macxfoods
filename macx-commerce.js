@@ -6,7 +6,20 @@ if (!username) console.warn("User not logged in. LocalStorage missing 'macx_logg
 
 // ---------- CART FUNCTIONS ----------
 
-function addToCart(id, name, price, image = '', quantity = 1) { if (!username) return alert("Please login first"); const itemNode = gun.get("macx_cart").get(username).get(id); itemNode.once(existing => { const currentQty = existing?.quantity || 0; itemNode.put({ id, name, price, image, quantity: currentQty + quantity }); alert("Added to cart"); }); }
+function addToCart(productId) {
+  const username = localStorage.getItem("macx_loggedInUser");
+  if (!username) return alert("Please log in first");
+
+  const prod = products.find(p => p.id === productId);
+  if (!prod) return alert("Product not found");
+
+  const cartNode = gun.get("macx_cart").get(username).get(prod.id);
+  cartNode.once(existing => {
+    const quantity = (existing?.quantity || 0) + 1;
+    cartNode.put({ ...prod, quantity });
+    alert("Added to cart");
+  });
+}
 
 function renderGlobalCartUI(targetId = "cartTable") { const tbody = document.querySelector(#${targetId} tbody); const grandTotalEl = document.getElementById("grandTotal"); if (!username || !tbody) return;
 
