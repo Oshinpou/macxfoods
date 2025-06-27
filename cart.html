@@ -31,28 +31,49 @@
   <button onclick="placeOrder()">Place Order</button>
 
   <script src="login-status.js"></script>
-  <script>
-    fetch('login-status.html').then(r => r.text()).then(html => {
-      document.getElementById('loginStatusWrapper').innerHTML = html;
-      initializeLoginStatusUI();
-      loadCart();
-    });
+  <!-- ─── SHIPPING FORM ──────────────────────────────────────────────────── -->
+<div id="shippingForm" style="margin:20px 0; padding:10px; border:1px solid #333;">
+  <h2>Shipping Details</h2>
+  <label>Name:<br><input id="shipName" type="text" style="width:100%" placeholder="Full Name"></label><br>
+  <label>Email:<br><input id="shipEmail" type="email" style="width:100%" placeholder="you@example.com"></label><br>
+  <label>Phone (+CC-Number):<br><input id="shipPhone" type="tel" style="width:100%" placeholder="+91XXXXXXXXXX"></label><br>
+  <label>Address:<br><textarea id="shipAddress" rows="3" style="width:100%" placeholder="Street, City, State"></textarea></label><br>
+  <label>Pincode:<br><input id="shipPincode" type="text" style="width:100%" placeholder="XXXXXX"></label>
+</div>
 
-  // ─── STEP 1: Make Qty Editable ─────────────────────────────────────────
-  // 1. Change your loadCart() so Qty is an <input> and rows carry data-index
+<!-- ─── GUNDB & RAZORPAY SCRIPTS ───────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+  const gun       = Gun();
+  const userKey   = () => localStorage.getItem("macx_loggedInUser");
+  const cartNode  = () => gun.get("carts").get(userKey());
+  const ordersNode= () => gun.get("orders").get(userKey());
+
+  // ─── XSS SANITIZE ─────────────────────────────────────────────────────
+  function sanitize(str) {
+    return String(str).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  // ─── LOAD & RENDER CART ───────────────────────────────────────────────
   function loadCart() {
-    const user = localStorage.getItem("macx_loggedInUser");
+    const user = userKey();
     if (!user) return;
-    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`)) || [];
+    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
     const tbody = document.querySelector("#cartTable tbody");
     tbody.innerHTML = "";
-
     let total = 0;
-    if (cart.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px;">
-        Your bag is feeling lonely!
-      </td></tr>`;
-      document.getElementById("grandTotal").textContent = `Grand Total: ₹0`;
+
+    if (!cart.length) {
+      tbody.innerHTML = `
+        <tr><td colspan="5" style="text-align:center; padding:20px;">
+          Your bag is feeling lonely!
+        </td></tr>`;
+      document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
+      togglePlaceBtn();
       return;
     }
 
@@ -61,162 +82,166 @@
       total += itemTotal;
       tbody.innerHTML += `
         <tr data-index="${i}">
-          <td>${item.name}</td>
+          <td>${sanitize(item.name)}</td>
           <td>₹${item.price}</td>
-          <td>
-            <input class="qty-input" 
-                   type="number" 
-                   min="1" 
-                   value="${item.quantity}" 
-                   style="width:50px">
-          </td>
+          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px"></td>
           <td>₹${itemTotal}</td>
           <td><button class="delete-btn">Delete</button></td>
         </tr>`;
     });
+
     document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+    togglePlaceBtn();
   }
 
-  // STEP 1B: Update helper
-  function updateItem(index, newQty) {
-    const user = localStorage.getItem("macx_loggedInUser");
-    let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`)) || [];
-    cart[index].quantity = newQty;
+  // ─── SAVE CART (localStorage + GunDB map) ─────────────────────────────
+  function saveCart(cart) {
+    const user = userKey();
+    if (!user) return;
+    localStorage.setItem(`macx_cart_${user}`, JSON.stringify(cart));
+
+    // clear old Gun entries
+    cartNode().map().once((_, key) => cartNode().get(key).put(null));
+    // re-put each item keyed by item.id
+    cart.forEach(item => cartNode().get(item.id).put(item));
+  }
+
+  // ─── SYNC REMOTE → LOCAL on change ────────────────────────────────────
+  gun.get("carts")
+     .get(userKey())
+     .map()
+     .on((item, key) => {
+       const user = userKey();
+       if (!user) return;
+       let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
+
+       if (item === null) {
+         cart = cart.filter(i => i.id !== key);
+       } else {
+         const idx = cart.findIndex(i => i.id === key);
+         if (idx >= 0) cart[idx] = item;
+         else cart.push(item);
+       }
+
+       localStorage.setItem(`macx_cart_${user}`, JSON.stringify(cart));
+       loadCart();
+     });
+
+  // ─── ITEM UPDATE & DELETE LOGIC ──────────────────────────────────────
+  function updateItem(idx, qty) {
+    const user = userKey();
+    let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
+    cart[idx].quantity = qty;
     saveCart(cart);
     loadCart();
   }
 
-  function deleteItem(index) {
-    const user = localStorage.getItem("macx_loggedInUser");
-    let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`)) || [];
-    cart.splice(index, 1);
+  function deleteItem(idx) {
+    const user = userKey();
+    let cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
+    const [item] = cart.splice(idx, 1);
     saveCart(cart);
     loadCart();
+    cartNode().get(item.id).put(null);
   }
 
-  // ─── STEP 2: Event Delegation ──────────────────────────────────────────
-  document.querySelector('#cartTable tbody')
-    .addEventListener('click', e => {
-      const tr = e.target.closest('tr[data-index]');
+  document.querySelector("#cartTable tbody")
+    .addEventListener("click", e => {
+      const tr = e.target.closest("tr[data-index]");
       if (!tr) return;
       const idx = +tr.dataset.index;
-
-      if (e.target.matches('.delete-btn')) {
-        deleteItem(idx);
-      }
+      if (e.target.matches(".delete-btn")) deleteItem(idx);
     });
 
-  document.querySelector('#cartTable tbody')
-    .addEventListener('change', e => {
-      if (e.target.matches('.qty-input')) {
-        const tr = e.target.closest('tr[data-index]');
-        const idx = +tr.dataset.index;
-        const qty = Math.max(1, +e.target.value);
-        updateItem(idx, qty);
-      }
+  document.querySelector("#cartTable tbody")
+    .addEventListener("change", e => {
+      if (!e.target.matches(".qty-input")) return;
+      const tr = e.target.closest("tr[data-index]");
+      updateItem(+tr.dataset.index, Math.max(1, +e.target.value));
     });
 
-  // ─── STEP 3: Real-Time Sync with GunDB ─────────────────────────────────
-  // (Optional—only if you want cross-device sync)
-  const gun = Gun(); // assumes <script src="gun.js"> loaded
-  function saveCart(cart) {
-    // localStorage & Gun
-    const user = localStorage.getItem("macx_loggedInUser");
-    localStorage.setItem(`macx_cart_${user}`, JSON.stringify(cart));
-    gun.get('carts').get(user).put({ items: cart });
-  }
-  // Listen for remote updates
-  gun.get('carts').get(localStorage.getItem("macx_loggedInUser"))
-    .on(data => {
-      if (data && data.items) {
-        localStorage.setItem(
-          `macx_cart_${localStorage.getItem("macx_loggedInUser")}`,
-          JSON.stringify(data.items)
-        );
-        loadCart();
-      }
-    });
-
-  // ─── STEP 4: UX POLISH ─────────────────────────────────────────────────
+  // ─── ENABLE/DISABLE PLACE ORDER ──────────────────────────────────────
   const placeBtn = document.querySelector("button[onclick='placeOrder()']");
   function togglePlaceBtn() {
-    const total = JSON.parse(localStorage.getItem(
-      `macx_cart_${localStorage.getItem("macx_loggedInUser")}`
-    ) || []).length;
-    placeBtn.disabled = total === 0;
+    const user = userKey();
+    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
+    placeBtn.disabled = !cart.length;
   }
-  // call from loadCart end
-  const origLoadCart = loadCart;
-  loadCart = () => { origLoadCart(); togglePlaceBtn(); };
+  const _loadCart = loadCart;
+  loadCart = () => { _loadCart(); togglePlaceBtn(); };
 
-  // ─── STEP 5: Razorpay Integration ───────────────────────────────────────
+  // ─── RAZORPAY CHECKOUT & FINALIZE ORDER ──────────────────────────────
   function placeOrder() {
-    const user = localStorage.getItem("macx_loggedInUser");
-    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`)) || [];
-    if (!cart.length) {
-      return alert("Cart is empty");
+    const user = userKey();
+    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
+    if (!cart.length) return alert("Cart is empty");
+
+    // shipping details
+    const name    = document.getElementById("shipName").value.trim();
+    const email   = document.getElementById("shipEmail").value.trim();
+    const phone   = document.getElementById("shipPhone").value.trim();
+    const address = document.getElementById("shipAddress").value.trim();
+    const pin     = document.getElementById("shipPincode").value.trim();
+    if (!name || !email || !phone || !address || !pin) {
+      return alert("Please fill in all shipping details");
     }
 
-    // show spinner
+    const amount = cart.reduce((s,i) => s + i.price * i.quantity, 0) * 100;
     placeBtn.textContent = "Processing…";
-    placeBtn.disabled = true;
-
-    // calculate amount
-    const amount = cart.reduce((sum, i) => sum + i.price * i.quantity, 0) * 100;
+    placeBtn.disabled    = true;
 
     const options = {
-      key: "YOUR_RAZORPAY_KEY",
-      amount,
-      currency: "INR",
-      name: "MACX Store",
+      key:       "YOUR_RAZORPAY_KEY",
+      amount, currency: "INR",
+      name:      "MACX Store",
       description: "Order Payment",
-      handler: function(resp) { finalizeOrder(resp.razorpay_payment_id); },
-      modal: { ondismiss() { placeBtn.textContent = "Place Order"; togglePlaceBtn(); } }
+      prefill:   { name, email, contact: phone },
+      handler:   resp => finalizeOrder(resp.razorpay_payment_id, { name, email, phone, address, pin }),
+      modal:     { ondismiss: () => { placeBtn.textContent="Place Order"; togglePlaceBtn(); } }
     };
 
     new Razorpay(options).open();
   }
 
-  function finalizeOrder(paymentId) {
-    const user = localStorage.getItem("macx_loggedInUser");
-    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`)) || [];
+  function finalizeOrder(paymentId, shipping) {
+    const user = userKey();
+    const cart = JSON.parse(localStorage.getItem(`macx_cart_${user}`) || "[]");
+    if (!user) return;
 
-    // Server-side validation would go here (verify paymentId, amount, etc.)
-    const orders = JSON.parse(localStorage.getItem(`macx_orders_${user}`)) || [];
-    orders.push({
-      orderId: `MACX-${Date.now()}`,
+    const order = {
+      orderId:  `MACX-${Date.now()}`,
       paymentId,
-      items: cart,
-      status: "Payment Done",
-      date: new Date().toLocaleString()
-    });
+      items:    cart,
+      shipping,
+      total:    cart.reduce((s,i)=>s + i.price*i.quantity,0),
+      date:     new Date().toLocaleString(),
+      status:   "Payment Done"
+    };
+
+    // save locally
+    const orders = JSON.parse(localStorage.getItem(`macx_orders_${user}`) || "[]");
+    orders.push(order);
     localStorage.setItem(`macx_orders_${user}`, JSON.stringify(orders));
+    // sync to GunDB
+    ordersNode().get(order.orderId).put(order);
+
+    // clear cart (local & remote)
+    cart.forEach(i => cartNode().get(i.id).put(null));
     localStorage.removeItem(`macx_cart_${user}`);
 
-    alert("Payment successful! Redirecting to your orders…");
-    window.location.href = "myorders.html";
+    alert("Payment successful! Redirecting…");
+    window.location.href = "cart.html";
   }
 
-  // ─── STEP 6: Input & XSS SAFETY ────────────────────────────────────────
-  // Always use createElement/textContent when rendering user data server-side.
-  // Here, since we control `item.name`, verify it contains only safe chars or escape.
-  // Optionally run:
-  function sanitize(str) {
-    return str.replace(/[&<>"']/g, c => 
-      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
-    );
-  }
-  // Then in loadCart: use sanitize(item.name) instead of raw ${item.name}.
-
-  // ─── INITIAL CALL ─────────────────────────────────────────────────────
-  fetch('login-status.html')
+  // ─── BOOTSTRAP ON LOAD ────────────────────────────────────────────────
+  fetch("login-status.html")
     .then(r => r.text())
     .then(html => {
-      document.getElementById('loginStatusWrapper').innerHTML = html;
+      document.getElementById("loginStatusWrapper").innerHTML = html;
       initializeLoginStatusUI();
       loadCart();
     });
-
 </script>
+
 </body>
 </html>
