@@ -10,7 +10,25 @@ function loadCart(callback) { const items = []; gun.get("macx_cart").get(usernam
 
 function removeFromCart(productId) { gun.get("macx_cart").get(username).get(productId).put(null); alert("Item removed"); }
 
+function updateCartItemQty(productId, qty) { gun.get("macx_cart").get(username).get(productId).once(item => { if (!item) return; item.quantity = qty; gun.get("macx_cart").get(username).get(productId).put(item); }); }
+
 function clearCart() { gun.get("macx_cart").get(username).map().once((val, key) => { gun.get("macx_cart").get(username).get(key).put(null); }); }
+
+function renderGlobalCartUI(targetId = "cartTable") { const tbody = document.querySelector(#${targetId} tbody); if (!tbody) return; tbody.innerHTML = ""; let total = 0; let hasItems = false;
+
+gun.get("macx_cart").get(username).map().on((item, key) => { if (!item) return; hasItems = true; const row = document.createElement("tr"); row.dataset.id = key; row.innerHTML =  <td>${sanitize(item.name)}</td> <td>₹${item.price}</td> <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px"></td> <td>₹${item.price * item.quantity}</td> <td><button class="delete-btn">Delete</button></td>; tbody.appendChild(row); total += item.price * item.quantity; });
+
+setTimeout(() => { if (!hasItems) { tbody.innerHTML = <tr><td colspan="5" style="text-align:center; padding:20px;">Your bag is feeling lonely!</td></tr>; } document.getElementById("grandTotal").textContent = Grand Total: ₹${total}; togglePlaceBtn(); }, 1000); }
+
+function sanitize(str) { return String(str).replace(/[&<>"']/g, c => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' })[c]); }
+
+function bindCartEvents() { const tbody = document.querySelector("#cartTable tbody");
+
+tbody.addEventListener("change", e => { if (e.target.classList.contains("qty-input")) { const tr = e.target.closest("tr[data-id]"); const id = tr.dataset.id; const qty = Math.max(1, parseInt(e.target.value)); updateCartItemQty(id, qty); } });
+
+tbody.addEventListener("click", e => { if (e.target.classList.contains("delete-btn")) { const tr = e.target.closest("tr[data-id]"); const id = tr.dataset.id; removeFromCart(id); } }); }
+
+function togglePlaceBtn() { const btn = document.querySelector("button[onclick='placeOrder()']"); let hasItems = false; gun.get("macx_cart").get(username).map().once(item => { if (item) hasItems = true; }); setTimeout(() => { if (btn) btn.disabled = !hasItems; }, 500); }
 
 // ---------- ORDERS ---------- function placeOrder(paymentStatus = "Paid") { const items = []; gun.get("macx_cart").get(username).map().once(data => { if (data?.id) items.push(data); });
 
@@ -44,10 +62,9 @@ function updateOrderStatus(user, orderId, status) { gun.get("macx_orders").get(u
 
 // ---------- UI HELPERS ---------- function renderCart(items, targetId = "cartContainer") { const el = document.getElementById(targetId); if (!el) return; el.innerHTML = ""; let total = 0; items.forEach(p => { total += p.price * p.quantity; el.innerHTML += <div style='margin: 10px 0; padding: 10px; border: 1px solid #333;'> <strong>${p.name}</strong><br> ₹${p.price} x ${p.quantity}<br> <button onclick="removeFromCart('${p.id}')">Remove</button> </div>; }); el.innerHTML += <h3>Total: ₹${total}</h3><button onclick="placeOrder()">Place Order</button>; }
 
-function renderOrders(orders, targetId = "ordersContainer") { const el = document.getElementById(targetId); if (!el) return; el.innerHTML = ""; orders.forEach(order => { el.innerHTML += <div style='margin: 10px 0; padding: 10px; border: 1px solid #444;'> <h4>Order ID: ${order.orderId}</h4> <p>Status: ${order.status}</p> <p>Date: ${order.date}</p> <ul> ${order.items.map(i =><li>${i.name} - ₹${i.price} x ${i.quantity}</li>).join('')} </ul> </div> ; }); }
+function renderOrders(orders, targetId = "ordersContainer") { const el = document.getElementById(targetId); if (!el) return; el.innerHTML = ""; orders.forEach(order => { el.innerHTML += <div style='margin: 10px 0; padding: 10px; border: 1px solid #444;'> <h4>Order ID: ${order.orderId}</h4> <p>Status: ${order.status}</p> <p>Date: ${order.date}</p> <ul> ${order.items.map(i => <li>${i.name} - ₹${i.price} x ${i.quantity}</li>).join('')} </ul> </div>; }); }
 
-function renderAdminOrders(orders, targetId = "adminOrdersContainer") { const el = document.getElementById(targetId); if (!el) return; el.innerHTML = ""; orders.forEach(order => { el.innerHTML += <div style='margin: 10px 0; padding: 10px; border: 1px solid #888;'> <h4>User: ${order.username}</h4> <h5>Order ID: ${order.orderId}</h5> <p>Status: ${order.status}</p> <p>Date: ${order.date}</p> <button onclick="cancelOrder('${order.username}', '${order.orderId}')">Cancel</button> <button onclick="updateOrderStatus('${order.username}', '${order.orderId}', 'Delivered')">Mark Delivered</button> <ul> ${order.items.map(i =><li>${i.name} - ₹${i.price} x ${i.quantity}</li>).join('')} </ul> </div> ; }); }
+function renderAdminOrders(orders, targetId = "adminOrdersContainer") { const el = document.getElementById(targetId); if (!el) return; el.innerHTML = ""; orders.forEach(order => { el.innerHTML += <div style='margin: 10px 0; padding: 10px; border: 1px solid #888;'> <h4>User: ${order.username}</h4> <h5>Order ID: ${order.orderId}</h5> <p>Status: ${order.status}</p> <p>Date: ${order.date}</p> <button onclick="cancelOrder('${order.username}', '${order.orderId}')">Cancel</button> <button onclick="updateOrderStatus('${order.username}', '${order.orderId}', 'Delivered')">Mark Delivered</button> <ul> ${order.items.map(i => <li>${i.name} - ₹${i.price} x ${i.quantity}</li>).join('')} </ul> </div>; }); }
 
-// Export for console testing (optional) window.macxCommerce = { addToCart, loadCart, renderCart, placeOrder, loadUserOrders, renderOrders, loadAdminOrders, renderAdminOrders, cancelOrder, updateOrderStatus };
+// Export for console testing (optional) window.macxCommerce = { addToCart, loadCart, renderCart, placeOrder, loadUserOrders, renderOrders, loadAdminOrders, renderAdminOrders, cancelOrder, updateOrderStatus, renderGlobalCartUI, bindCartEvents, togglePlaceBtn };
 
-  
