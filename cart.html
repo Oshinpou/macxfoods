@@ -253,6 +253,442 @@ function deleteItem(idx) {
       initializeLoginStatusUI();
       loadCart();
     });
+
+
+  const gun       = Gun();
+  const userKey   = () => localStorage.getItem("macx_loggedInUser");
+  const cartNode  = () => gun.get("carts").get(userKey());
+  const ordersNode= () => gun.get("orders").get(userKey());
+
+  function sanitize(str) {
+    return String(str).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  // ─── GLOBAL CART RENDER FROM GUN ────────────────────────────────────────
+  function loadCart() {
+    const user = userKey();
+    if (!user) return;
+
+    const tbody = document.querySelector("#cartTable tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+    let hasItems = false;
+
+    cartNode().map().once((item, key) => {
+      if (!item) return;
+
+      hasItems = true;
+      const itemTotal = item.price * item.quantity;
+      total += itemTotal;
+
+      tbody.innerHTML += `
+        <tr data-id="${key}">
+          <td>${sanitize(item.name)}</td>
+          <td>₹${item.price}</td>
+          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px"></td>
+          <td>₹${itemTotal}</td>
+          <td><button class="delete-btn">Delete</button></td>
+        </tr>`;
+    });
+
+    setTimeout(() => {
+      if (!hasItems) {
+        tbody.innerHTML = `
+          <tr><td colspan="5" style="text-align:center; padding:20px;">
+            Your bag is feeling lonely!
+          </td></tr>`;
+      }
+      document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+      togglePlaceBtn();
+    }, 500); // slight delay for GUN sync
+  }
+
+  // ─── SAVE CART ITEMS TO GUN ONLY ────────────────────────────────────────
+  function saveCartToGun(cart) {
+    const user = userKey();
+    if (!user) return;
+
+    cartNode().map().once((_, key) => cartNode().get(key).put(null));
+    cart.forEach(item => {
+      cartNode().get(item.id).put(item);
+    });
+  }
+
+  // ─── DELETE ITEM ────────────────────────────────────────────────────────
+  function deleteItem(itemId) {
+    cartNode().get(itemId).put(null);
+  }
+
+  // ─── UPDATE ITEM QUANTITY ───────────────────────────────────────────────
+  function updateItem(itemId, qty) {
+    cartNode().get(itemId).once(item => {
+      if (!item) return;
+      item.quantity = qty;
+      cartNode().get(itemId).put(item);
+    });
+  }
+
+  // ─── DOM EVENT BINDINGS FOR QTY + DELETE ───────────────────────────────
+  document.querySelector("#cartTable tbody").addEventListener("change", e => {
+    if (!e.target.matches(".qty-input")) return;
+    const tr = e.target.closest("tr[data-id]");
+    const itemId = tr.dataset.id;
+    updateItem(itemId, Math.max(1, +e.target.value));
+  });
+
+  document.querySelector("#cartTable tbody").addEventListener("click", e => {
+    if (!e.target.matches(".delete-btn")) return;
+    const tr = e.target.closest("tr[data-id]");
+    const itemId = tr.dataset.id;
+    deleteItem(itemId);
+  });
+
+  // ─── ENABLE/DISABLE PLACE ORDER BUTTON ─────────────────────────────────
+  const placeBtn = document.querySelector("button[onclick='placeOrder()']");
+  function togglePlaceBtn() {
+    const user = userKey();
+    if (!user) {
+      placeBtn.disabled = true;
+      return;
+    }
+    // Check if cart has any item in Gun
+    let hasItems = false;
+    cartNode().map().once((item) => {
+      if (item) hasItems = true;
+    });
+    setTimeout(() => {
+      placeBtn.disabled = !hasItems;
+    }, 500);
+  }
+
+  // ─── PLACE ORDER & PAYMENT FLOW ─────────────────────────────────────────
+  function placeOrder() {
+    const user = userKey();
+    if (!user) return alert("Not logged in.");
+
+    let cart = [];
+    cartNode().map().once((item, key) => {
+      if (item) cart.push(item);
+    });
+
+    setTimeout(() => {
+      if (!cart.length) return alert("Cart is empty");
+
+      const name    = document.getElementById("shipName").value.trim();
+      const email   = document.getElementById("shipEmail").value.trim();
+      const phone   = document.getElementById("shipPhone").value.trim();
+      const address = document.getElementById("shipAddress").value.trim();
+      const pin     = document.getElementById("shipPincode").value.trim();
+
+      if (!name || !email || !phone || !address || !pin) {
+        return alert("Please fill in all shipping details");
+      }
+
+      const amount = cart.reduce((s, i) => s + i.price * i.quantity, 0) * 100;
+      placeBtn.textContent = "Processing…";
+      placeBtn.disabled = true;
+
+      const options = {
+        key:       "YOUR_RAZORPAY_KEY",
+        amount,
+        currency:  "INR",
+        name:      "MACX Store",
+        description: "Order Payment",
+        prefill:   { name, email, contact: phone },
+        handler:   resp => finalizeOrder(resp.razorpay_payment_id, { name, email, phone, address, pin }),
+        modal:     { ondismiss: () => { placeBtn.textContent = "Place Order"; togglePlaceBtn(); } }
+      };
+
+      new Razorpay(options).open();
+    }, 500);
+  }
+
+  // ─── FINALIZE ORDER AFTER PAYMENT ───────────────────────────────────────
+  function finalizeOrder(paymentId, shipping) {
+    const user = userKey();
+    if (!user) return;
+
+    let cart = [];
+    cartNode().map().once((item, key) => {
+      if (item) cart.push(item);
+    });
+
+    setTimeout(() => {
+      const order = {
+        orderId: `MACX-${Date.now()}`,
+        paymentId,
+        items: cart,
+        shipping,
+        total: cart.reduce((s, i) => s + i.price * i.quantity, 0),
+        date: new Date().toLocaleString(),
+        status: "Payment Done"
+      };
+
+      const prev = JSON.parse(localStorage.getItem(`macx_orders_${user}`) || "[]");
+      prev.push(order);
+      localStorage.setItem(`macx_orders_${user}`, JSON.stringify(prev));
+      ordersNode().get(order.orderId).put(order);
+
+      cart.forEach(i => cartNode().get(i.id).put(null));
+      alert("Payment successful! Redirecting…");
+      window.location.href = "cart.html";
+    }, 500);
+  }
+
+  // ─── INITIAL LOAD & LOGIN STATUS ────────────────────────────────────────
+  fetch("login-status.html")
+    .then(r => r.text())
+    .t<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>MACX Cart</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="macx-commerce.js"></script>
+  
+  <style>
+    body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 10px; border: 1px solid #333; }
+    button { padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <div id="loginStatusWrapper"></div>
+
+  <h1>Your Cart</h1>
+  <table id="cartTable">
+    <thead>
+      <tr>
+        <th>Product</th><th>Price</th><th>Qty</th><th>Total</th><th>Action</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2 id="grandTotal">Grand Total: ₹0</h2>
+  <button onclick="placeOrder()">Place Order</button>
+
+  <script src="login-status.js"></script>
+  <!-- ─── SHIPPING FORM ──────────────────────────────────────────────────── -->
+<div id="shippingForm" style="margin:20px 0; padding:10px; border:1px solid #333;">
+  <h2>Shipping Details</h2>
+  <label>Name:<br><input id="shipName" type="text" style="width:100%" placeholder="Full Name"></label><br>
+  <label>Email:<br><input id="shipEmail" type="email" style="width:100%" placeholder="you@example.com"></label><br>
+  <label>Phone (+CC-Number):<br><input id="shipPhone" type="tel" style="width:100%" placeholder="+91XXXXXXXXXX"></label><br>
+  <label>Address:<br><textarea id="shipAddress" rows="3" style="width:100%" placeholder="Street, City, State"></textarea></label><br>
+  <label>Pincode:<br><input id="shipPincode" type="text" style="width:100%" placeholder="XXXXXX"></label>
+</div>
+
+<!-- ─── GUNDB & RAZORPAY SCRIPTS ───────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+
+  const gun       = Gun();
+  const userKey   = () => localStorage.getItem("macx_loggedInUser");
+  const cartNode  = () => gun.get("carts").get(userKey());
+  const ordersNode= () => gun.get("orders").get(userKey());
+
+  function sanitize(str) {
+    return String(str).replace(/[&<>"']/g, c =>
+      ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+    );
+  }
+
+  // ─── GLOBAL CART RENDER FROM GUN ────────────────────────────────────────
+  function loadCart() {
+    const user = userKey();
+    if (!user) return;
+
+    const tbody = document.querySelector("#cartTable tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+    let hasItems = false;
+
+    cartNode().map().once((item, key) => {
+      if (!item) return;
+
+      hasItems = true;
+      const itemTotal = item.price * item.quantity;
+      total += itemTotal;
+
+      tbody.innerHTML += `
+        <tr data-id="${key}">
+          <td>${sanitize(item.name)}</td>
+          <td>₹${item.price}</td>
+          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px"></td>
+          <td>₹${itemTotal}</td>
+          <td><button class="delete-btn">Delete</button></td>
+        </tr>`;
+    });
+
+    setTimeout(() => {
+      if (!hasItems) {
+        tbody.innerHTML = `
+          <tr><td colspan="5" style="text-align:center; padding:20px;">
+            Your bag is feeling lonely!
+          </td></tr>`;
+      }
+      document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+      togglePlaceBtn();
+    }, 500); // slight delay for GUN sync
+  }
+
+  // ─── SAVE CART ITEMS TO GUN ONLY ────────────────────────────────────────
+  function saveCartToGun(cart) {
+    const user = userKey();
+    if (!user) return;
+
+    cartNode().map().once((_, key) => cartNode().get(key).put(null));
+    cart.forEach(item => {
+      cartNode().get(item.id).put(item);
+    });
+  }
+
+  // ─── DELETE ITEM ────────────────────────────────────────────────────────
+  function deleteItem(itemId) {
+    cartNode().get(itemId).put(null);
+  }
+
+  // ─── UPDATE ITEM QUANTITY ───────────────────────────────────────────────
+  function updateItem(itemId, qty) {
+    cartNode().get(itemId).once(item => {
+      if (!item) return;
+      item.quantity = qty;
+      cartNode().get(itemId).put(item);
+    });
+  }
+
+  // ─── DOM EVENT BINDINGS FOR QTY + DELETE ───────────────────────────────
+  document.querySelector("#cartTable tbody").addEventListener("change", e => {
+    if (!e.target.matches(".qty-input")) return;
+    const tr = e.target.closest("tr[data-id]");
+    const itemId = tr.dataset.id;
+    updateItem(itemId, Math.max(1, +e.target.value));
+  });
+
+  document.querySelector("#cartTable tbody").addEventListener("click", e => {
+    if (!e.target.matches(".delete-btn")) return;
+    const tr = e.target.closest("tr[data-id]");
+    const itemId = tr.dataset.id;
+    deleteItem(itemId);
+  });
+
+  // ─── ENABLE/DISABLE PLACE ORDER BUTTON ─────────────────────────────────
+  const placeBtn = document.querySelector("button[onclick='placeOrder()']");
+  function togglePlaceBtn() {
+    const user = userKey();
+    if (!user) {
+      placeBtn.disabled = true;
+      return;
+    }
+    // Check if cart has any item in Gun
+    let hasItems = false;
+    cartNode().map().once((item) => {
+      if (item) hasItems = true;
+    });
+    setTimeout(() => {
+      placeBtn.disabled = !hasItems;
+    }, 500);
+  }
+
+  // ─── PLACE ORDER & PAYMENT FLOW ─────────────────────────────────────────
+  function placeOrder() {
+    const user = userKey();
+    if (!user) return alert("Not logged in.");
+
+    let cart = [];
+    cartNode().map().once((item, key) => {
+      if (item) cart.push(item);
+    });
+
+    setTimeout(() => {
+      if (!cart.length) return alert("Cart is empty");
+
+      const name    = document.getElementById("shipName").value.trim();
+      const email   = document.getElementById("shipEmail").value.trim();
+      const phone   = document.getElementById("shipPhone").value.trim();
+      const address = document.getElementById("shipAddress").value.trim();
+      const pin     = document.getElementById("shipPincode").value.trim();
+
+      if (!name || !email || !phone || !address || !pin) {
+        return alert("Please fill in all shipping details");
+      }
+
+      const amount = cart.reduce((s, i) => s + i.price * i.quantity, 0) * 100;
+      placeBtn.textContent = "Processing…";
+      placeBtn.disabled = true;
+
+      const options = {
+        key:       "YOUR_RAZORPAY_KEY",
+        amount,
+        currency:  "INR",
+        name:      "MACX Store",
+        description: "Order Payment",
+        prefill:   { name, email, contact: phone },
+        handler:   resp => finalizeOrder(resp.razorpay_payment_id, { name, email, phone, address, pin }),
+        modal:     { ondismiss: () => { placeBtn.textContent = "Place Order"; togglePlaceBtn(); } }
+      };
+
+      new Razorpay(options).open();
+    }, 500);
+  }
+
+  // ─── FINALIZE ORDER AFTER PAYMENT ───────────────────────────────────────
+  function finalizeOrder(paymentId, shipping) {
+    const user = userKey();
+    if (!user) return;
+
+    let cart = [];
+    cartNode().map().once((item, key) => {
+      if (item) cart.push(item);
+    });
+
+    setTimeout(() => {
+      const order = {
+        orderId: `MACX-${Date.now()}`,
+        paymentId,
+        items: cart,
+        shipping,
+        total: cart.reduce((s, i) => s + i.price * i.quantity, 0),
+        date: new Date().toLocaleString(),
+        status: "Payment Done"
+      };
+
+      const prev = JSON.parse(localStorage.getItem(`macx_orders_${user}`) || "[]");
+      prev.push(order);
+      localStorage.setItem(`macx_orders_${user}`, JSON.stringify(prev));
+      ordersNode().get(order.orderId).put(order);
+
+      cart.forEach(i => cartNode().get(i.id).put(null));
+      alert("Payment successful! Redirecting…");
+      window.location.href = "cart.html";
+    }, 500);
+  }
+
+  // ─── INITIAL LOAD & LOGIN STATUS ────────────────────────────────────────
+  fetch("login-status.html")
+    .then(r => r.text())
+    .then(html => {
+      document.getElementById("loginStatusWrapper").innerHTML = html;
+      initializeLoginStatusUI();
+      loadCart();
+    });
+
+                                                               
+
+hen(html => {
+      document.getElementById("loginStatusWrapper").innerHTML = html;
+      initializeLoginStatusUI();
+      loadCart();
+    });
+
+                                                               
 </script>
 
 </body>
