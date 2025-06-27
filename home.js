@@ -81,3 +81,60 @@ function openFeature(url) {
     }
   }
 }
+
+// ------------------ LOGIN PAGE HANDLER -------------------
+document.addEventListener("DOMContentLoaded", () => {
+  const loginForm = document.getElementById("loginForm");
+  const usernameInput = document.getElementById("username") || document.getElementById("loginUsername");
+  const passwordInput = document.getElementById("password") || document.getElementById("loginPassword");
+  const messageBox = document.getElementById("message");
+
+  if (!loginForm || !usernameInput || !passwordInput || !messageBox) {
+    return; // We're not on login page, ignore
+  }
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value;
+
+    if (!username || !password) {
+      showMessage("Please enter both username and password.", "red");
+      return;
+    }
+
+    const userRef = gun.get("macx_users").get(username);
+    userRef.once(async (data) => {
+      if (!data || !data.password) {
+        showMessage("User not found. Please sign up first.", "red");
+        return;
+      }
+
+      const hashedInput = await Gun.SEA.work(password, null, null, { name: "SHA-256" });
+
+      if (data.password === hashedInput) {
+        const accountId = "macx-" + username;
+
+        // Save session globally and locally
+        gun.get("macx_sessions").get(accountId).put({
+          username,
+          loggedIn: true
+        });
+        sessionStorage.setItem("macx_accountId", accountId);
+
+        showMessage("Login successful! Redirecting...", "green");
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 1000);
+      } else {
+        showMessage("Incorrect password. Try again.", "red");
+      }
+    });
+  });
+
+  function showMessage(msg, color = "red") {
+    messageBox.textContent = msg;
+    messageBox.style.color = color;
+  }
+});
