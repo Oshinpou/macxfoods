@@ -85,7 +85,22 @@
     const target = document.getElementById(form + 'Form');
     if (target) target.style.display = 'block';
   }
+</script>
+<script>
 
-  </script>
+  const gun = Gun();
+const accountId = generateOrFetchAccountId(); // Your method
+const username = getUsernameFromInput(); // Your method
+
+// Set session data in GUN
+gun.get("macx_sessions").get(accountId).put({
+  username,
+  loggedIn: true,
+});
+
+// Save session locally for reference
+sessionStorage.setItem("macx_accountId", accountId);
+</script>
+
 </body>
 </html>
