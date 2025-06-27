@@ -235,7 +235,14 @@
         initializeLoginStatusUI();
         loadCart();
       });
-  </script>
+
+
+    // Call these after login is confirmed
+    renderGlobalCartUI();   // Load cart UI from GunDB
+    bindCartEvents();       // Enable quantity and delete actions
+  });
+  
+        </script>
 
 </body>
 </html>
