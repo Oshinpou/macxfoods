@@ -1,27 +1,19 @@
 const gun = Gun();
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Check if this is login.html or index.html by DOM element presence
-  const loginForm = document.getElementById("loginForm");
   const loggedInSection = document.getElementById("loggedInSection");
   const notLoggedIn = document.getElementById("notLoggedIn");
   const userDisplay = document.getElementById("userDisplay");
   const logoutBtn = document.getElementById("logoutBtn");
   const loginRedirectBtn = document.getElementById("loginRedirectBtn");
-  const messageBox = document.getElementById("message");
-
   const accountId = sessionStorage.getItem("macx_accountId");
 
-  // =========================
-  // INDEX.HTML: Show login status
-  // =========================
+  // === INDEX.html Login State ===
   if (userDisplay || loggedInSection || notLoggedIn) {
     if (accountId) {
       gun.get("macx_sessions").get(accountId).once((sessionData) => {
         if (sessionData && sessionData.loggedIn && sessionData.username) {
-          if (userDisplay) {
-            userDisplay.textContent = `Welcome, ${sessionData.username} (ID: ${accountId})`;
-          }
+          if (userDisplay) userDisplay.textContent = `Welcome, ${sessionData.username} (ID: ${accountId})`;
           if (loggedInSection) loggedInSection.style.display = "block";
           if (notLoggedIn) notLoggedIn.style.display = "none";
         } else {
@@ -32,13 +24,18 @@ document.addEventListener("DOMContentLoaded", () => {
       showNotLoggedIn();
     }
 
+    function showNotLoggedIn() {
+      if (loggedInSection) loggedInSection.style.display = "none";
+      if (notLoggedIn) notLoggedIn.style.display = "block";
+    }
+
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
         if (accountId) {
           gun.get("macx_sessions").get(accountId).put({ loggedIn: false });
           sessionStorage.removeItem("macx_accountId");
         }
-        window.location.replace("index.html");
+        window.location.href = "index.html";
       });
     }
 
@@ -47,53 +44,44 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = "login.html";
       });
     }
-
-    function showNotLoggedIn() {
-      if (loggedInSection) loggedInSection.style.display = "none";
-      if (notLoggedIn) notLoggedIn.style.display = "block";
-    }
   }
 
-  // =========================
-  // LOGIN.HTML: Handle login form
-  // =========================
+  // === LOGIN.html Login Form Logic ===
+  const loginForm = document.getElementById("loginForm");
+  const messageBox = document.getElementById("message");
+
   if (loginForm && messageBox) {
-    const usernameInput = document.getElementById("username") || document.getElementById("loginUsername");
-    const passwordInput = document.getElementById("password") || document.getElementById("loginPassword");
+    const usernameInput = document.getElementById("loginUsername");
+    const passwordInput = document.getElementById("loginPassword");
 
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      const username = usernameInput?.value.trim();
-      const password = passwordInput?.value;
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
 
       if (!username || !password) {
         showMessage("Please enter both username and password.", "red");
         return;
       }
 
-      const userRef = gun.get("macx_users").get(username);
-      userRef.once(async (data) => {
+      gun.get("macx_users").get(username).once(async (data) => {
         if (!data || !data.password) {
-          showMessage("User not found. Please sign up first.", "red");
+          showMessage("User not found. Please sign up.", "red");
           return;
         }
 
-        const hashedInput = await Gun.SEA.work(password, null, null, { name: "SHA-256" });
+        const hashed = await Gun.SEA.work(password, null, null, { name: "SHA-256" });
 
-        if (data.password === hashedInput) {
+        if (data.password === hashed) {
           const accountId = "macx-" + username;
-
           gun.get("macx_sessions").get(accountId).put({
             username,
             loggedIn: true
           });
           sessionStorage.setItem("macx_accountId", accountId);
-
           showMessage("Login successful! Redirecting...", "green");
-          setTimeout(() => {
-            window.location.href = "index.html";
-          }, 1000);
+          setTimeout(() => window.location.href = "index.html", 1000);
         } else {
           showMessage("Incorrect password. Try again.", "red");
         }
@@ -107,15 +95,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// =========================
-// Secure Feature Access (e.g., Cart, Orders)
-// =========================
+// === Secure Feature Access ===
 function openFeature(url) {
-  const errorMsg = document.getElementById("featureError");
   const accountId = sessionStorage.getItem("macx_accountId");
+  const errorMsg = document.getElementById("featureError");
 
   if (!accountId) {
-    showFeatureError("Login first to access this feature.");
+    showError("Login first to access this feature.");
     return;
   }
 
@@ -123,14 +109,14 @@ function openFeature(url) {
     if (sessionData && sessionData.loggedIn) {
       window.location.href = url;
     } else {
-      showFeatureError("Session expired. Please login again.");
+      showError("Session expired. Please login again.");
     }
   });
 
-  function showFeatureError(msg) {
+  function showError(msg) {
     if (errorMsg) {
       errorMsg.textContent = msg;
-      setTimeout(() => (errorMsg.textContent = ""), 3000);
+      setTimeout(() => errorMsg.textContent = "", 3000);
     }
   }
 }
