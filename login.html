@@ -88,17 +88,17 @@
 </script>
 <script>
 
-  const gun = Gun();
-const accountId = generateOrFetchAccountId(); // Your method
-const username = getUsernameFromInput(); // Your method
+const gun = Gun();
+const accountId = "macx-" + Date.now(); // or your logic
+const username = "exampleUser"; // from login form
 
-// Set session data in GUN
+// Save to GUN (global session)
 gun.get("macx_sessions").get(accountId).put({
   username,
   loggedIn: true,
 });
 
-// Save session locally for reference
+// Store locally to retrieve later
 sessionStorage.setItem("macx_accountId", accountId);
 </script>
 
