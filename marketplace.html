@@ -121,10 +121,9 @@ fetch('login-status.html')
 
 // Product list
 const products = [
-  { id: 'p1', name: 'Cosmetic Cream', price: 1200, image: 'https://via.placeholder.com/150' },
-  { id: 'p2', name: 'Skin Serum', price: 1800, image: 'https://via.placeholder.com/150' },
-  { id: 'p3', name: 'Luxury Lipstick', price: 900, image: 'https://via.placeholder.com/150' }
-  // Add more products as needed
+  { id: 'p1', name: 'Cosmetic Cream', price: 1200, image: 'https://via.placeholder.com/150', page: 'product-p1.html' },
+  { id: 'p2', name: 'Skin Serum', price: 1800, image: 'https://via.placeholder.com/150', page: 'product-p2.html' },
+  { id: 'p3', name: 'Luxury Lipstick', price: 900, image: 'https://via.placeholder.com/150', page: 'product-p3.html' }
 ];
 
 // Render products
@@ -143,7 +142,12 @@ products.forEach(prod => {
 
 // View product placeholder
 function viewProduct(id) {
-  alert(`View product ${id} (link to product page)`);
+  const prod = products.find(p => p.id === id);
+  if (prod && prod.page) {
+    window.location.href = prod.page;
+  } else {
+    alert("Product page not found.");
+  }
 }
 
 // Add to cart
