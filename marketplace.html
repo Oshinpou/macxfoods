@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>MACX Marketplace</title>
@@ -7,25 +8,29 @@
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; }
-    .container { padding: 20px; }
-    .product-card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; }
-    .product-card button { margin-right: 10px; }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    .product-card { border: 1px solid #ccc; padding: 10px; margin-bottom: 15px; }
+    .product-card img { max-width: 150px; }
+    #products { margin-top: 20px; }
   </style>
 </head>
 <body>
-<div class="container">
-  <div id="notLoggedIn" style="display: none;">
-    <h2>You are not logged in.</h2>
-    <button id="loginRedirectBtn">Login First</button>
-  </div>  <div id="loggedInSection" style="display: none;">
-    <h1 id="userDisplay">Welcome, User</h1>
-    <button id="logoutBtn">Logout</button>
-    <p>You are now logged in. Enjoy shopping at MACX Marketplace!</p><div id="products"></div>
 
-  </div>
-</div><script>
-  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
+<div id="notLoggedIn" style="display: none;">
+  <h2>You are not logged in.</h2>
+  <button id="loginRedirectBtn">Login First</button>
+</div>
+
+<div id="loggedInSection" style="display: none;">
+  <h1 id="userDisplay">Welcome</h1>
+  <button id="logoutBtn">Logout</button>
+  <p>You are now logged in. Enjoy shopping at MACX Marketplace!</p>
+
+  <div id="products"></div>
+</div>
+
+<script>
+  const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // working public relay
   const user = gun.user();
 
   const notLoggedIn = document.getElementById("notLoggedIn");
@@ -35,8 +40,13 @@
   const logoutBtn = document.getElementById("logoutBtn");
 
   loginRedirectBtn.onclick = () => window.location.href = 'login.html';
-  logoutBtn.onclick = () => user.leave();
+  logoutBtn.onclick = () => {
+    user.leave();
+    alert("Logged out");
+    location.reload();
+  };
 
+  // Recall session and check login
   user.recall({ sessionStorage: true }, () => {
     if (user.is) {
       notLoggedIn.style.display = "none";
@@ -50,28 +60,30 @@
   });
 
   function loadProducts() {
-    const productsDiv = document.getElementById("products");
     const sampleProducts = [
-      { sku: "P001", name: "MACX Serum", price: 2000, img: "img1.jpg" },
-      { sku: "P002", name: "MACX Cream", price: 2500, img: "img2.jpg" },
+      { sku: "SKU001", name: "MACX Cream", price: 2000, img: "https://via.placeholder.com/150" },
+      { sku: "SKU002", name: "MACX Serum", price: 1800, img: "https://via.placeholder.com/150" },
     ];
+    const container = document.getElementById("products");
+    container.innerHTML = "";
 
-    sampleProducts.forEach(product => {
+    sampleProducts.forEach(p => {
       const card = document.createElement("div");
       card.className = "product-card";
       card.innerHTML = `
-        <h3>${product.name}</h3>
-        <img src="${product.img}" width="150" />
-        <p>Price: ₹${product.price}</p>
-        <button onclick="viewProduct('${product.name}')">View Product</button>
-        <button onclick="addToCart('${product.sku}', '${product.name}', ${product.price})">Add to Cart</button>
+        <h3>${p.name}</h3>
+        <img src="${p.img}" alt="${p.name}" />
+        <p>Price: ₹${p.price}</p>
+        <button onclick="viewProduct('${p.name}')">View Product</button>
+        <button onclick="addToCart('${p.sku}', '${p.name}', ${p.price})">Add to Cart</button>
       `;
-      productsDiv.appendChild(card);
+      container.appendChild(card);
     });
   }
 
   function viewProduct(name) {
-    window.location.href = name.replace(/\s+/g, '') + ".html";
+    const page = name.replace(/\\s+/g, '') + ".html";
+    window.location.href = page;
   }
 
   function addToCart(sku, name, price) {
@@ -80,8 +92,9 @@
     cart.get(sku).once(data => {
       const quantity = data?.quantity || 0;
       cart.get(sku).put({ name, price, quantity: quantity + 1 });
-      alert("Added to cart: " + name);
+      alert(`Added to cart: ${name}`);
     });
   }
-</script></body>
+</script>
+</body>
 </html>
