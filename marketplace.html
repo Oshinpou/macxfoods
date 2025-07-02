@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>MACX Marketplace</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
       background: #111;
@@ -11,71 +12,47 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
+
     .container {
-      background: #222;
-      padding: 15px;
-      border-radius: 8px;
       margin-bottom: 20px;
     }
+
+    .product-card {
+      background: #222;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 10px;
+      display: inline-block;
+      width: 200px;
+      vertical-align: top;
+      transition: transform 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+
     button {
-      padding: 8px 12px;
-      background: #444;
+      margin-top: 5px;
+      width: 100%;
+      padding: 5px;
       border: none;
       border-radius: 5px;
+      background: #444;
       color: #fff;
       cursor: pointer;
     }
+
     button:hover {
       background: #666;
     }
-  
-  body {
-  background: #111;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  padding: 20px;
-}
-
-.container {
-  margin-bottom: 20px;
-}
-
-.product-card {
-  background: #222;
-  border-radius: 8px;
-  padding: 15px;
-  margin: 10px;
-  display: inline-block;
-  width: 200px;
-  vertical-align: top;
-  transition: transform 0.3s ease;
-}
-
-.product-card:hover {
-  transform: translateY(-5px);
-}
-
-.product-card img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 5px;
-}
-
-button {
-  margin-top: 5px;
-  width: 100%;
-  padding: 5px;
-  border: none;
-  border-radius: 5px;
-  background: #444;
-  color: #fff;
-  cursor: pointer;
-}
-
-button:hover {
-  background: #666;
-}
   </style>
 </head>
 <body>
@@ -89,150 +66,157 @@ button:hover {
 
   <div id="productsContainer" class="container"></div>
 
-  
   <script src="login-status.js"></script>
+
   <script>
-    // Load the reusable login status UI
+    // --- GUN Init ---
+    const gun = Gun();
+
+    // --- Products ---
+    const products = [
+      { id: 'p1', name: 'Cosmetic Cream', price: 1200, image: 'https://via.placeholder.com/150', page: 'product-p1.html' },
+      { id: 'p2', name: 'Skin Serum', price: 1800, image: 'https://via.placeholder.com/150', page: 'product-p2.html' },
+      { id: 'p3', name: 'Luxury Lipstick', price: 900, image: 'https://via.placeholder.com/150', page: 'product-p3.html' }
+    ];
+
+    // --- Login Status ---
     fetch('login-status.html')
       .then(res => res.text())
       .then(html => {
         document.getElementById("loginStatusWrapper").innerHTML = html;
-        initializeLoginStatusUI();
+        if (typeof initializeLoginStatusUI === "function") initializeLoginStatusUI();
       });
 
     function accessPremiumFeature() {
-      const username = localStorage.getItem("macx_loggedInUser");
+      const username = sessionStorage.getItem("macx_loggedInUser");
       if (username) {
         alert(`Welcome ${username}, accessing premium features!`);
-        // Replace with your actual feature URL or logic
-        // window.location.href = "premium-feature.html";
       } else {
         alert("Please log in to access premium features.");
       }
     }
- 
-  // Load login status sticker
-fetch('login-status.html')
-  .then(r => r.text())
-  .then(html => {
-    document.getElementById('loginStatusWrapper').innerHTML = html;
-    initializeLoginStatusUI();
-  });
 
-// Product list
-const products = [
-  { id: 'p1', name: 'Cosmetic Cream', price: 1200, image: 'https://via.placeholder.com/150', page: 'product-p1.html' },
-  { id: 'p2', name: 'Skin Serum', price: 1800, image: 'https://via.placeholder.com/150', page: 'product-p2.html' },
-  { id: 'p3', name: 'Luxury Lipstick', price: 900, image: 'https://via.placeholder.com/150', page: 'product-p3.html' }
-];
+    // --- Render Products ---
+    const container = document.getElementById('productsContainer');
+    products.forEach(prod => {
+      container.innerHTML += `
+        <div class="product-card">
+          <img src="${prod.image}" alt="${prod.name}">
+          <h3>${prod.name}</h3>
+          <p>₹${prod.price}</p>
+          <button onclick="viewProduct('${prod.id}')">View Product</button>
+          <button onclick="addToCart('${prod.id}')">Add to Cart</button>
+        </div>
+      `;
+    });
 
-// Render products
-const container = document.getElementById('productsContainer');
-products.forEach(prod => {
-  container.innerHTML += `
-    <div class="product-card">
-      <img src="${prod.image}" alt="${prod.name}">
-      <h3>${prod.name}</h3>
-      <p>₹${prod.price}</p>
-      <button onclick="viewProduct('${prod.id}')">View Product</button>
-      <button onclick="addToCart('${prod.id}')">Add to Cart</button>
-    </div>
-  `;
-});
-
-// View product placeholder
-function viewProduct(id) {
-  const prod = products.find(p => p.id === id);
-  if (prod && prod.page) {
-    window.location.href = prod.page;
-  } else {
-    alert("Product page not found.");
-  }
-}
-
-// Add to cart
-function addToCart(id) {
-  const username = localStorage.getItem("macx_loggedInUser");
-  if (!username) {
-    alert("Please log in first");
-    return;
-  }
-  const cartKey = `macx_cart_${username}`;
-  let cart = JSON.parse(localStorage.getItem(cartKey)) || [];
-  let item = cart.find(p => p.id === id);
-  if (item) {
-    item.quantity += 1;
-  } else {
-    const prod = products.find(p => p.id === id);
-    cart.push({ ...prod, quantity: 1 });
-  }
-  localStorage.setItem(cartKey, JSON.stringify(cart));
-  alert("Added to cart");
-}
- 
-  function renderGlobalCartUI(targetId = "cartTable") {
-  const username = localStorage.getItem("macx_loggedInUser");
-  const tbody = document.querySelector(`#${targetId} tbody`);
-  const grandTotalEl = document.getElementById("grandTotal");
-
-  if (!username || !tbody) return;
-
-  tbody.innerHTML = "";
-  let total = 0;
-  let hasItems = false;
-
-  gun.get("macx_cart").get(username).map().on((item, key) => {
-    if (!item || !item.id) return;
-    hasItems = true;
-    const itemTotal = item.price * item.quantity;
-    total += itemTotal;
-
-    const row = document.createElement("tr");
-    row.setAttribute("data-id", key);
-    row.innerHTML = `
-      <td>${item.name}</td>
-      <td>₹${item.price}</td>
-      <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px" /></td>
-      <td>₹${itemTotal}</td>
-      <td><button class="delete-btn">Delete</button></td>
-    `;
-    tbody.appendChild(row);
-    grandTotalEl.textContent = `Grand Total: ₹${total}`;
-  });
-
-  setTimeout(() => {
-    if (!hasItems) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cart is empty</td></tr>`;
-      grandTotalEl.textContent = `Grand Total: ₹0`;
+    // --- View Product ---
+    function viewProduct(id) {
+      const prod = products.find(p => p.id === id);
+      if (prod && prod.page) {
+        window.location.href = prod.page;
+      } else {
+        alert("Product page not found.");
+      }
     }
-  }, 1000);
-}
 
-    function bindCartEvents(targetId = "cartTable") {
-  const tbody = document.querySelector(`#${targetId} tbody`);
+    // --- Add to Cart using GUN ---
+    function addToCart(id) {
+      const username = sessionStorage.getItem("macx_loggedInUser");
+      if (!username) {
+        alert("Please log in first");
+        return;
+      }
 
-  tbody.addEventListener("click", e => {
-    if (e.target.matches(".delete-btn")) {
-      const tr = e.target.closest("tr");
-      const itemId = tr.dataset.id;
-      gun.get("macx_cart").get(localStorage.getItem("macx_loggedInUser")).get(itemId).put(null);
-    }
-  });
+      const cartRef = gun.get("macx_cart").get(username);
+      const prod = products.find(p => p.id === id);
+      if (!prod) return alert("Product not found");
 
-  tbody.addEventListener("change", e => {
-    if (e.target.matches(".qty-input")) {
-      const tr = e.target.closest("tr");
-      const itemId = tr.dataset.id;
-      const newQty = Math.max(1, +e.target.value);
-      gun.get("macx_cart").get(localStorage.getItem("macx_loggedInUser")).get(itemId).once(item => {
-        if (!item) return;
-        item.quantity = newQty;
-        gun.get("macx_cart").get(localStorage.getItem("macx_loggedInUser")).get(itemId).put(item);
+      cartRef.get(id).once(data => {
+        const newQty = data && data.quantity ? data.quantity + 1 : 1;
+        cartRef.get(id).put({ ...prod, quantity: newQty });
+        alert("Added to cart");
       });
     }
-  });
+
+    // --- Cart Functions (for cart.html or other pages) ---
+    function renderGlobalCartUI(targetId = "cartTable") {
+      const username = sessionStorage.getItem("macx_loggedInUser");
+      const tbody = document.querySelector(`#${targetId} tbody`);
+      const grandTotalEl = document.getElementById("grandTotal");
+
+      if (!username || !tbody) return;
+
+      tbody.innerHTML = "";
+      let total = 0;
+      let hasItems = false;
+
+      gun.get("macx_cart").get(username).map().once((item, key) => {
+        if (!item || !item.id) return;
+
+        hasItems = true;
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+
+        const row = document.createElement("tr");
+        row.setAttribute("data-id", key);
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>₹${item.price}</td>
+          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px" /></td>
+          <td>₹${itemTotal}</td>
+          <td><button class="delete-btn">Delete</button></td>
+        `;
+        tbody.appendChild(row);
+        if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹${total}`;
+      });
+
+      setTimeout(() => {
+        if (!hasItems) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cart is empty</td></tr>`;
+          if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹0`;
+        }
+      }, 1000);
     }
-  
+
+    function bindCartEvents(targetId = "cartTable") {
+      const tbody = document.querySelector(`#${targetId} tbody`);
+      if (!tbody) return;
+
+      tbody.addEventListener("click", e => {
+        if (e.target.matches(".delete-btn")) {
+          const tr = e.target.closest("tr");
+          const itemId = tr.dataset.id;
+          gun.get("macx_cart").get(sessionStorage.getItem("macx_loggedInUser")).get(itemId).put(null);
+        }
+      });
+
+      tbody.addEventListener("change", e => {
+        if (e.target.matches(".qty-input")) {
+          const tr = e.target.closest("tr");
+          const itemId = tr.dataset.id;
+          const newQty = Math.max(1, +e.target.value);
+          const user = sessionStorage.getItem("macx_loggedInUser");
+
+          gun.get("macx_cart").get(user).get(itemId).once(item => {
+            if (!item) return;
+            item.quantity = newQty;
+            gun.get("macx_cart").get(user).get(itemId).put(item);
+          });
+        }
+      });
+    }
+
+    // --- Live Cart Update Listener ---
+    function cartUpdates(targetId = "cartTable") {
+      const username = sessionStorage.getItem("macx_loggedInUser");
+      const tbody = document.querySelector(`#${targetId} tbody`);
+      if (!username || !tbody) return;
+
+      gun.get("macx_cart").get(username).map().on(() => {
+        renderGlobalCartUI(targetId);
+      });
+    }
   </script>
 
 </body>
