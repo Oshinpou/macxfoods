@@ -1,4 +1,3 @@
-<!-- Updated cart.html using GUN only -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <script src="macx-commerce.js"></script>
   <script src="login-status.js"></script>
   <style>
     body { background: #111; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
@@ -20,6 +18,7 @@
 </head>
 <body>
   <div id="loginStatusWrapper"></div>
+
   <h1>Your Cart</h1>
   <table id="cartTable">
     <thead>
@@ -42,6 +41,8 @@
   </div>
 
   <script>
+    const gun = Gun();
+
     fetch("login-status.html")
       .then(r => r.text())
       .then(html => {
@@ -50,22 +51,106 @@
         setTimeout(() => {
           renderGlobalCartUI();
           bindCartEvents();
+          cartUpdates(); // Auto-sync updates
         }, 800);
       });
 
+    function renderGlobalCartUI(targetId = "cartTable") {
+      const username = sessionStorage.getItem("macx_loggedInUser");
+      const tbody = document.querySelector(`#${targetId} tbody`);
+      const grandTotalEl = document.getElementById("grandTotal");
+
+      if (!username || !tbody) return;
+
+      tbody.innerHTML = "";
+      let total = 0;
+      let hasItems = false;
+
+      gun.get("macx_cart").get(username).map().once((item, key) => {
+        if (!item || !item.id) return;
+
+        hasItems = true;
+        const itemTotal = item.price * item.quantity;
+        total += itemTotal;
+
+        const row = document.createElement("tr");
+        row.setAttribute("data-id", key);
+        row.innerHTML = `
+          <td>${item.name}</td>
+          <td>₹${item.price}</td>
+          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px" /></td>
+          <td>₹${itemTotal}</td>
+          <td><button class="delete-btn">Delete</button></td>
+        `;
+        tbody.appendChild(row);
+        if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹${total}`;
+      });
+
+      setTimeout(() => {
+        if (!hasItems) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cart is empty</td></tr>`;
+          if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹0`;
+        }
+      }, 1000);
+    }
+
+    function bindCartEvents(targetId = "cartTable") {
+      const tbody = document.querySelector(`#${targetId} tbody`);
+      if (!tbody) return;
+
+      tbody.addEventListener("click", e => {
+        if (e.target.matches(".delete-btn")) {
+          const tr = e.target.closest("tr");
+          const itemId = tr.dataset.id;
+          gun.get("macx_cart").get(sessionStorage.getItem("macx_loggedInUser")).get(itemId).put(null);
+        }
+      });
+
+      tbody.addEventListener("change", e => {
+        if (e.target.matches(".qty-input")) {
+          const tr = e.target.closest("tr");
+          const itemId = tr.dataset.id;
+          const newQty = Math.max(1, +e.target.value);
+          const user = sessionStorage.getItem("macx_loggedInUser");
+
+          gun.get("macx_cart").get(user).get(itemId).once(item => {
+            if (!item) return;
+            item.quantity = newQty;
+            gun.get("macx_cart").get(user).get(itemId).put(item);
+          });
+        }
+      });
+    }
+
+    function cartUpdates(targetId = "cartTable") {
+      const username = sessionStorage.getItem("macx_loggedInUser");
+      const tbody = document.querySelector(`#${targetId} tbody`);
+      if (!username || !tbody) return;
+
+      gun.get("macx_cart").get(username).map().on(() => {
+        renderGlobalCartUI(targetId);
+      });
+    }
+
     function placeOrder() {
-      const username = localStorage.getItem("macx_loggedInUser");
+      const username = sessionStorage.getItem("macx_loggedInUser");
+      if (!username) return alert("Please log in to place your order");
+
       const shipping = {
         name: document.getElementById("shipName").value.trim(),
         email: document.getElementById("shipEmail").value.trim(),
         phone: document.getElementById("shipPhone").value.trim(),
         address: document.getElementById("shipAddress").value.trim(),
-        pincode: document.getElementById("shipPincode").value.trim(),
+        pincode: document.getElementById("shipPincode").value.trim()
       };
+
       if (!shipping.name || !shipping.email || !shipping.phone || !shipping.address || !shipping.pincode) {
         return alert("Please fill all shipping details");
       }
-      placeOrderWithForm(shipping);
+
+      // Example: Razorpay logic placeholder (customize if needed)
+      alert("Proceeding to payment gateway...");
+      console.log("Shipping Info:", shipping);
     }
   </script>
 </body>
