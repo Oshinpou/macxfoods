@@ -1,137 +1,87 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>MACX Marketplace</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
   <style>
-    body {
-      background: #111;
-      color: #fff;
-      font-family: Arial, sans-serif;
-      padding: 20px;
-    }
-    .container {
-      margin-bottom: 20px;
-    }
-    .product-card {
-      background: #222;
-      border-radius: 8px;
-      padding: 15px;
-      margin: 10px;
-      display: inline-block;
-      width: 200px;
-      vertical-align: top;
-      transition: transform 0.3s ease;
-    }
-    .product-card:hover {
-      transform: translateY(-5px);
-    }
-    .product-card img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 5px;
-    }
-    button {
-      margin-top: 5px;
-      width: 100%;
-      padding: 5px;
-      border: none;
-      border-radius: 5px;
-      background: #444;
-      color: #fff;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #666;
-    }
+    body { font-family: Arial, sans-serif; }
+    .container { padding: 20px; }
+    .product-card { border: 1px solid #ccc; padding: 15px; margin: 10px 0; }
+    .product-card button { margin-right: 10px; }
   </style>
 </head>
 <body>
+<div class="container">
+  <div id="notLoggedIn" style="display: none;">
+    <h2>You are not logged in.</h2>
+    <button id="loginRedirectBtn">Login First</button>
+  </div>  <div id="loggedInSection" style="display: none;">
+    <h1 id="userDisplay">Welcome, User</h1>
+    <button id="logoutBtn">Logout</button>
+    <p>You are now logged in. Enjoy shopping at MACX Marketplace!</p><div id="products"></div>
 
-  <div id="loginStatusWrapper"></div>
+  </div>
+</div><script>
+  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
+  const user = gun.user();
 
-  <h1>Welcome to MACX Marketplace</h1>
-  <p>Explore premium cosmetics and accessories tailored just for you!</p>
+  const notLoggedIn = document.getElementById("notLoggedIn");
+  const loggedInSection = document.getElementById("loggedInSection");
+  const userDisplay = document.getElementById("userDisplay");
+  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  <button onclick="accessPremiumFeature()">Access Premium Feature</button>
+  loginRedirectBtn.onclick = () => window.location.href = 'login.html';
+  logoutBtn.onclick = () => user.leave();
 
-  <div id="productsContainer" class="container"></div>
+  user.recall({ sessionStorage: true }, () => {
+    if (user.is) {
+      notLoggedIn.style.display = "none";
+      loggedInSection.style.display = "block";
+      userDisplay.textContent = `Welcome, ${user.is.alias}`;
+      loadProducts();
+    } else {
+      notLoggedIn.style.display = "block";
+      loggedInSection.style.display = "none";
+    }
+  });
 
-  <script src="login-status.js"></script>
-  <script>
-    const gun = Gun();
-
-    // Dummy Products
-    const products = [
-      { id: 'p1', name: 'Cosmetic Cream', price: 1200, image: 'https://via.placeholder.com/150', page: 'product-p1.html' },
-      { id: 'p2', name: 'Skin Serum', price: 1800, image: 'https://via.placeholder.com/150', page: 'product-p2.html' },
-      { id: 'p3', name: 'Luxury Lipstick', price: 900, image: 'https://via.placeholder.com/150', page: 'product-p3.html' }
+  function loadProducts() {
+    const productsDiv = document.getElementById("products");
+    const sampleProducts = [
+      { sku: "P001", name: "MACX Serum", price: 2000, img: "img1.jpg" },
+      { sku: "P002", name: "MACX Cream", price: 2500, img: "img2.jpg" },
     ];
 
-    // Load login status section
-    fetch('login-status.html')
-      .then(res => res.text())
-      .then(html => {
-        document.getElementById("loginStatusWrapper").innerHTML = html;
-        if (typeof initializeLoginStatusUI === "function") initializeLoginStatusUI();
-      });
-
-    // Access Premium Feature
-    function accessPremiumFeature() {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      if (username) {
-        alert(`Welcome ${username}, accessing premium features!`);
-      } else {
-        alert("Please log in to access premium features.");
-      }
-    }
-
-    // Render Products
-    const container = document.getElementById('productsContainer');
-    products.forEach(prod => {
-      container.innerHTML += `
-        <div class="product-card">
-          <img src="${prod.image}" alt="${prod.name}">
-          <h3>${prod.name}</h3>
-          <p>₹${prod.price}</p>
-          <button onclick="viewProduct('${prod.id}')">View Product</button>
-          <button onclick="addToCart('${prod.id}')">Add to Cart</button>
-        </div>
+    sampleProducts.forEach(product => {
+      const card = document.createElement("div");
+      card.className = "product-card";
+      card.innerHTML = `
+        <h3>${product.name}</h3>
+        <img src="${product.img}" width="150" />
+        <p>Price: ₹${product.price}</p>
+        <button onclick="viewProduct('${product.name}')">View Product</button>
+        <button onclick="addToCart('${product.sku}', '${product.name}', ${product.price})">Add to Cart</button>
       `;
+      productsDiv.appendChild(card);
     });
+  }
 
-    // View Product
-    function viewProduct(id) {
-      const prod = products.find(p => p.id === id);
-      if (prod && prod.page) {
-        window.location.href = prod.page;
-      } else {
-        alert("Product page not found.");
-      }
-    }
+  function viewProduct(name) {
+    window.location.href = name.replace(/\s+/g, '') + ".html";
+  }
 
-    // Add to Cart (GUN only)
-    function addToCart(id) {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      if (!username) {
-        alert("Please log in first");
-        return;
-      }
-
-      const cartRef = gun.get("macx_cart").get(username);
-      const prod = products.find(p => p.id === id);
-      if (!prod) return alert("Product not found");
-
-      cartRef.get(id).once(data => {
-        const newQty = data && data.quantity ? data.quantity + 1 : 1;
-        cartRef.get(id).put({ ...prod, quantity: newQty });
-        alert("Added to cart");
-      });
-    }
-  </script>
-
-</body>
+  function addToCart(sku, name, price) {
+    const username = user.is.alias;
+    const cart = gun.get(`macx_cart_${username}`);
+    cart.get(sku).once(data => {
+      const quantity = data?.quantity || 0;
+      cart.get(sku).put({ name, price, quantity: quantity + 1 });
+      alert("Added to cart: " + name);
+    });
+  }
+</script></body>
 </html>
