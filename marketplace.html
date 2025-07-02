@@ -12,11 +12,9 @@
       font-family: Arial, sans-serif;
       padding: 20px;
     }
-
     .container {
       margin-bottom: 20px;
     }
-
     .product-card {
       background: #222;
       border-radius: 8px;
@@ -27,18 +25,15 @@
       vertical-align: top;
       transition: transform 0.3s ease;
     }
-
     .product-card:hover {
       transform: translateY(-5px);
     }
-
     .product-card img {
       width: 100%;
       height: 150px;
       object-fit: cover;
       border-radius: 5px;
     }
-
     button {
       margin-top: 5px;
       width: 100%;
@@ -49,7 +44,6 @@
       color: #fff;
       cursor: pointer;
     }
-
     button:hover {
       background: #666;
     }
@@ -67,19 +61,17 @@
   <div id="productsContainer" class="container"></div>
 
   <script src="login-status.js"></script>
-
   <script>
-    // --- GUN Init ---
     const gun = Gun();
 
-    // --- Products ---
+    // Dummy Products
     const products = [
       { id: 'p1', name: 'Cosmetic Cream', price: 1200, image: 'https://via.placeholder.com/150', page: 'product-p1.html' },
       { id: 'p2', name: 'Skin Serum', price: 1800, image: 'https://via.placeholder.com/150', page: 'product-p2.html' },
       { id: 'p3', name: 'Luxury Lipstick', price: 900, image: 'https://via.placeholder.com/150', page: 'product-p3.html' }
     ];
 
-    // --- Login Status ---
+    // Load login status section
     fetch('login-status.html')
       .then(res => res.text())
       .then(html => {
@@ -87,6 +79,7 @@
         if (typeof initializeLoginStatusUI === "function") initializeLoginStatusUI();
       });
 
+    // Access Premium Feature
     function accessPremiumFeature() {
       const username = sessionStorage.getItem("macx_loggedInUser");
       if (username) {
@@ -96,7 +89,7 @@
       }
     }
 
-    // --- Render Products ---
+    // Render Products
     const container = document.getElementById('productsContainer');
     products.forEach(prod => {
       container.innerHTML += `
@@ -110,7 +103,7 @@
       `;
     });
 
-    // --- View Product ---
+    // View Product
     function viewProduct(id) {
       const prod = products.find(p => p.id === id);
       if (prod && prod.page) {
@@ -120,7 +113,7 @@
       }
     }
 
-    // --- Add to Cart using GUN ---
+    // Add to Cart (GUN only)
     function addToCart(id) {
       const username = sessionStorage.getItem("macx_loggedInUser");
       if (!username) {
@@ -136,85 +129,6 @@
         const newQty = data && data.quantity ? data.quantity + 1 : 1;
         cartRef.get(id).put({ ...prod, quantity: newQty });
         alert("Added to cart");
-      });
-    }
-
-    // --- Cart Functions (for cart.html or other pages) ---
-    function renderGlobalCartUI(targetId = "cartTable") {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      const tbody = document.querySelector(`#${targetId} tbody`);
-      const grandTotalEl = document.getElementById("grandTotal");
-
-      if (!username || !tbody) return;
-
-      tbody.innerHTML = "";
-      let total = 0;
-      let hasItems = false;
-
-      gun.get("macx_cart").get(username).map().once((item, key) => {
-        if (!item || !item.id) return;
-
-        hasItems = true;
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
-
-        const row = document.createElement("tr");
-        row.setAttribute("data-id", key);
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>₹${item.price}</td>
-          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px" /></td>
-          <td>₹${itemTotal}</td>
-          <td><button class="delete-btn">Delete</button></td>
-        `;
-        tbody.appendChild(row);
-        if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹${total}`;
-      });
-
-      setTimeout(() => {
-        if (!hasItems) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cart is empty</td></tr>`;
-          if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹0`;
-        }
-      }, 1000);
-    }
-
-    function bindCartEvents(targetId = "cartTable") {
-      const tbody = document.querySelector(`#${targetId} tbody`);
-      if (!tbody) return;
-
-      tbody.addEventListener("click", e => {
-        if (e.target.matches(".delete-btn")) {
-          const tr = e.target.closest("tr");
-          const itemId = tr.dataset.id;
-          gun.get("macx_cart").get(sessionStorage.getItem("macx_loggedInUser")).get(itemId).put(null);
-        }
-      });
-
-      tbody.addEventListener("change", e => {
-        if (e.target.matches(".qty-input")) {
-          const tr = e.target.closest("tr");
-          const itemId = tr.dataset.id;
-          const newQty = Math.max(1, +e.target.value);
-          const user = sessionStorage.getItem("macx_loggedInUser");
-
-          gun.get("macx_cart").get(user).get(itemId).once(item => {
-            if (!item) return;
-            item.quantity = newQty;
-            gun.get("macx_cart").get(user).get(itemId).put(item);
-          });
-        }
-      });
-    }
-
-    // --- Live Cart Update Listener ---
-    function cartUpdates(targetId = "cartTable") {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      const tbody = document.querySelector(`#${targetId} tbody`);
-      if (!username || !tbody) return;
-
-      gun.get("macx_cart").get(username).map().on(() => {
-        renderGlobalCartUI(targetId);
       });
     }
   </script>
