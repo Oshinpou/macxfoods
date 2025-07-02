@@ -1,4 +1,6 @@
-<!DOCTYPE html><html lang="en">
+<!-- Updated cart.html using GUN only -->
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>MACX Cart</title>
@@ -17,7 +19,8 @@
   </style>
 </head>
 <body>
-  <div id="loginStatusWrapper"></div>  <h1>Your Cart</h1>
+  <div id="loginStatusWrapper"></div>
+  <h1>Your Cart</h1>
   <table id="cartTable">
     <thead>
       <tr>
@@ -25,26 +28,45 @@
       </tr>
     </thead>
     <tbody></tbody>
-  </table>  <h2 id="grandTotal">Grand Total: ₹0</h2>
-  <button onclick="placeOrder()" id="placeOrderBtn">Place Order</button>  <div id="shippingForm" style="margin:20px 0; padding:10px; border:1px solid #333;">
+  </table>
+  <h2 id="grandTotal">Grand Total: ₹0</h2>
+  <button onclick="placeOrder()" id="placeOrderBtn">Place Order</button>
+
+  <div id="shippingForm" style="margin:20px 0; padding:10px; border:1px solid #333;">
     <h2>Shipping Details</h2>
     <label>Name:<br><input id="shipName" type="text" style="width:100%" placeholder="Full Name"></label><br>
     <label>Email:<br><input id="shipEmail" type="email" style="width:100%" placeholder="you@example.com"></label><br>
     <label>Phone (+CC-Number):<br><input id="shipPhone" type="tel" style="width:100%" placeholder="+91XXXXXXXXXX"></label><br>
     <label>Address:<br><textarea id="shipAddress" rows="3" style="width:100%" placeholder="Street, City, State"></textarea></label><br>
     <label>Pincode:<br><input id="shipPincode" type="text" style="width:100%" placeholder="XXXXXX"></label>
-  </div>  <script>
-    // Ensure user is loaded before cart
+  </div>
+
+  <script>
     fetch("login-status.html")
       .then(r => r.text())
       .then(html => {
         document.getElementById("loginStatusWrapper").innerHTML = html;
         initializeLoginStatusUI();
-        // Wait for login to load and then render cart
         setTimeout(() => {
           renderGlobalCartUI();
           bindCartEvents();
         }, 800);
       });
-  </script></body>
+
+    function placeOrder() {
+      const username = localStorage.getItem("macx_loggedInUser");
+      const shipping = {
+        name: document.getElementById("shipName").value.trim(),
+        email: document.getElementById("shipEmail").value.trim(),
+        phone: document.getElementById("shipPhone").value.trim(),
+        address: document.getElementById("shipAddress").value.trim(),
+        pincode: document.getElementById("shipPincode").value.trim(),
+      };
+      if (!shipping.name || !shipping.email || !shipping.phone || !shipping.address || !shipping.pincode) {
+        return alert("Please fill all shipping details");
+      }
+      placeOrderWithForm(shipping);
+    }
+  </script>
+</body>
 </html>
