@@ -1,157 +1,141 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>MACX Cart</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <script src="login-status.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
   <style>
-    body { background: #111; color: #fff; font-family: Arial, sans-serif; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { padding: 10px; border: 1px solid #333; text-align: center; }
-    button { padding: 6px 12px; background: #444; color: #fff; border: none; cursor: pointer; border-radius: 4px; }
-    button:hover { background: #666; }
-    input, textarea { background: #222; color: #fff; border: 1px solid #555; padding: 8px; border-radius: 4px; margin-top: 5px; }
+    body { font-family: Arial, sans-serif; }
+    .container { padding: 20px; }
+    .cart-item { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
+    .total-section, .shipping-form { margin-top: 20px; }
   </style>
 </head>
 <body>
-  <div id="loginStatusWrapper"></div>
+<div class="container">
+  <div id="notLoggedIn" style="display: none;">
+    <h2>You are not logged in.</h2>
+    <button id="loginRedirectBtn">Login First</button>
+  </div>  <div id="loggedInSection" style="display: none;">
+    <h1 id="userDisplay">Your Cart</h1>
+    <button id="logoutBtn">Logout</button>
+    <div id="cartItems"></div><div class="total-section">
+  <h3>Total: ₹<span id="grandTotal">0</span></h3>
+</div>
 
-  <h1>Your Cart</h1>
-  <table id="cartTable">
-    <thead>
-      <tr>
-        <th>Product</th><th>Price</th><th>Qty</th><th>Total</th><th>Action</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <h2 id="grandTotal">Grand Total: ₹0</h2>
-  <button onclick="placeOrder()" id="placeOrderBtn">Place Order</button>
+<div class="shipping-form">
+  <h3>Shipping Details</h3>
+  <input type="text" id="name" placeholder="Full Name" required><br><br>
+  <input type="email" id="email" placeholder="Email" required><br><br>
+  <input type="text" id="phone" placeholder="Phone (+91...)" required><br><br>
+  <input type="text" id="address" placeholder="Full Address" required><br><br>
+  <input type="text" id="pincode" placeholder="Pincode" required><br><br>
+  <button onclick="placeOrder()">Place Order & Pay</button>
+</div>
 
-  <div id="shippingForm" style="margin:20px 0; padding:10px; border:1px solid #333;">
-    <h2>Shipping Details</h2>
-    <label>Name:<br><input id="shipName" type="text" style="width:100%" placeholder="Full Name"></label><br>
-    <label>Email:<br><input id="shipEmail" type="email" style="width:100%" placeholder="you@example.com"></label><br>
-    <label>Phone (+CC-Number):<br><input id="shipPhone" type="tel" style="width:100%" placeholder="+91XXXXXXXXXX"></label><br>
-    <label>Address:<br><textarea id="shipAddress" rows="3" style="width:100%" placeholder="Street, City, State"></textarea></label><br>
-    <label>Pincode:<br><input id="shipPincode" type="text" style="width:100%" placeholder="XXXXXX"></label>
   </div>
+</div><script>
+  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
+  const user = gun.user();
 
-  <script>
-    const gun = Gun();
+  const notLoggedIn = document.getElementById("notLoggedIn");
+  const loggedInSection = document.getElementById("loggedInSection");
+  const userDisplay = document.getElementById("userDisplay");
+  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const cartItems = document.getElementById("cartItems");
+  const grandTotalEl = document.getElementById("grandTotal");
 
-    fetch("login-status.html")
-      .then(r => r.text())
-      .then(html => {
-        document.getElementById("loginStatusWrapper").innerHTML = html;
-        initializeLoginStatusUI();
-        setTimeout(() => {
-          renderGlobalCartUI();
-          bindCartEvents();
-          cartUpdates(); // Auto-sync updates
-        }, 800);
-      });
+  loginRedirectBtn.onclick = () => window.location.href = 'login.html';
+  logoutBtn.onclick = () => user.leave();
 
-    function renderGlobalCartUI(targetId = "cartTable") {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      const tbody = document.querySelector(`#${targetId} tbody`);
-      const grandTotalEl = document.getElementById("grandTotal");
+  let totalAmount = 0;
+  let cartData = {};
 
-      if (!username || !tbody) return;
+  user.recall({ sessionStorage: true }, () => {
+    if (user.is) {
+      notLoggedIn.style.display = "none";
+      loggedInSection.style.display = "block";
+      userDisplay.textContent = `Cart for ${user.is.alias}`;
+      loadCart();
+    } else {
+      notLoggedIn.style.display = "block";
+      loggedInSection.style.display = "none";
+    }
+  });
 
-      tbody.innerHTML = "";
-      let total = 0;
-      let hasItems = false;
+  function loadCart() {
+    const username = user.is.alias;
+    const cart = gun.get(`macx_cart_${username}`);
+    cart.map().once((item, sku) => {
+      if (!item || !item.name) return;
+      const div = document.createElement("div");
+      div.className = "cart-item";
+      const itemTotal = item.quantity * item.price;
+      totalAmount += itemTotal;
+      cartData[sku] = { ...item, sku };
+      div.innerHTML = `
+        <h4>${item.name}</h4>
+        <p>Price: ₹${item.price}</p>
+        <p>Quantity: <input type='number' value='${item.quantity}' onchange='updateQuantity("${sku}", this.value)' /></p>
+        <p>Total: ₹<span id='total-${sku}'>${itemTotal}</span></p>
+        <button onclick='deleteItem("${sku}")'>Delete</button>
+      `;
+      cartItems.appendChild(div);
+      grandTotalEl.textContent = totalAmount;
+    });
+  }
 
-      gun.get("macx_cart").get(username).map().once((item, key) => {
-        if (!item || !item.id) return;
+  function updateQuantity(sku, qty) {
+    const username = user.is.alias;
+    const cart = gun.get(`macx_cart_${username}`);
+    const item = cartData[sku];
+    const quantity = parseInt(qty);
+    if (quantity < 1) return;
+    cart.get(sku).put({ ...item, quantity });
+    document.getElementById(`total-${sku}`).textContent = item.price * quantity;
+    location.reload();
+  }
 
-        hasItems = true;
-        const itemTotal = item.price * item.quantity;
-        total += itemTotal;
+  function deleteItem(sku) {
+    const username = user.is.alias;
+    gun.get(`macx_cart_${username}`).get(sku).put(null);
+    location.reload();
+  }
 
-        const row = document.createElement("tr");
-        row.setAttribute("data-id", key);
-        row.innerHTML = `
-          <td>${item.name}</td>
-          <td>₹${item.price}</td>
-          <td><input class="qty-input" type="number" min="1" value="${item.quantity}" style="width:50px" /></td>
-          <td>₹${itemTotal}</td>
-          <td><button class="delete-btn">Delete</button></td>
-        `;
-        tbody.appendChild(row);
-        if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹${total}`;
-      });
-
-      setTimeout(() => {
-        if (!hasItems) {
-          tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Cart is empty</td></tr>`;
-          if (grandTotalEl) grandTotalEl.textContent = `Grand Total: ₹0`;
-        }
-      }, 1000);
+  function placeOrder() {
+    const username = user.is.alias;
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const phone = document.getElementById("phone").value;
+    const address = document.getElementById("address").value;
+    const pincode = document.getElementById("pincode").value;
+    if (!name || !email || !phone || !address || !pincode) {
+      alert("Please fill all shipping details.");
+      return;
     }
 
-    function bindCartEvents(targetId = "cartTable") {
-      const tbody = document.querySelector(`#${targetId} tbody`);
-      if (!tbody) return;
+    const orderId = `ORD${Date.now()}`;
+    const orderDetails = {
+      username,
+      name,
+      email,
+      phone,
+      address,
+      pincode,
+      items: Object.values(cartData),
+      total: totalAmount,
+      date: new Date().toISOString(),
+      status: 'Pending'
+    };
 
-      tbody.addEventListener("click", e => {
-        if (e.target.matches(".delete-btn")) {
-          const tr = e.target.closest("tr");
-          const itemId = tr.dataset.id;
-          gun.get("macx_cart").get(sessionStorage.getItem("macx_loggedInUser")).get(itemId).put(null);
-        }
-      });
-
-      tbody.addEventListener("change", e => {
-        if (e.target.matches(".qty-input")) {
-          const tr = e.target.closest("tr");
-          const itemId = tr.dataset.id;
-          const newQty = Math.max(1, +e.target.value);
-          const user = sessionStorage.getItem("macx_loggedInUser");
-
-          gun.get("macx_cart").get(user).get(itemId).once(item => {
-            if (!item) return;
-            item.quantity = newQty;
-            gun.get("macx_cart").get(user).get(itemId).put(item);
-          });
-        }
-      });
-    }
-
-    function cartUpdates(targetId = "cartTable") {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      const tbody = document.querySelector(`#${targetId} tbody`);
-      if (!username || !tbody) return;
-
-      gun.get("macx_cart").get(username).map().on(() => {
-        renderGlobalCartUI(targetId);
-      });
-    }
-
-    function placeOrder() {
-      const username = sessionStorage.getItem("macx_loggedInUser");
-      if (!username) return alert("Please log in to place your order");
-
-      const shipping = {
-        name: document.getElementById("shipName").value.trim(),
-        email: document.getElementById("shipEmail").value.trim(),
-        phone: document.getElementById("shipPhone").value.trim(),
-        address: document.getElementById("shipAddress").value.trim(),
-        pincode: document.getElementById("shipPincode").value.trim()
-      };
-
-      if (!shipping.name || !shipping.email || !shipping.phone || !shipping.address || !shipping.pincode) {
-        return alert("Please fill all shipping details");
-      }
-
-      // Example: Razorpay logic placeholder (customize if needed)
-      alert("Proceeding to payment gateway...");
-      console.log("Shipping Info:", shipping);
-    }
-  </script>
-</body>
-</html>
+    gun.get("macx_orders").get(orderId).put(orderDetails);
+    gun.get(`macx_user_orders_${username}`).get(orderId).put(orderDetails);
+    gun.get(`macx_cart_${username}`).put(null); // clear cart
+    alert("Order Placed. Redirecting to My Orders.");
+    window.location.href = "myorders.html";
+  }
+</script></body>
+  </html>
