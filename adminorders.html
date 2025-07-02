@@ -1,53 +1,78 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Admin Orders</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="macx-commerce.js"></script>
+  <meta charset="UTF-8">
+  <title>Admin Orders - MACX</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
   <style>
-    body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
-    .order { background: #222; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
+    body { font-family: Arial, sans-serif; }
+    .container { padding: 20px; }
+    .order-card { border: 1px solid #aaa; padding: 15px; margin: 15px 0; background: #f9f9f9; }
+    .order-card h4 { margin: 5px 0; }
+    .order-items { margin-left: 15px; }
+    .btn { padding: 6px 10px; margin-right: 5px; }
   </style>
 </head>
 <body>
-  <h1>Admin Order Management</h1>
-  <div id="adminOrdersContainer"></div>
+<div class="container">
+  <h1>MACX Admin Order Management</h1>
+  <div id="orders"></div>
+</div><script>
+  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
+  const ordersDiv = document.getElementById("orders");
 
-  <script>
-    function loadAllOrders() {
-      let container = document.getElementById("adminOrdersContainer");
-      container.innerHTML = "";
-      Object.keys(localStorage).forEach(key => {
-        if (key.startsWith("macx_orders_")) {
-          const username = key.replace("macx_orders_", "");
-          const orders = JSON.parse(localStorage.getItem(key));
-          orders.forEach(order => {
-            let itemsHtml = order.items.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join("<br>");
-            container.innerHTML += `
-              <div class="order">
-                <strong>User:</strong> ${username}<br>
-                <strong>Order ID:</strong> ${order.orderId}<br>
-                <strong>Status:</strong> ${order.status}<br>
-                ${itemsHtml}<br>
-                <button onclick="updateStatus('${username}','${order.orderId}')">Update Status</button>
-              </div>
-            `;
-          });
-        }
-      });
-    }
+  function loadAllOrders() {
+    const orders = gun.get("macx_orders");
+    orders.map().once((order, id) => {
+      if (!order || !order.username) return;
+      const div = document.createElement("div");
+      div.className = "order-card";
+      const statusId = `status-${id}`;
+      div.innerHTML = `
+        <h4>Order ID: ${id}</h4>
+        <p>User: ${order.username}</p>
+        <p>Date: ${new Date(order.date).toLocaleString()}</p>
+        <p>Total: ₹${order.total}</p>
+        <p>Status: <input id="${statusId}" type="text" value="${order.status}" /></p>
+        <button class="btn" onclick="updateStatus('${id}', '${statusId}')">Update Status</button>
+        <button class="btn" onclick="confirmDelete('${id}')">Delete Order</button>
+        <h5>Items:</h5>
+        <ul class='order-items'>
+          ${order.items.map(i => `<li>${i.name} (x${i.quantity}) - ₹${i.price * i.quantity}</li>`).join('')}
+        </ul>
+      `;
+      ordersDiv.appendChild(div);
+    });
+  }
 
-    function updateStatus(username, orderId) {
-      const newStatus = prompt("Enter new status:");
-      let orders = JSON.parse(localStorage.getItem(`macx_orders_${username}`)) || [];
-      orders = orders.map(o => o.orderId === orderId ? { ...o, status: newStatus } : o);
-      localStorage.setItem(`macx_orders_${username}`, JSON.stringify(orders));
-      loadAllOrders();
-    }
+  function updateStatus(orderId, inputId) {
+    const newStatus = document.getElementById(inputId).value;
+    gun.get("macx_orders").get(orderId).get("status").put(newStatus);
+    alert("Status updated.");
+  }
 
-    loadAllOrders();
-  </script>
-</body>
+  function confirmDelete(orderId) {
+    let confirmCount = 0;
+    const askDelete = () => {
+      if (confirmCount >= 5) {
+        gun.get("macx_orders").get(orderId).put(null);
+        alert("Order deleted.");
+        location.reload();
+        return;
+      }
+      const sure = confirm(`(${confirmCount + 1}/5) Confirm delete order ${orderId}?`);
+      if (sure) {
+        confirmCount++;
+        askDelete();
+      } else {
+        alert("Delete cancelled.");
+      }
+    };
+    askDelete();
+  }
+
+  loadAllOrders();
+</script></body>
 </html>
