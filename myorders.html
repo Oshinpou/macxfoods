@@ -1,12 +1,11 @@
+<!-- Updated myorders.html using GUN only -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <title>My Orders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
- 
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="macx-commerce.js"></script>
   <style>
     body { background: #111; color: #fff; font-family: Arial; padding: 20px; }
     .order { background: #222; margin-bottom: 10px; padding: 10px; border-radius: 5px; }
@@ -19,6 +18,7 @@
 
   <script src="login-status.js"></script>
   <script>
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     fetch('login-status.html').then(r => r.text()).then(html => {
       document.getElementById('loginStatusWrapper').innerHTML = html;
       initializeLoginStatusUI();
@@ -27,13 +27,11 @@
 
     function loadOrders() {
       const username = localStorage.getItem("macx_loggedInUser");
-      const orders = JSON.parse(localStorage.getItem(`macx_orders_${username}`)) || [];
       const container = document.getElementById("ordersContainer");
-      if (!orders.length) {
-        container.innerHTML = "<p>No orders found.</p>";
-        return;
-      }
-      orders.forEach(order => {
+      container.innerHTML = "<p>Loading orders...</p>";
+
+      gun.get("macx_orders").get(username).map().once(order => {
+        if (!order || !order.orderId) return;
         let itemsHtml = order.items.map(i => `${i.name} x${i.quantity} = ₹${i.price * i.quantity}`).join("<br>");
         container.innerHTML += `
           <div class="order">
@@ -48,15 +46,17 @@
     }
 
     function cancelOrder(orderId) {
-      if (!confirm("Confirm cancel?") || !confirm("Are you sure?") || !confirm("Final confirmation?") || !confirm("Really cancel?") || !confirm("This action is final, proceed?")) {
-        return;
-      }
+      if (!confirm("Are you sure you want to cancel this order?")) return;
       const username = localStorage.getItem("macx_loggedInUser");
-      let orders = JSON.parse(localStorage.getItem(`macx_orders_${username}`)) || [];
-      orders = orders.map(o => o.orderId === orderId ? { ...o, status: "Cancelled" } : o);
-      localStorage.setItem(`macx_orders_${username}`, JSON.stringify(orders));
-      alert("Order cancelled");
-      window.location.reload();
+      gun.get("macx_orders").get(username).get(orderId).once(order => {
+        if (order) {
+          order.status = "Cancelled";
+          gun.get("macx_orders").get(username).get(orderId).put(order);
+          gun.get("macx_admin_orders").get(orderId).put(order);
+          alert("Order cancelled");
+          location.reload();
+        }
+      });
     }
   </script>
 </body>
