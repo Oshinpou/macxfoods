@@ -1,48 +1,37 @@
-// cart.js
+// cart.js — MACX Fully Functional Cart Logic
+console.log("🚀 cart.js loaded");
 
-// CONFIG — use a known public peer for now to ensure connectivity
-const RELAY = 'https://gun-manhattan.herokuapp.com/gun';
-
-console.log('🛠️ cart.js loaded');
-
+// GUN setup
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const username = localStorage.getItem('macx_loggedInUser');
-console.log('🔐 username:', username);
 
-const gun = Gun({ peers: [RELAY] });
-console.log('🌐 Gun peers:', gun._.opt.peers);
-
-// Log every “hi” handshake
-Gun.on('hi', peer => console.log('🤝 hi from peer', peer.opt.url));
-
-const cartRef     = gun.get('macx_cart').get(username);
-const ordersRef   = gun.get('macx_orders').get(username);
+const cartRef = gun.get('macx_cart').get(username);
+const ordersRef = gun.get('macx_orders').get(username);
 const adminOrders = gun.get('admin_orders');
+
 let items = [];
 
-window.logout = () => {
-  console.log('🚪 logging out');
+function logout() {
   localStorage.removeItem('macx_loggedInUser');
   location.reload();
-};
+}
 
 function renderLoginStatus() {
-  console.log('🔄 renderLoginStatus called');
   if (!username) {
-    console.warn('⚠️ no username, showing login');
     document.getElementById('notLoggedIn').style.display = 'block';
     return;
   }
-  console.log('✅ username found, showing cart UI');
-  document.getElementById('notLoggedIn').style.display    = 'none';
+
+  document.getElementById('notLoggedIn').style.display = 'none';
   document.getElementById('loggedInSection').style.display = 'block';
-  document.getElementById('userDisplay').textContent       = `Welcome, ${username}`;
+  document.getElementById('userDisplay').textContent = `Welcome, ${username}`;
+
   renderCart();
 }
 
 function updateGrandTotal() {
   let total = 0;
 
-  // Fetch fresh from GUN instead of using stale local `items`
   cartRef.map().once((item, id) => {
     if (!item || !item.price || !item.quantity) return;
 
@@ -51,32 +40,24 @@ function updateGrandTotal() {
 
     total += qty * price;
 
-    // Also update the individual subtotal in DOM if exists
     const subtotalElem = document.getElementById(`subtotal-${id}`);
     if (subtotalElem) {
       subtotalElem.textContent = `Subtotal: ₹${qty * price}`;
     }
   });
 
-  // Wait briefly to ensure all `.once` have resolved before updating grand total
   setTimeout(() => {
     document.getElementById('grandTotal').textContent = `Grand Total: ₹${total}`;
-    console.log('💰 Updated grand total: ₹', total);
   }, 1000);
 }
 
-// Debug-enhanced renderCart
 function renderCart() {
-  console.log('🛒 renderCart() subscription starting…');
   const container = document.getElementById('cartItems');
   container.innerHTML = '';
   items = [];
 
   cartRef.map().on((item, id) => {
-    console.log('📥 cartRef.on → id:', id, 'item:', item);
-
-    if (!item) {
-      console.log('❌ item deleted:', id);
+    if (!item || !item.productName) {
       const gone = container.querySelector(`[data-id="${id}"]`);
       if (gone) gone.remove();
       items = items.filter(x => x.id !== id);
@@ -85,84 +66,124 @@ function renderCart() {
     }
 
     const qty = parseInt(item.quantity || 1, 10);
-    const entry = { ...item, id, quantity: qty };
-    const idx = items.findIndex(x => x.id === id);
-    if (idx >= 0) items[idx] = entry;
-    else items.push(entry);
+    const product = { ...item, id, quantity: qty };
+    const existingIndex = items.findIndex(x => x.id === id);
 
-    let node = container.querySelector(`[data-id="${id}"]`);
-    if (!node) {
-      node = document.createElement('div');
-      node.setAttribute('data-id', id);
-      container.appendChild(node);
+    if (existingIndex >= 0) items[existingIndex] = product;
+    else items.push(product);
+
+    let div = container.querySelector(`[data-id="${id}"]`);
+    if (!div) {
+      div = document.createElement('div');
+      div.setAttribute('data-id', id);
+      container.appendChild(div);
     }
 
-    node.innerHTML = `
-      <img src="${item.image}" alt="${item.productName}">
+    div.innerHTML = `
+      <img src="${item.image}" alt="${item.productName}" style="height:60px;margin-right:10px;">
       <div class="product-info">
         <p><strong>${item.productName}</strong><br>₹${item.price}</p>
         <div class="qty-controls">
           <button onclick="changeQty('${id}', -1)">-</button>
-          <input type="number" value="${qty}" min="1"
-                 onchange="updateQuantity('${id}', this)" />
+          <input class="qty-input" type="number" min="1" value="${qty}" onchange="updateQuantity('${id}', this)">
           <button onclick="changeQty('${id}', 1)">+</button>
         </div>
-        <div class="item-summary" id="subtotal-${id}">
-          Subtotal: ₹${item.price * qty}
-        </div>
+        <div class="item-summary" id="subtotal-${id}">Subtotal: ₹${item.price * qty}</div>
       </div>
-      <button onclick="removeItem('${id}')">Remove</button>
+      <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
     `;
+
     updateGrandTotal();
   });
+
+  setTimeout(() => {
+    if (container.innerHTML.trim() === "") {
+      container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
+      document.getElementById('grandTotal').textContent = "Grand Total: ₹0";
+    }
+  }, 1200);
 }
 
-window.updateQuantity = (id, input) => {
+window.updateQuantity = function (id, input) {
   const newQty = parseInt(input.value, 10);
   if (!newQty || newQty < 1) return;
 
-  cartRef.get(id).once(data => {
-    const updated = { ...data, quantity: newQty };
-    cartRef.get(id).put(updated, () => {
-      console.log('🔄 Quantity updated:', id, newQty);
+  cartRef.get(id).once(item => {
+    if (!item) return;
+    cartRef.get(id).put({ ...item, quantity: newQty }, () => {
+      document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${item.price * newQty}`;
       updateGrandTotal();
     });
   });
 };
 
-window.changeQty = (id, delta) => {
-  console.log('➕/➖ changeQty', id, delta);
-  cartRef.get(id).once(data => {
-    const q = Math.max(1, (data.quantity || 1) + delta);
-    cartRef.get(id).put({ ...data, quantity: q });
+window.changeQty = function (id, delta) {
+  cartRef.get(id).once(item => {
+    if (!item) return;
+    const newQty = Math.max(1, (item.quantity || 1) + delta);
+    cartRef.get(id).put({ ...item, quantity: newQty });
   });
 };
 
-window.removeItem = id => {
-  console.log('🗑️ removeItem', id);
+window.removeItem = function (id) {
   cartRef.get(id).put(null);
 };
 
-// Dummy “put” button so you can manually test replication
-// (opens console in Browser A, click “Test Put”, then watch Console in B)
-const testBtn = document.createElement('button');
-testBtn.textContent = 'Test Put';
-testBtn.onclick = () => {
-  console.log('🔧 doing test put to /test');
-  gun.get('test').put({ hi: Date.now() });
-};
-document.body.prepend(testBtn);
+// Payment and Order Submission
+document.getElementById('shippingForm').addEventListener('submit', function (e) {
+  e.preventDefault();
+  if (items.length === 0) return alert('Cart is empty');
 
-gun.get('test').on(msg =>
-  console.log('🔄 got test update:', msg)
-);
+  const total = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
 
-document.getElementById('shippingForm')
-  .addEventListener('submit', e => {
-    e.preventDefault();
-    console.log('📝 submitting order…', items);
-    // no changes here, we just log for now
-  });
+  const shipping = {
+    name: document.getElementById('name').value,
+    phone: document.getElementById('phone').value,
+    email: document.getElementById('email').value,
+    address: document.getElementById('address').value,
+    country: document.getElementById('country').value,
+    pincode: document.getElementById('pincode').value
+  };
+
+  const orderId = Date.now().toString();
+
+  const options = {
+    key: 'YOUR_RAZORPAY_KEY_ID', // replace with your Razorpay key
+    amount: total * 100,
+    currency: 'INR',
+    name: 'MACX Marketplace',
+    description: 'Order Payment',
+    handler: function (response) {
+      const order = {
+        shipping,
+        items,
+        total,
+        status: 'Paid',
+        razorpayPaymentId: response.razorpay_payment_id,
+        timestamp: Date.now()
+      };
+
+      ordersRef.get(orderId).put(order);
+      adminOrders.get(orderId).put({ ...order, username });
+
+      // Clear cart
+      cartRef.map().once((data, id) => {
+        cartRef.get(id).put(null);
+      });
+
+      alert("Order placed successfully!");
+      window.location.href = "myorders.html";
+    },
+    prefill: {
+      name: shipping.name,
+      email: shipping.email,
+      contact: shipping.phone
+    },
+    theme: { color: '#00c0b5' }
+  };
+
+  const rzp = new Razorpay(options);
+  rzp.open();
+});
 
 renderLoginStatus();
-    
