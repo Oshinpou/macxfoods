@@ -1,14 +1,12 @@
-// CDN dependencies (make sure to include these in cart.html head or here dynamically)
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const username = localStorage.getItem("macx_loggedInUser");
 const cartRef = gun.get('macx_cart').get(username);
 
 const cartItemsContainer = document.getElementById('cartItems');
 const grandTotalElement = document.getElementById('grandTotal');
-
 let cartData = {};
 
-// Render cart items
+// Render cart
 function renderCart() {
   if (!username) {
     cartItemsContainer.innerHTML = "<p>Please login to view your cart.</p>";
@@ -38,7 +36,7 @@ function renderCart() {
           Quantity:
           <input type="number" min="1" value="${item.quantity}" onchange="updateQuantity('${id}', this.value)">
         </label>
-        <p>Subtotal: ₹${subtotal}</p>
+        <p id="subtotal-${id}">Subtotal: ₹${subtotal}</p>
         <button onclick="removeItem('${id}')">Remove</button>
       </div>
     `;
@@ -46,11 +44,11 @@ function renderCart() {
   });
 
   setTimeout(() => {
-    grandTotalElement.textContent = `Grand Total: ₹${total}`;
+    updateGrandTotal();
   }, 1000);
 }
 
-// Update quantity and save in Gun
+// Update quantity
 function updateQuantity(id, newQty) {
   newQty = parseInt(newQty);
   if (isNaN(newQty) || newQty < 1 || !cartData[id]) return;
@@ -59,14 +57,16 @@ function updateQuantity(id, newQty) {
   cartRef.get(id).put(updatedItem, (ack) => {
     if (!ack.err) {
       cartData[id] = updatedItem;
-      renderCart();
+      const newSubtotal = updatedItem.price * newQty;
+      document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${newSubtotal}`;
+      updateGrandTotal();
     } else {
       alert("Failed to update quantity.");
     }
   });
 }
 
-// Remove item from cart
+// Remove from cart
 function removeItem(id) {
   cartRef.get(id).put(null, (ack) => {
     if (!ack.err) {
@@ -76,7 +76,16 @@ function removeItem(id) {
   });
 }
 
-// Optional: Call this after payment success to clear the cart
+// Grand total calculation
+function updateGrandTotal() {
+  let total = 0;
+  Object.values(cartData).forEach(item => {
+    total += item.price * item.quantity;
+  });
+  grandTotalElement.textContent = `Grand Total: ₹${total}`;
+}
+
+// Clear cart after order
 function clearCartAfterOrder() {
   Object.keys(cartData).forEach(id => {
     cartRef.get(id).put(null);
@@ -85,5 +94,4 @@ function clearCartAfterOrder() {
   renderCart();
 }
 
-// Render cart on page load
 document.addEventListener("DOMContentLoaded", renderCart);
