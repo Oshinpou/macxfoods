@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Product 2 - Hydrating Elixir</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sea.js"></script>
+  <style>
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f8f8f8; }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+
+    .slider { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; }
+    .slider img { height: 200px; border-radius: 10px; }
+
+    h2, h3 { margin-bottom: 10px; }
+    p { color: #444; }
+
+    .qty-controls { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+    .qty-controls button { padding: 5px 10px; font-size: 18px; }
+    .qty-controls input { width: 60px; text-align: center; font-size: 16px; }
+
+    textarea, input[type=text], input[type=number] { width: 100%; padding: 8px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; }
+
+    .review-item { background: #f0f0f0; padding: 10px; border-left: 4px solid teal; margin-bottom: 10px; border-radius: 5px; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Login Status -->
+    <div id="notLoggedIn" class="hidden">
+      <h2>You are not logged in.</h2>
+      <button onclick="location.href='login.html'">Login First</button>
+    </div>
+
+    <div id="loggedInSection" class="hidden">
+      <h2 id="userDisplay">Welcome, User</h2>
+      <button onclick="logout()">Logout</button>
+
+      <!-- Product Images -->
+      <div class="slider">
+        <img src="img/elixir1.jpg" alt="img1" />
+        <img src="img/elixir2.jpg" alt="img2" />
+        <img src="img/elixir3.jpg" alt="img3" />
+      </div>
+
+      <h2>Luxury Hydrating Elixir</h2>
+      <p><strong>Price:</strong> ₹2500</p>
+
+      <div class="qty-controls">
+        <button onclick="changeQty(-1)">-</button>
+        <input type="number" id="quantity" value="1" min="1" />
+        <button onclick="changeQty(1)">+</button>
+      </div>
+
+      <button onclick="addToCart()">Add to Cart</button>
+
+      <h3>Description</h3>
+      <p>A deeply hydrating elixir that restores moisture balance and plumps skin with rich botanical nutrients.</p>
+
+      <h3>Ingredients</h3>
+      <p>Botanical Oils, Hyaluronic Acid, Glycerin, Pro-Vitamin B5, Chamomile Extract.</p>
+
+      <h3>Usage</h3>
+      <p>Apply 3 drops to clean skin morning and evening. Follow with moisturizer.</p>
+
+      <h3>Warning</h3>
+      <p>For external use only. Avoid contact with eyes. Discontinue if irritation occurs.</p>
+
+      <!-- Reviews -->
+      <div>
+        <h3>Public Reviews</h3>
+        <div id="reviewList"></div>
+
+        <h4>Write a Review</h4>
+        <input type="text" id="reviewerName" placeholder="Your Name" />
+        <input type="number" id="reviewStars" placeholder="Star Rating (1-5)" min="1" max="5" />
+        <textarea id="reviewText" placeholder="Write your review..."></textarea>
+        <button onclick="submitReview()">Submit Review</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const username = localStorage.getItem("macx_loggedInUser");
+    const gun = Gun();
+    const cart = gun.get("macx_cart").get(username);
+    const reviews = gun.get("macx_reviews").get("product2");
+
+    function logout() {
+      localStorage.removeItem("macx_loggedInUser");
+      location.reload();
+    }
+
+    function showPage() {
+      if (username) {
+        document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+        document.getElementById("notLoggedIn").classList.add("hidden");
+        document.getElementById("loggedInSection").classList.remove("hidden");
+        loadReviews();
+      } else {
+        document.getElementById("notLoggedIn").classList.remove("hidden");
+        document.getElementById("loggedInSection").classList.add("hidden");
+      }
+    }
+
+    function changeQty(delta) {
+      const qtyInput = document.getElementById("quantity");
+      let qty = parseInt(qtyInput.value);
+      qty = Math.max(1, qty + delta);
+      qtyInput.value = qty;
+    }
+
+    function addToCart() {
+      if (!username) return alert("Login first");
+      const quantity = parseInt(document.getElementById("quantity").value);
+      const item = {
+        productId: "p02",
+        productName: "Luxury Hydrating Elixir",
+        price: 2500,
+        image: "img/elixir1.jpg",
+        quantity,
+        timestamp: Date.now()
+      };
+      const cartId = "p02_" + Date.now();
+      cart.get(cartId).put(item);
+      alert("Item added to cart!");
+    }
+
+    function submitReview() {
+      const name = document.getElementById("reviewerName").value.trim();
+      const stars = parseInt(document.getElementById("reviewStars").value);
+      const text = document.getElementById("reviewText").value.trim();
+      if (!name || !stars || !text) return alert("Fill all review fields");
+
+      const id = Date.now().toString();
+      reviews.get(id).put({ name, stars, text, time: id });
+
+      document.getElementById("reviewerName").value = "";
+      document.getElementById("reviewStars").value = "";
+      document.getElementById("reviewText").value = "";
+      loadReviews();
+    }
+
+    function loadReviews() {
+      const container = document.getElementById("reviewList");
+      container.innerHTML = "";
+      reviews.map().once((r, id) => {
+        if (!r || !r.text) return;
+        const div = document.createElement("div");
+        div.className = "review-item";
+        div.innerHTML = `<strong>${r.name}</strong> (${r.stars}★)<br>${r.text}`;
+        container.appendChild(div);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", showPage);
+  </script>
+</body>
+</html>
