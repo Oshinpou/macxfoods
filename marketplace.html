@@ -6,6 +6,28 @@
   <title>MACX Marketplace</title>
   <link rel="stylesheet" href="style.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+<style>
+
+  .qty-bar {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 5px 0;
+}
+
+.qty-bar button {
+  padding: 5px 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.qty-bar .qty-input {
+  width: 50px;
+  text-align: center;
+  font-size: 16px;
+}
+</style>
+
 </head>
 <body>
   <div class="container">
@@ -24,6 +46,11 @@
         <h3>Luxury Serum</h3>
         <p>₹1800</p>
         <button onclick="viewProduct('product1.html')">View Product</button>
+       <div class="qty-bar">
+  <button onclick="changeQty(this, -1)">−</button>
+  <input type="number" value="1" min="1" class="qty-input">
+  <button onclick="changeQty(this, 1)">+</button>
+</div>
         <button onclick="addToCart('p01', 'Luxury Serum', 1800, 'product1.jpg')">Add to Cart</button>
       </div>
 
@@ -32,6 +59,11 @@
         <h3>Anti-Aging Cream</h3>
         <p>₹2500</p>
         <button onclick="viewProduct('product2.html')">View Product</button>
+        <div class="qty-bar">
+  <button onclick="changeQty(this, -1)">−</button>
+  <input type="number" value="1" min="1" class="qty-input">
+  <button onclick="changeQty(this, 1)">+</button>
+</div>
         <button onclick="addToCart('p02', 'Anti-Aging Cream', 2500, 'product2.jpg')">Add to Cart</button>
       </div>
     </div>
@@ -94,6 +126,49 @@
         }
       });
     }
+ 
+  function changeQty(btn, delta) {
+  const input = btn.parentElement.querySelector(".qty-input");
+  let value = parseInt(input.value) || 1;
+  value = Math.max(1, value + delta);
+  input.value = value;
+}
+
+function addToCart(productId, productName, price, image) {
+  const username = localStorage.getItem("macx_loggedInUser");
+  if (!username) {
+    alert("Please login first to add to cart.");
+    return;
+  }
+
+  // Find corresponding quantity input next to the button clicked
+  const cards = document.querySelectorAll(".product-card");
+  let quantity = 1;
+
+  cards.forEach(card => {
+    if (card.innerHTML.includes(productName)) {
+      const qtyInput = card.querySelector(".qty-input");
+      if (qtyInput) quantity = parseInt(qtyInput.value) || 1;
+    }
+  });
+
+  const gun = Gun();
+  const cartRef = gun.get("macx_cart").get(username);
+
+  const cartItem = {
+    productId,
+    productName,
+    price,
+    image,
+    quantity,
+    timestamp: Date.now()
+  };
+
+  const cartItemId = productId + "_" + Date.now();
+  cartRef.get(cartItemId).put(cartItem);
+  alert(`Added ${quantity} of ${productName} to cart.`);
+}
+  
   </script>
 </body>
 </html>
