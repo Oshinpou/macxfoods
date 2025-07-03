@@ -4,25 +4,122 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Luxury Serum - MACX</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/sea.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .container { padding: 20px; max-width: 800px; margin: auto; }
-    .slider { display: flex; overflow-x: auto; gap: 10px; scroll-snap-type: x mandatory; }
-    .slider img { width: 100%; max-width: 300px; scroll-snap-align: start; border-radius: 10px; }
-    .product-info { margin-top: 20px; }
-    .qty-controls { display: flex; gap: 10px; align-items: center; margin: 10px 0; }
-    .review { border-top: 1px solid #ccc; margin-top: 20px; padding-top: 20px; }
-    .review-item { border-bottom: 1px solid #eee; padding: 10px 0; }
-    textarea, input { width: 100%; padding: 8px; margin: 5px 0; }
-    button { padding: 10px; background: teal; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    button:hover { background: #007777; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+    }
+
+    .container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.08);
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .status-bar h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .slider {
+      display: flex;
+      overflow-x: auto;
+      gap: 12px;
+      scroll-snap-type: x mandatory;
+      margin-bottom: 20px;
+    }
+
+    .slider img {
+      width: 100%;
+      max-width: 300px;
+      border-radius: 12px;
+      scroll-snap-align: start;
+      flex-shrink: 0;
+    }
+
+    h2, h3 {
+      color: #222;
+    }
+
+    p {
+      color: #555;
+    }
+
+    .product-info {
+      padding: 10px 0;
+    }
+
+    .qty-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 15px 0;
+    }
+
+    .qty-controls input {
+      width: 60px;
+      padding: 6px;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .qty-controls button {
+      padding: 8px 14px;
+      font-size: 16px;
+      background: #00bfa5;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #009e8e;
+    }
+
+    .review {
+      margin-top: 30px;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+    }
+
+    textarea, input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 5px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .review-item {
+      background: #f9f9f9;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-left: 4px solid #00bfa5;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
+
     <!-- Login Status -->
     <div id="notLoggedIn" style="display: none;">
       <h2>You are not logged in.</h2>
@@ -30,16 +127,18 @@
     </div>
 
     <div id="loggedInSection" style="display: none;">
-      <h2 id="userDisplay">Welcome, User</h2>
-      <button onclick="logout()">Logout</button>
+      <div class="status-bar">
+        <h2 id="userDisplay">Welcome, User</h2>
+        <button onclick="logout()">Logout</button>
+      </div>
 
       <!-- Product Image Slider -->
       <div class="slider">
-        <img src="img/serum1.jpg" alt="Product Image 1">
-        <img src="img/serum2.jpg" alt="Product Image 2">
-        <img src="img/serum3.jpg" alt="Product Image 3">
-        <img src="img/serum4.jpg" alt="Product Image 4">
-        <img src="img/serum5.jpg" alt="Product Image 5">
+        <img src="img/serum1.jpg" alt="Serum Image 1">
+        <img src="img/serum2.jpg" alt="Serum Image 2">
+        <img src="img/serum3.jpg" alt="Serum Image 3">
+        <img src="img/serum4.jpg" alt="Serum Image 4">
+        <img src="img/serum5.jpg" alt="Serum Image 5">
       </div>
 
       <!-- Product Info -->
@@ -49,33 +148,34 @@
 
         <div class="qty-controls">
           <button onclick="changeQty(-1)">-</button>
-          <input type="number" id="quantity" value="1" min="1">
+          <input type="number" id="quantity" value="1" min="1" />
           <button onclick="changeQty(1)">+</button>
         </div>
 
         <button onclick="addToCart()">Add to Cart</button>
 
         <h3>Description</h3>
-        <p>A luxurious serum designed to firm, shape, and enhance your natural facial contours.</p>
+        <p>A luxurious serum designed to firm, lift, and enhance your facial contours with advanced peptides and botanical nutrients.</p>
 
         <h3>Ingredients</h3>
-        <p>Peptides, Hyaluronic Acid, Vitamin C, Botanical Extracts.</p>
+        <p>Multi-Peptides, Hyaluronic Acid, Vitamin C, Plant Stem Cells, Aloe Vera.</p>
 
         <h3>Usage</h3>
-        <p>Apply daily after cleansing. Massage gently into skin for 2 minutes.</p>
+        <p>Massage 2-3 drops into clean face and neck every morning and night.</p>
 
         <h3>Warning</h3>
-        <p>External use only. Avoid eye contact. Keep out of reach of children.</p>
+        <p>External use only. Avoid direct eye contact. Patch test recommended before first use.</p>
       </div>
 
       <!-- Reviews Section -->
       <div class="review">
         <h3>Public Reviews</h3>
         <div id="reviewList"></div>
+
         <h4>Write a Review</h4>
         <input type="text" id="reviewerName" placeholder="Your Name">
         <input type="number" id="reviewStars" placeholder="Star Rating (1-5)" min="1" max="5">
-        <textarea id="reviewText" placeholder="Your Review"></textarea>
+        <textarea id="reviewText" placeholder="Write your review here..."></textarea>
         <button onclick="submitReview()">Submit Review</button>
       </div>
     </div>
@@ -113,7 +213,7 @@
 
     function addToCart() {
       if (!username) {
-        alert("Please login first.");
+        alert("Please login to add to cart.");
         return;
       }
 
@@ -129,7 +229,7 @@
 
       const cartId = "p01_" + Date.now();
       cartRef.get(cartId).put(product);
-      alert("Product added to cart!");
+      alert("Added to cart!");
     }
 
     function submitReview() {
@@ -138,13 +238,13 @@
       const text = document.getElementById("reviewText").value.trim();
 
       if (!name || !text || isNaN(stars) || stars < 1 || stars > 5) {
-        alert("Fill all fields correctly.");
+        alert("Please fill all review fields correctly.");
         return;
       }
 
       const review = { name, stars, text, time: Date.now() };
-      const reviewId = Date.now().toString();
-      reviewRef.get(reviewId).put(review);
+      reviewRef.get(Date.now().toString()).put(review);
+
       document.getElementById("reviewerName").value = "";
       document.getElementById("reviewStars").value = "";
       document.getElementById("reviewText").value = "";
