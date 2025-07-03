@@ -94,63 +94,75 @@
     }
 
     function updateQuantity(id, inputElement) {
-      const newQty = parseInt(inputElement.value);
-      if (isNaN(newQty) || newQty < 1) return;
-      cartRef.get(id).once(data => {
-        if (!data) return;
-        const updatedItem = { ...data, quantity: newQty };
-        cartRef.get(id).put(updatedItem);
-        // Save quantity permanently and update grand total
-        renderCart();
-      });
-    }
+  const newQty = parseInt(inputElement.value);
+  if (isNaN(newQty) || newQty < 1) return;
+
+  cartRef.get(id).once(item => {
+    if (!item) return;
+    const updatedItem = { ...item, quantity: newQty };
+    cartRef.get(id).put(updatedItem, () => {
+      // Update subtotal immediately
+      document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${updatedItem.price * updatedItem.quantity}`;
+      updateGrandTotal();
+    });
+  });
+}
 
     function renderCart() {
-      const container = document.getElementById("cartItems");
-      container.innerHTML = "";
-      items = [];
+  const container = document.getElementById("cartItems");
+  container.innerHTML = "";
+  items = [];
 
-      cartRef.map().once((item, id) => {
-        if (!item || !item.productName) return;
+  cartRef.map().once((item, id) => {
+    if (!item || !item.productName) return;
 
-        items.push(item);
+    // Persist the latest quantity (if missing, default to 1)
+    const qty = item.quantity ? parseInt(item.quantity) : 1;
+    const updatedItem = { ...item, quantity: qty };
+    cartRef.get(id).put(updatedItem); // this syncs globally
 
-        const div = document.createElement("div");
-        div.innerHTML = `
-          <img src="${item.image}" alt="Product">
-          <div class="product-info">
-            <p><strong>${item.productName}</strong><br>₹${item.price}</p>
-            <div class="qty-controls">
-              <button onclick="changeQty('${id}', -1)">-</button>
-              <input class="qty-input" type="number" value="${item.quantity}" min="1" onchange="updateQuantity('${id}', this)">
-              <button onclick="changeQty('${id}', 1)">+</button>
-            </div>
-            <div class="item-summary">Subtotal: ₹${item.price * item.quantity}</div>
-          </div>
-          <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
-        `;
-        container.appendChild(div);
-      });
+    items.push(updatedItem);
 
-      setTimeout(() => {
-        if (container.innerHTML.trim() === "") {
-          container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
-          document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
-        }
-        updateGrandTotal();
-      }, 1000);
+    const div = document.createElement("div");
+    div.innerHTML = `
+      <img src="${item.image}" alt="Product">
+      <div class="product-info">
+        <p><strong>${item.productName}</strong><br>₹${item.price}</p>
+        <div class="qty-controls">
+          <button onclick="changeQty('${id}', -1)">-</button>
+          <input class="qty-input" type="number" value="${qty}" min="1" onchange="updateQuantity('${id}', this)">
+          <button onclick="changeQty('${id}', 1)">+</button>
+        </div>
+        <div class="item-summary" id="subtotal-${id}">Subtotal: ₹${qty * item.price}</div>
+      </div>
+      <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
+    `;
+    container.appendChild(div);
+  });
+
+  setTimeout(() => {
+    if (container.innerHTML.trim() === "") {
+      container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
+      document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
+    } else {
+      updateGrandTotal();
     }
+  }, 1000);
+}
+      
 
     function changeQty(id, delta) {
-      cartRef.get(id).once(data => {
-        if (!data) return;
-        const newQty = Math.max(1, (data.quantity || 1) + delta);
-        const updatedItem = { ...data, quantity: newQty };
-        cartRef.get(id).put(updatedItem, () => {
-          renderCart();
-        });
-      });
-    }
+  cartRef.get(id).once(item => {
+    if (!item) return;
+    const newQty = Math.max(1, (item.quantity || 1) + delta);
+    const updatedItem = { ...item, quantity: newQty };
+    cartRef.get(id).put(updatedItem, () => {
+      // Update only that item's subtotal
+      document.querySelector(`#subtotal-${id}`).textContent = `Subtotal: ₹${updatedItem.price * updatedItem.quantity}`;
+      updateGrandTotal();
+    });
+  });
+}
 
     function removeItem(id) {
       cartRef.get(id).put(null);
