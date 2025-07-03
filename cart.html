@@ -3,42 +3,31 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>MACX Cart</title>
+  <title>MACX Cart (Debug)</title>
 
   <style>
+    /* same styles as before… */
     .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
-    input,button { margin:5px 0; padding:8px; width:100% }
-    #cartItems div { display:flex; align-items:center; justify-content:space-between;
-                     margin-bottom:10px; padding:10px; border-bottom:1px solid #ccc }
-    img { height:60px; margin-right:10px }
-    .product-info { flex-grow:1 }
-    .remove-btn { background:crimson; color:#fff; border:none; cursor:pointer; padding:5px 10px }
-    .qty-controls { display:flex; gap:5px; align-items:center }
-    .qty-input { width:50px; text-align:center }
-    .empty-msg { color:gray; font-style:italic; text-align:center; margin-top:10px }
-    .item-summary { font-size:14px; color:#444 }
+    /* … */
   </style>
 
-  <!-- 1) Gun + SEA via jsDelivr -->
+  <!-- Gun + SEA -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
 
-  <!-- 2) Razorpay Checkout -->
+  <!-- Razorpay -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
-  <!-- 3) Your cart logic -->
+  <!-- Debug Cart Logic -->
   <script src="cart.js" defer></script>
 </head>
-
 <body>
   <div class="container">
-    <!-- Not Logged In -->
     <div id="notLoggedIn" style="display:none">
       <h2>You are not logged in.</h2>
       <button onclick="location.href='login.html'">Login First</button>
     </div>
 
-    <!-- Logged In -->
     <div id="loggedInSection" style="display:none">
       <h1 id="userDisplay"></h1>
       <button onclick="logout()">Logout</button>
@@ -49,12 +38,12 @@
 
       <h2>Shipping Details</h2>
       <form id="shippingForm">
-        <input type="text" id="name" placeholder="Full Name" required />
-        <input type="tel" id="phone" placeholder="Phone Number" required />
-        <input type="email" id="email" placeholder="Email" required />
-        <input type="text" id="address" placeholder="Address" required />
-        <input type="text" id="country" placeholder="Country" required />
-        <input type="text" id="pincode" placeholder="PIN Code" required />
+        <input id="name" required placeholder="Full Name" />
+        <input id="phone" required placeholder="Phone" />
+        <input id="email" required placeholder="Email" />
+        <input id="address" required placeholder="Address" />
+        <input id="country" required placeholder="Country" />
+        <input id="pincode" required placeholder="PIN Code" />
         <button type="submit">Pay & Place Order</button>
       </form>
     </div>
