@@ -1,230 +1,62 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MACX Cart</title>
-  <link rel="stylesheet" href="style.css">
-  <!-- In cart.html head section -->
-<!-- Powerful CDNs for Data, Sync, UI, and Real-time Support -->
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sea.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/yjs"></script>
-<script src="https://cdn.jsdelivr.net/npm/y-webrtc"></script>
-<script src="https://cdn.jsdelivr.net/npm/peerdb"></script>
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/lodash/lodash.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/fuse.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/localforage/dist/localforage.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/uuid@9.0.0/dist/umd/uuidv4.min.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
- <script src="cart.js" defer></script>
   <style>
-    .container { max-width: 800px; margin: auto; padding: 20px; font-family: sans-serif; }
-    input, button { margin: 5px 0; padding: 8px; width: 100%; }
-    #cartItems div { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 10px; border-bottom: 1px solid #ccc; }
-    img { height: 60px; margin-right: 10px; }
-    .product-info { flex-grow: 1; }
-    .remove-btn { background-color: crimson; color: white; border: none; padding: 5px 10px; cursor: pointer; }
-    .qty-controls { display: flex; align-items: center; gap: 5px; }
-    .qty-input { width: 50px; text-align: center; font-size: 16px; padding: 4px; }
-    .empty-msg { color: gray; font-style: italic; text-align: center; margin-top: 10px; }
-    .item-summary { font-size: 14px; color: #444; }
+    .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
+    input,button { margin:5px 0; padding:8px; width:100% }
+    #cartItems div { display:flex; align-items:center; justify-content:space-between;
+                     margin-bottom:10px; padding:10px; border-bottom:1px solid #ccc }
+    img { height:60px; margin-right:10px }
+    .product-info { flex-grow:1 }
+    .remove-btn { background:crimson; color:#fff; border:none; cursor:pointer; padding:5px 10px }
+    .qty-controls { display:flex; gap:5px; align-items:center }
+    .qty-input { width:50px; text-align:center }
+    .empty-msg { color:gray; font-style:italic; text-align:center; margin-top:10px }
+    .item-summary { font-size:14px; color:#444 }
   </style>
+
+  <!-- 1) Gun + SEA -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+
+  <!-- 2) Razorpay Checkout -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+  <!-- 3) Your cart logic -->
+  <script src="cart.js" defer></script>
 </head>
+
 <body>
   <div class="container">
-    <!-- Login Status -->
-    <div id="notLoggedIn" style="display:none;">
+    <!-- If not logged in -->
+    <div id="notLoggedIn" style="display:none">
       <h2>You are not logged in.</h2>
       <button onclick="location.href='login.html'">Login First</button>
-    </div><div id="loggedInSection" style="display:none;">
-  <h1 id="userDisplay"></h1>
-  <button onclick="logout()">Logout</button>
+    </div>
 
-  <h2>Your Cart</h2>
-  <div id="cartItems"></div>
-  <h3 id="grandTotal">Grand Total: ₹0</h3>
+    <!-- If logged in -->
+    <div id="loggedInSection" style="display:none">
+      <h1 id="userDisplay"></h1>
+      <button onclick="logout()">Logout</button>
 
-  <h2>Shipping Details</h2>
-  <form id="shippingForm">
-    <input type="text" id="name" placeholder="Full Name" required><br>
-    <input type="tel" id="phone" placeholder="Phone Number with country code" required><br>
-    <input type="email" id="email" placeholder="Email" required><br>
-    <input type="text" id="address" placeholder="Address" required><br>
-    <input type="text" id="country" placeholder="Country" required><br>
-    <input type="text" id="pincode" placeholder="PIN Code" required><br>
-    <button type="submit">Pay & Place Order</button>
-  </form>
-</div>
+      <h2>Your Cart</h2>
+      <div id="cartItems"></div>
+      <h3 id="grandTotal">Grand Total: ₹0</h3>
 
-  </div>  <script>
-    const username = localStorage.getItem("macx_loggedInUser");
-    const gun = Gun();
-    const cartRef = gun.get("macx_cart").get(username);
-    const ordersRef = gun.get("macx_orders").get(username);
-    const adminOrders = gun.get("admin_orders");
-    let items = [];
-
-    function logout() {
-      localStorage.removeItem("macx_loggedInUser");
-      location.reload();
-    }
-
-    function renderLoginStatus() {
-      if (username) {
-        document.getElementById("loggedInSection").style.display = "block";
-        document.getElementById("notLoggedIn").style.display = "none";
-        document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
-        renderCart();
-      } else {
-        document.getElementById("notLoggedIn").style.display = "block";
-        document.getElementById("loggedInSection").style.display = "none";
-      }
-    }
-
-    function updateGrandTotal() {
-      let total = 0;
-      items.forEach(item => {
-        if (item && item.quantity && item.price) {
-          total += item.price * item.quantity;
-        }
-      });
-      document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
-    }
-
-    function updateQuantity(id, inputElement) {
-  const newQty = parseInt(inputElement.value);
-  if (isNaN(newQty) || newQty < 1) return;
-
-  cartRef.get(id).once(item => {
-    if (!item) return;
-    const updatedItem = { ...item, quantity: newQty };
-    cartRef.get(id).put(updatedItem, () => {
-      // Update subtotal immediately
-      document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${updatedItem.price * updatedItem.quantity}`;
-      updateGrandTotal();
-    });
-  });
-}
-
-    function renderCart() {
-  const container = document.getElementById("cartItems");
-  container.innerHTML = "";
-  items = [];
-
-  cartRef.map().once((item, id) => {
-    if (!item || !item.productName) return;
-
-    // Persist the latest quantity (if missing, default to 1)
-    const qty = item.quantity ? parseInt(item.quantity) : 1;
-    const updatedItem = { ...item, quantity: qty };
-    cartRef.get(id).put(updatedItem); // this syncs globally
-
-    items.push(updatedItem);
-
-    const div = document.createElement("div");
-    div.innerHTML = `
-      <img src="${item.image}" alt="Product">
-      <div class="product-info">
-        <p><strong>${item.productName}</strong><br>₹${item.price}</p>
-        <div class="qty-controls">
-          <button onclick="changeQty('${id}', -1)">-</button>
-          <input class="qty-input" type="number" value="${qty}" min="1" onchange="updateQuantity('${id}', this)">
-          <button onclick="changeQty('${id}', 1)">+</button>
-        </div>
-        <div class="item-summary" id="subtotal-${id}">Subtotal: ₹${qty * item.price}</div>
-      </div>
-      <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
-    `;
-    container.appendChild(div);
-  });
-
-  setTimeout(() => {
-    if (container.innerHTML.trim() === "") {
-      container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
-      document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
-    } else {
-      updateGrandTotal();
-    }
-  }, 1000);
-}
-      
-
-    function changeQty(id, delta) {
-  cartRef.get(id).once(item => {
-    if (!item) return;
-    const newQty = Math.max(1, (item.quantity || 1) + delta);
-    const updatedItem = { ...item, quantity: newQty };
-    cartRef.get(id).put(updatedItem, () => {
-      // Update only that item's subtotal
-      document.querySelector(`#subtotal-${id}`).textContent = `Subtotal: ₹${updatedItem.price * updatedItem.quantity}`;
-      updateGrandTotal();
-    });
-  });
-}
-
-    function removeItem(id) {
-      cartRef.get(id).put(null);
-      setTimeout(renderCart, 300);
-    }
-
-    document.getElementById("shippingForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-
-      if (items.length === 0) return alert("Cart is empty");
-
-      let total = 0;
-      items.forEach(item => {
-        if (item && item.quantity && item.price) {
-          total += item.price * item.quantity;
-        }
-      });
-
-      const shipping = {
-        name: document.getElementById("name").value,
-        phone: document.getElementById("phone").value,
-        email: document.getElementById("email").value,
-        address: document.getElementById("address").value,
-        country: document.getElementById("country").value,
-        pincode: document.getElementById("pincode").value,
-      };
-
-      const orderId = Date.now().toString();
-
-      const options = {
-        key: "YOUR_RAZORPAY_KEY_ID",
-        amount: total * 100,
-        currency: "INR",
-        name: "MACX Cosmetics",
-        description: "Order Payment",
-        handler: function (response) {
-          const order = {
-            shipping,
-            items,
-            total,
-            status: "Paid",
-            razorpayPaymentId: response.razorpay_payment_id,
-            timestamp: Date.now()
-          };
-          ordersRef.get(orderId).put(order);
-          adminOrders.get(orderId).put({ ...order, username });
-          cartRef.map().once((data, id) => cartRef.get(id).put(null));
-          alert("Order placed successfully!");
-          window.location.href = "myorders.html";
-        },
-        prefill: {
-          name: shipping.name,
-          email: shipping.email,
-          contact: shipping.phone
-        },
-        theme: { color: "#00c0b5" }
-      };
-
-      const rzp = new Razorpay(options);
-      rzp.open();
-    });
-
-    renderLoginStatus();
-  </script></body>
-      </html>
+      <h2>Shipping Details</h2>
+      <form id="shippingForm">
+        <input type="text" id="name" placeholder="Full Name" required />
+        <input type="tel" id="phone" placeholder="Phone Number" required />
+        <input type="email" id="email" placeholder="Email" required />
+        <input type="text" id="address" placeholder="Address" required />
+        <input type="text" id="country" placeholder="Country" required />
+        <input type="text" id="pincode" placeholder="PIN Code" required />
+        <button type="submit">Pay & Place Order</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>
