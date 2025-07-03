@@ -1,160 +1,91 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Cart</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    .container { padding: 20px; }
-    .cart-item { border: 1px solid #ccc; padding: 10px; margin: 10px 0; }
-    .total-section, .shipping-form { margin-top: 20px; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
-<div class="container">
-  <div id="notLoggedIn" style="display: none;">
-    <h2>You are not logged in.</h2>
-    <button id="loginRedirectBtn">Login First</button>
-  </div>  <div id="loggedInSection" style="display: none;">
-    <h1 id="userDisplay">Your Cart</h1>
-    <button id="logoutBtn">Logout</button>
-    <div id="cartItems"></div><div class="total-section">
-  <h3>Total: ₹<span id="grandTotal">0</span></h3>
-</div>
+  <div class="container">
+    <h1>Your Cart</h1>
+    <div id="cartItems"></div>
+    <h2 id="grandTotal">Grand Total: ₹0</h2>
 
-<div class="shipping-form">
-  <h3>Shipping Details</h3>
-  <input type="text" id="name" placeholder="Full Name" required><br><br>
-  <input type="email" id="email" placeholder="Email" required><br><br>
-  <input type="text" id="phone" placeholder="Phone (+91...)" required><br><br>
-  <input type="text" id="address" placeholder="Full Address" required><br><br>
-  <input type="text" id="pincode" placeholder="Pincode" required><br><br>
-  <button onclick="placeOrder()">Place Order & Pay</button>
-</div>
-
+    <h3>Shipping Details</h3>
+    <form id="shippingForm">
+      <input type="text" id="customerName" placeholder="Full Name" required><br>
+      <input type="tel" id="customerPhone" placeholder="Phone (+91XXXXXXXXXX)" required><br>
+      <input type="email" id="customerEmail" placeholder="Email" required><br>
+      <textarea id="shippingAddress" placeholder="Shipping Address" required></textarea><br>
+      <input type="text" id="country" placeholder="Country" required><br>
+      <input type="text" id="pincode" placeholder="Pincode" required><br>
+      <button type="submit">Create Order & Pay</button>
+    </form>
   </div>
-</div><script>
-  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
-  const user = gun.user();
 
-  const notLoggedIn = document.getElementById("notLoggedIn");
-  const loggedInSection = document.getElementById("loggedInSection");
-  const userDisplay = document.getElementById("userDisplay");
-  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const cartItems = document.getElementById("cartItems");
-  const grandTotalEl = document.getElementById("grandTotal");
+  <script>
+    const username = localStorage.getItem("macx_loggedInUser");
+    const gun = Gun();
+    const cartRef = gun.get("macx_cart").get(username);
+    const orderRef = gun.get("macx_orders").get(username);
+    const cartItemsDiv = document.getElementById("cartItems");
+    const grandTotalEl = document.getElementById("grandTotal");
+    let grandTotal = 0;
+    let items = [];
 
-  loginRedirectBtn.onclick = () => window.location.href = 'login.html';
-  logoutBtn.onclick = () => user.leave();
-
-  let totalAmount = 0;
-  let cartData = {};
-
-  user.recall({ sessionStorage: true }, () => {
-    if (user.is) {
-      notLoggedIn.style.display = "none";
-      loggedInSection.style.display = "block";
-      userDisplay.textContent = `Cart for ${user.is.alias}`;
-      loadCart();
-    } else {
-      notLoggedIn.style.display = "block";
-      loggedInSection.style.display = "none";
-    }
-  });
-
-  function loadCart() {
-    const username = user.is.alias;
-    const cart = gun.get(`macx_cart_${username}`);
-    cart.map().once((item, sku) => {
-      if (!item || !item.name) return;
+    cartRef.map().once((data, id) => {
+      if (!data) return;
       const div = document.createElement("div");
-      div.className = "cart-item";
-      const itemTotal = item.quantity * item.price;
-      totalAmount += itemTotal;
-      cartData[sku] = { ...item, sku };
+      const total = data.price * data.quantity;
+      grandTotal += total;
+      items.push({...data, id});
       div.innerHTML = `
-        <h4>${item.name}</h4>
-        <p>Price: ₹${item.price}</p>
-        <p>Quantity: <input type='number' value='${item.quantity}' onchange='updateQuantity("${sku}", this.value)' /></p>
-        <p>Total: ₹<span id='total-${sku}'>${itemTotal}</span></p>
-        <button onclick='deleteItem("${sku}")'>Delete</button>
+        <p><strong>${data.productName}</strong> - ₹${data.price} x ${data.quantity}</p>
+        <button onclick="deleteItem('${id}')">Delete</button>
       `;
-      cartItems.appendChild(div);
-      grandTotalEl.textContent = totalAmount;
+      cartItemsDiv.appendChild(div);
+      grandTotalEl.textContent = `Grand Total: ₹${grandTotal}`;
     });
-  }
 
-  function updateQuantity(sku, qty) {
-    const username = user.is.alias;
-    const cart = gun.get(`macx_cart_${username}`);
-    const item = cartData[sku];
-    const quantity = parseInt(qty);
-    if (quantity < 1) return;
-    cart.get(sku).put({ ...item, quantity });
-    document.getElementById(`total-${sku}`).textContent = item.price * quantity;
-    location.reload();
-  }
-
-  function deleteItem(sku) {
-    const username = user.is.alias;
-    gun.get(`macx_cart_${username}`).get(sku).put(null);
-    location.reload();
-  }
-
-  function placeOrder() {
-    const username = user.is.alias;
-    const name = document.getElementById("name").value;
-    const email = document.getElementById("email").value;
-    const phone = document.getElementById("phone").value;
-    const address = document.getElementById("address").value;
-    const pincode = document.getElementById("pincode").value;
-    if (!name || !email || !phone || !address || !pincode) {
-      alert("Please fill all shipping details.");
-      return;
+    function deleteItem(id) {
+      cartRef.get(id).put(null);
+      window.location.reload();
     }
 
-    const orderId = `ORD${Date.now()}`;
-    const orderDetails = {
-      username,
-      name,
-      email,
-      phone,
-      address,
-      pincode,
-      items: Object.values(cartData),
-      total: totalAmount,
-      date: new Date().toISOString(),
-      status: 'Pending'
-    };
+    document.getElementById("shippingForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (!username) return alert("Login first");
 
-    const options = {
-      key: "YOUR_RAZORPAY_KEY_ID", // Replace with real Razorpay Key ID
-      amount: totalAmount * 100,
-      currency: "INR",
-      name: "MACX Marketplace",
-      description: `Order ${orderId}`,
-      handler: function (response) {
-        gun.get("macx_orders").get(orderId).put(orderDetails);
-        gun.get(`macx_user_orders_${username}`).get(orderId).put(orderDetails);
-        gun.get(`macx_cart_${username}`).put(null);
-        alert("Order Placed and Payment Successful!");
-        window.location.href = "myorders.html";
-      },
-      prefill: {
-        name: name,
-        email: email,
-        contact: phone
-      },
-      theme: { color: "#3399cc" }
-    };
+      const name = document.getElementById("customerName").value;
+      const phone = document.getElementById("customerPhone").value;
+      const email = document.getElementById("customerEmail").value;
+      const address = document.getElementById("shippingAddress").value;
+      const country = document.getElementById("country").value;
+      const pincode = document.getElementById("pincode").value;
 
-    const rzp = new Razorpay(options);
-    rzp.open();
-  }
-</script></body>
+      const orderDetails = {
+        items,
+        name,
+        phone,
+        email,
+        address,
+        country,
+        pincode,
+        grandTotal,
+        status: "Pending",
+        paymentStatus: "Paid",
+        timestamp: Date.now()
+      };
+
+      const orderId = Date.now().toString();
+      orderRef.get(orderId).put(orderDetails);
+
+      cartRef.map().once((_, id) => cartRef.get(id).put(null));
+      alert("Order placed successfully!");
+      window.location.href = "myorders.html";
+    });
+  </script>
+</body>
 </html>
