@@ -40,9 +40,29 @@ function renderLoginStatus() {
 }
 
 function updateGrandTotal() {
-  const total = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
-  console.log('💰 updateGrandTotal:', total);
-  document.getElementById('grandTotal').textContent = `Grand Total: ₹${total}`;
+  let total = 0;
+
+  // Fetch fresh from GUN instead of using stale local `items`
+  cartRef.map().once((item, id) => {
+    if (!item || !item.price || !item.quantity) return;
+
+    const qty = parseInt(item.quantity || 1, 10);
+    const price = parseFloat(item.price || 0);
+
+    total += qty * price;
+
+    // Also update the individual subtotal in DOM if exists
+    const subtotalElem = document.getElementById(`subtotal-${id}`);
+    if (subtotalElem) {
+      subtotalElem.textContent = `Subtotal: ₹${qty * price}`;
+    }
+  });
+
+  // Wait briefly to ensure all `.once` have resolved before updating grand total
+  setTimeout(() => {
+    document.getElementById('grandTotal').textContent = `Grand Total: ₹${total}`;
+    console.log('💰 Updated grand total: ₹', total);
+  }, 1000);
 }
 
 // Debug-enhanced renderCart
@@ -98,14 +118,15 @@ function renderCart() {
 }
 
 window.updateQuantity = (id, input) => {
-  const q = parseInt(input.value, 10);
-  console.log('✏️ updateQuantity', id, '→', q);
-  if (!q || q < 1) return;
+  const newQty = parseInt(input.value, 10);
+  if (!newQty || newQty < 1) return;
+
   cartRef.get(id).once(data => {
-    cartRef.get(id).put({ ...data, quantity: q });
-    document.getElementById(`subtotal-${id}`)
-            .textContent = `Subtotal: ₹${data.price * q}`;
-    updateGrandTotal();
+    const updated = { ...data, quantity: newQty };
+    cartRef.get(id).put(updated, () => {
+      console.log('🔄 Quantity updated:', id, newQty);
+      updateGrandTotal();
+    });
   });
 };
 
