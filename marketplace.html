@@ -2,111 +2,121 @@
 <head>
   <meta charset="UTF-8">
   <title>MACX Marketplace</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
-  <script type="module">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />  <!-- GUN and SEA -->  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>  <!-- Yjs + Peer Sync -->  <script type="module">
     import * as Y from 'https://cdn.skypack.dev/yjs';
-    import { WebrtcProvider } from 'https://cdn.skypack.dev/y-webrtc';const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-const user = gun.user();
-user.recall({ sessionStorage: true });
+    import { WebrtcProvider } from 'https://cdn.skypack.dev/y-webrtc';
 
-const notLoggedIn = document.getElementById("notLoggedIn");
-const loggedInSection = document.getElementById("loggedInSection");
-const userDisplay = document.getElementById("userDisplay");
-const logoutBtn = document.getElementById("logoutBtn");
-const productsDiv = document.getElementById("products");
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const user = gun.user();
+    user.recall({ sessionStorage: true });
 
-logoutBtn.onclick = () => {
-  user.leave();
-  sessionStorage.clear();
-  location.reload();
-};
+    const notLoggedIn = document.getElementById("notLoggedIn");
+    const loggedInSection = document.getElementById("loggedInSection");
+    const userDisplay = document.getElementById("userDisplay");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const productsDiv = document.getElementById("products");
 
-function updateUI() {
-  if (user.is) {
-    notLoggedIn.style.display = "none";
-    loggedInSection.style.display = "block";
-    userDisplay.textContent = `Welcome, ${user.is.alias}`;
-    loadProducts();
-  } else {
-    notLoggedIn.style.display = "block";
-    loggedInSection.style.display = "none";
-  }
-}
+    logoutBtn.onclick = () => {
+      user.leave();
+      sessionStorage.clear();
+      location.reload();
+    };
 
-// Wait for GUN to finish recall before checking user state
-setTimeout(updateUI, 1000);
+    function updateUI() {
+      if (user.is) {
+        notLoggedIn.style.display = "none";
+        loggedInSection.style.display = "block";
+        userDisplay.textContent = `Welcome, ${user.is.alias}`;
+        loadProducts();
+      } else {
+        notLoggedIn.style.display = "block";
+        loggedInSection.style.display = "none";
+      }
+    }
 
-const sampleProducts = [
-  { sku: "SKU001", name: "MACX Glow Cream", price: 2000 },
-  { sku: "SKU002", name: "MACX Sculpt Serum", price: 1800 },
-  { sku: "SKU003", name: "MACX Muscle Mist", price: 2500 }
-];
+    setTimeout(updateUI, 1000);
 
-function loadProducts() {
-  productsDiv.innerHTML = "";
-  sampleProducts.forEach(p => {
-    const card = document.createElement("div");
-    card.className = "product-card";
-    card.innerHTML = `
-      <h3>${p.name}</h3>
-      <p>Price: ₹${p.price}</p>
-      <button onclick="viewProduct('${p.name}')">View Product</button>
-      <button onclick="addToCart('${p.sku}', '${p.name}', ${p.price})">Add to Cart</button>
-    `;
-    productsDiv.appendChild(card);
-  });
-}
+    const sampleProducts = [
+      { sku: "SKU001", name: "MACX Glow Cream", price: 2000, image: "https://via.placeholder.com/150" },
+      { sku: "SKU002", name: "MACX Sculpt Serum", price: 1800, image: "https://via.placeholder.com/150" },
+      { sku: "SKU003", name: "MACX Muscle Mist", price: 2500, image: "https://via.placeholder.com/150" }
+    ];
 
-window.viewProduct = function(name) {
-  const filename = name.replace(/\s+/g, '') + '.html';
-  window.location.href = filename;
-};
+    function loadProducts() {
+      productsDiv.innerHTML = "";
+      sampleProducts.forEach(p => {
+        const card = document.createElement("div");
+        card.className = "product-card";
+        card.innerHTML = `
+          <img src="${p.image}" alt="${p.name}" class="product-image" />
+          <h3>${p.name}</h3>
+          <p>Price: ₹${p.price}</p>
+          <button onclick="viewProduct('${p.name}')">View Product</button>
+          <button onclick="addToCart('${p.sku}', '${p.name}', ${p.price})">Add to Cart</button>
+        `;
+        productsDiv.appendChild(card);
+      });
+    }
 
-window.addToCart = function(sku, name, price) {
-  if (!user.is) return alert("Login first");
-  const username = user.is.alias;
+    window.viewProduct = function(name) {
+      const filename = name.replace(/\s+/g, '') + '.html';
+      window.location.href = filename;
+    };
 
-  const ydoc = new Y.Doc();
-  const provider = new WebrtcProvider(`macx-cart-${username}`, ydoc);
-  const cart = ydoc.getMap('cart');
+    window.addToCart = function(sku, name, price) {
+      if (!user.is) return alert("Login first");
+      const username = user.is.alias;
 
-  const key = `${sku}`;
-  const current = cart.get(key) || { name, price, quantity: 0 };
-  current.quantity++;
-  cart.set(key, current);
+      const ydoc = new Y.Doc();
+      const provider = new WebrtcProvider(`macx-cart-${username}`, ydoc);
+      const cart = ydoc.getMap('cart');
 
-  alert(`${name} added to cart`);
-}
+      const key = `${sku}`;
+      const current = cart.get(key) || { name, price, quantity: 0 };
+      current.quantity++;
+      cart.set(key, current);
 
-  </script>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
-    .container { max-width: 800px; margin: auto; }
+      alert(`${name} added to cart`);
+    }
+  </script>  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+    }
     .product-card {
       border: 1px solid #ddd;
       padding: 15px;
       margin: 10px 0;
       background: #fff;
+      text-align: center;
     }
-    .product-card h3 { margin: 0; }
+    .product-card h3 {
+      margin: 10px 0 5px;
+    }
     .product-card button {
-      margin-right: 10px;
+      margin: 5px;
       padding: 6px 12px;
     }
-  </style>
-</head>
+    .product-image {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+    }
+  </style></head>
 <body>
 <div class="container">
   <div id="notLoggedIn" style="display:none;">
     <h2>You are not logged in.</h2>
-    <button onclick="window.location.href='login.html'">Login First</button>
+    <button id="loginRedirectBtn" onclick="window.location.href='login.html'">Login First</button>
   </div>  <div id="loggedInSection" style="display:none;">
     <h1 id="userDisplay">Welcome</h1>
     <button id="logoutBtn">Logout</button>
-    <p>Enjoy shopping at MACX Marketplace!</p>
+    <p>You are now logged in. Enjoy shopping at MACX Marketplace!</p>
     <div id="products"></div>
   </div>
 </div>
