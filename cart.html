@@ -1,96 +1,97 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MACX Cart</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="style.css">
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Your Cart</h1>
     <div id="cartItems"></div>
-    <h2 id="grandTotal">Grand Total: ₹0</h2><h3>Shipping Details</h3>
-<form id="shippingForm">
-  <input type="text" id="customerName" placeholder="Full Name" required><br>
-  <input type="tel" id="customerPhone" placeholder="Phone (+91XXXXXXXXXX)" required><br>
-  <input type="email" id="customerEmail" placeholder="Email" required><br>
-  <textarea id="shippingAddress" placeholder="Shipping Address" required></textarea><br>
-  <input type="text" id="country" placeholder="Country" required><br>
-  <input type="text" id="pincode" placeholder="Pincode" required><br>
-  <button type="submit">Create Order & Pay</button>
-</form>
+    <h3 id="grandTotal">Grand Total: ₹0</h3>
 
-  </div>  <script>
+    <h2>Shipping Details</h2>
+    <form id="shippingForm">
+      <input type="text" id="name" placeholder="Full Name" required><br>
+      <input type="tel" id="phone" placeholder="Phone Number" required><br>
+      <input type="email" id="email" placeholder="Email" required><br>
+      <input type="text" id="address" placeholder="Shipping Address" required><br>
+      <input type="text" id="country" placeholder="Country" required><br>
+      <input type="text" id="pincode" placeholder="PIN Code" required><br>
+      <button type="submit">Place Order</button>
+    </form>
+  </div>
+
+  <script>
     const username = localStorage.getItem("macx_loggedInUser");
     const gun = Gun();
     const cartRef = gun.get("macx_cart").get(username);
-    const orderRef = gun.get("macx_orders").get(username);
-    const cartItemsDiv = document.getElementById("cartItems");
-    const grandTotalEl = document.getElementById("grandTotal");
+    const ordersRef = gun.get("macx_orders").get(username);
+    const adminRef = gun.get("admin_orders");
 
-    let grandTotal = 0;
-    let items = [];
+    let total = 0;
 
-    cartRef.map().once((item, id) => {
-      if (!item || !item.productName || !item.price) return;
+    function renderCart() {
+      const container = document.getElementById("cartItems");
+      container.innerHTML = "";
+      total = 0;
 
-      const div = document.createElement("div");
-      const total = item.price * item.quantity;
-      grandTotal += total;
-      items.push({...item, id});
+      cartRef.map().once((item, id) => {
+        if (!item || !item.productName) return;
 
-      div.innerHTML = `
-        <div style="border:1px solid #ccc;padding:10px;margin-bottom:10px;">
-          <img src="${item.image || 'default.jpg'}" alt="${item.productName}" width="100">
-          <p><strong>${item.productName}</strong></p>
-          <p>Price: ₹${item.price}</p>
-          <p>Quantity: ${item.quantity}</p>
-          <p>Total: ₹${total}</p>
-          <button onclick="deleteItem('${id}')">Remove</button>
-        </div>
-      `;
-      cartItemsDiv.appendChild(div);
-      grandTotalEl.textContent = `Grand Total: ₹${grandTotal}`;
-    });
+        const div = document.createElement("div");
+        div.innerHTML = `
+          <img src="${item.image}" width="80">
+          <p>${item.productName} - ₹${item.price} x ${item.quantity}</p>
+          <button onclick="removeItem('${id}')">Remove</button>
+        `;
+        container.appendChild(div);
 
-    function deleteItem(id) {
-      cartRef.get(id).put(null);
-      window.location.reload();
+        total += item.price * item.quantity;
+        document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+      });
     }
 
-    document.getElementById("shippingForm").addEventListener("submit", function(e) {
+    function removeItem(id) {
+      cartRef.get(id).put(null);
+      setTimeout(renderCart, 500);
+    }
+
+    document.getElementById("shippingForm").addEventListener("submit", (e) => {
       e.preventDefault();
-      if (!username) return alert("Login first");
-      if (items.length === 0) return alert("Cart is empty");
-
-      const name = document.getElementById("customerName").value.trim();
-      const phone = document.getElementById("customerPhone").value.trim();
-      const email = document.getElementById("customerEmail").value.trim();
-      const address = document.getElementById("shippingAddress").value.trim();
-      const country = document.getElementById("country").value.trim();
-      const pincode = document.getElementById("pincode").value.trim();
-
-      const orderData = {
-        items,
-        name,
-        phone,
-        email,
-        address,
-        country,
-        pincode,
-        grandTotal,
-        paymentStatus: "Paid",
+      const orderId = Date.now().toString();
+      const shipping = {
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        email: document.getElementById("email").value,
+        address: document.getElementById("address").value,
+        country: document.getElementById("country").value,
+        pincode: document.getElementById("pincode").value,
+        total,
         status: "Pending",
+        paid: "Yes",
         timestamp: Date.now()
       };
 
-      const orderId = Date.now().toString();
-      orderRef.get(orderId).put(orderData);
+      const orderItems = [];
+      cartRef.map().once((item, id) => {
+        if (!item || !item.productName) return;
+        orderItems.push(item);
+      });
 
-      cartRef.map().once((_, key) => cartRef.get(key).put(null));
-      alert("Order placed successfully!");
-      window.location.href = "myorders.html";
+      setTimeout(() => {
+        ordersRef.get(orderId).put({ shipping, items: orderItems });
+        adminRef.get(orderId).put({ shipping, items: orderItems });
+        alert("Order placed successfully!");
+        cartRef.map().once((data, id) => cartRef.get(id).put(null));
+        renderCart();
+      }, 500);
     });
-  </script></body>
+
+    renderCart();
+  </script>
+</body>
 </html>
