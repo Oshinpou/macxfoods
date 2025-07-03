@@ -1,14 +1,11 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Marketplace</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/sea.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/yjs"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/peerdb"></script>
-  <script defer src="marketplace.js"></script>
 </head>
 <body>
   <div class="container">
@@ -16,106 +13,89 @@
     <div id="notLoggedIn" style="display: none;">
       <h2>You are not logged in.</h2>
       <button id="loginRedirectBtn">Login First</button>
-    </div><div id="loggedInSection" style="display: none;">
-  <h1 id="userDisplay">Welcome, User</h1>
-  <button id="logoutBtn">Logout</button>
-</div>
+    </div>
+    <div id="loggedInSection" style="display: none;">
+      <h1 id="userDisplay">Welcome, User</h1>
+      <button id="logoutBtn">Logout</button>
+    </div>
 
-<!-- Product Cards -->
-<div class="products">
-  <div class="product-card">
-    <img src="product1.jpg" alt="Product 1">
-    <h3>Product Name 1</h3>
-    <p>₹1800</p>
-    <button onclick="viewProduct('product1.html')">View Product</button>
-    <button onclick="addToCart('p01', 'Luxury Serum', 1800, 'img/serum.jpg')">Add to Cart</button>
+    <!-- Product Cards -->
+    <div class="products">
+      <div class="product-card">
+        <img src="product1.jpg" alt="Product 1" width="100">
+        <h3>Luxury Serum</h3>
+        <p>₹1800</p>
+        <button onclick="viewProduct('product1.html')">View Product</button>
+        <button onclick="addToCart('p01', 'Luxury Serum', 1800, 'product1.jpg')">Add to Cart</button>
+      </div>
+
+      <div class="product-card">
+        <img src="product2.jpg" alt="Product 2" width="100">
+        <h3>Anti-Aging Cream</h3>
+        <p>₹2500</p>
+        <button onclick="viewProduct('product2.html')">View Product</button>
+        <button onclick="addToCart('p02', 'Anti-Aging Cream', 2500, 'product2.jpg')">Add to Cart</button>
+      </div>
+      <!-- Add more products as needed -->
+    </div>
   </div>
 
-  <div class="product-card">
-    <img src="product2.jpg" alt="Product 2">
-    <h3>Product Name 2</h3>
-    <p>₹2500</p>
-    <button onclick="viewProduct('product2.html')">View Product</button>
-    <button onclick="addToCart('p01', 'Luxury Serum', 2500, 'img/serum.jpg')">Add to Cart</button>
-  </div>
-  <!-- More products can be added -->
-</div>
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const username = localStorage.getItem("macx_loggedInUser");
+      const userDisplay = document.getElementById("userDisplay");
+      const loggedInSection = document.getElementById("loggedInSection");
+      const notLoggedIn = document.getElementById("notLoggedIn");
+      const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+      const logoutBtn = document.getElementById("logoutBtn");
 
-  </div>
+      if (username) {
+        userDisplay.textContent = `Welcome, ${username}`;
+        loggedInSection.style.display = "block";
+        notLoggedIn.style.display = "none";
+
+        logoutBtn.addEventListener("click", () => {
+          localStorage.removeItem("macx_loggedInUser");
+          window.location.reload();
+        });
+      } else {
+        loggedInSection.style.display = "none";
+        notLoggedIn.style.display = "block";
+
+        loginRedirectBtn.addEventListener("click", () => {
+          window.location.href = "login.html";
+        });
+      }
+    });
+
+    function viewProduct(url) {
+      window.location.href = url;
+    }
+
+    function addToCart(productId, productName, price, image) {
+      const username = localStorage.getItem("macx_loggedInUser");
+      if (!username) {
+        alert("Please login first to add to cart.");
+        return;
+      }
+
+      const gun = Gun();
+      const cartRef = gun.get("macx_cart").get(username);
+      const quantity = 1;
+      const cartItemId = productId + '_' + Date.now();
+
+      const item = {
+        productId,
+        productName,
+        price,
+        quantity,
+        image,
+        timestamp: Date.now()
+      };
+
+      cartRef.get(cartItemId).put(item);
+      alert("Added to cart!");
+    }
+  </script>
 </body>
-</html><script>
-document.addEventListener("DOMContentLoaded", () => {
-  const username = localStorage.getItem("macx_loggedInUser");
-  const userDisplay = document.getElementById("userDisplay");
-  const loggedInSection = document.getElementById("loggedInSection");
-  const notLoggedIn = document.getElementById("notLoggedIn");
-  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  if (username) {
-    userDisplay.textContent = `Welcome, ${username}`;
-    loggedInSection.style.display = "block";
-    notLoggedIn.style.display = "none";
-
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("macx_loggedInUser");
-      window.location.reload();
-    });
-  } else {
-    loggedInSection.style.display = "none";
-    notLoggedIn.style.display = "block";
-
-    loginRedirectBtn.addEventListener("click", () => {
-      window.location.href = "login.html";
-    });
-  }
-});
-
-function viewProduct(url) {
-  window.location.href = url;
-}
-
-function addToCart(productName, price) {
-  const username = localStorage.getItem("macx_loggedInUser");
-  if (!username) {
-    alert("Login first to add to cart.");
-    return;
-  }
-  const quantity = 1;
-  const gun = Gun();
-  const cart = gun.get('macx_cart').get(username);
-  const id = Date.now().toString();
-  cart.get(id).put({ productName, price, quantity });
-  alert("Item added to cart.");
-}
-
-
-const username = localStorage.getItem("macx_loggedInUser");
-const gun = Gun();
-const cartRef = gun.get("macx_cart").get(username);
-
-function addToCart(productId, productName, price, image) {
-  if (!username) {
-    alert("Please login first to add to cart.");
-    return;
-  }
-
-  const quantity = 1; // default quantity for now
-
-  const item = {
-    productId,
-    productName,
-    price,
-    quantity,
-    image,
-    timestamp: Date.now()
-  };
-
-  const cartItemId = productId + '_' + Date.now(); // Unique ID
-  cartRef.get(cartItemId).put(item);
-  alert("Added to cart!");
-}
-
-
-
-</script>
+</html>
