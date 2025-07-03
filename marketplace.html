@@ -9,7 +9,6 @@
 </head>
 <body>
   <div class="container">
-    <!-- Login Status Sticker -->
     <div id="notLoggedIn" style="display: none;">
       <h2>You are not logged in.</h2>
       <button id="loginRedirectBtn">Login First</button>
@@ -19,10 +18,9 @@
       <button id="logoutBtn">Logout</button>
     </div>
 
-    <!-- Product Cards -->
     <div class="products">
       <div class="product-card">
-        <img src="product1.jpg" alt="Product 1" width="100">
+        <img src="product1.jpg" alt="Luxury Serum" width="100">
         <h3>Luxury Serum</h3>
         <p>₹1800</p>
         <button onclick="viewProduct('product1.html')">View Product</button>
@@ -30,13 +28,12 @@
       </div>
 
       <div class="product-card">
-        <img src="product2.jpg" alt="Product 2" width="100">
+        <img src="product2.jpg" alt="Anti-Aging Cream" width="100">
         <h3>Anti-Aging Cream</h3>
         <p>₹2500</p>
         <button onclick="viewProduct('product2.html')">View Product</button>
         <button onclick="addToCart('p02', 'Anti-Aging Cream', 2500, 'product2.jpg')">Add to Cart</button>
       </div>
-      <!-- Add more products as needed -->
     </div>
   </div>
 
@@ -53,18 +50,16 @@
         userDisplay.textContent = `Welcome, ${username}`;
         loggedInSection.style.display = "block";
         notLoggedIn.style.display = "none";
-
-        logoutBtn.addEventListener("click", () => {
+        logoutBtn.onclick = () => {
           localStorage.removeItem("macx_loggedInUser");
           window.location.reload();
-        });
+        };
       } else {
         loggedInSection.style.display = "none";
         notLoggedIn.style.display = "block";
-
-        loginRedirectBtn.addEventListener("click", () => {
+        loginRedirectBtn.onclick = () => {
           window.location.href = "login.html";
-        });
+        };
       }
     });
 
@@ -81,20 +76,23 @@
 
       const gun = Gun();
       const cartRef = gun.get("macx_cart").get(username);
-      const quantity = 1;
       const cartItemId = productId + '_' + Date.now();
-
       const item = {
         productId,
         productName,
         price,
-        quantity,
+        quantity: 1,
         image,
         timestamp: Date.now()
       };
 
-      cartRef.get(cartItemId).put(item);
-      alert("Added to cart!");
+      cartRef.get(cartItemId).put(item, (ack) => {
+        if (ack.err) {
+          alert("Error adding to cart");
+        } else {
+          alert("Added to cart!");
+        }
+      });
     }
   </script>
 </body>
