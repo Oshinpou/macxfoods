@@ -51,7 +51,6 @@
     const cartRef = gun.get("macx_cart").get(username);
     const ordersRef = gun.get("macx_orders").get(username);
     const adminOrders = gun.get("admin_orders");
-    let total = 0;
     let items = [];
 
     function logout() {
@@ -72,7 +71,7 @@
     }
 
     function updateGrandTotal() {
-      total = 0;
+      let total = 0;
       items.forEach(item => {
         if (item && item.quantity && item.price) {
           total += item.price * item.quantity;
@@ -81,23 +80,26 @@
       document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
     }
 
-    function updateQuantity(id, newQty) {
-      if (newQty < 1) newQty = 1;
+    function updateQuantity(id, inputElement) {
+      const newQty = parseInt(inputElement.value);
+      if (isNaN(newQty) || newQty < 1) return;
       cartRef.get(id).once(data => {
         if (!data) return;
-        cartRef.get(id).put({ ...data, quantity: newQty });
-        setTimeout(renderCart, 300);
+        cartRef.get(id).put({ ...data, quantity: newQty }, () => {
+          renderCart();
+        });
       });
     }
 
     function renderCart() {
       const container = document.getElementById("cartItems");
       container.innerHTML = "";
-      total = 0;
       items = [];
 
       cartRef.map().once((item, id) => {
         if (!item || !item.productName) return;
+
+        items.push(item);
 
         const div = document.createElement("div");
         div.innerHTML = `
@@ -105,9 +107,9 @@
           <div class="product-info">
             <p><strong>${item.productName}</strong><br>₹${item.price}</p>
             <div class="qty-controls">
-              <button onclick="updateQuantity('${id}', ${item.quantity - 1})">-</button>
-              <input class="qty-input" type="number" value="${item.quantity}" min="1" onchange="updateQuantity('${id}', this.value)">
-              <button onclick="updateQuantity('${id}', ${item.quantity + 1})">+</button>
+              <button onclick="changeQty('${id}', -1)">-</button>
+              <input class="qty-input" type="number" value="${item.quantity}" min="1" onchange="updateQuantity('${id}', this)">
+              <button onclick="changeQty('${id}', 1)">+</button>
             </div>
             <div class="item-summary">Subtotal: ₹${item.price * item.quantity}</div>
           </div>
@@ -115,7 +117,6 @@
         `;
         container.appendChild(div);
 
-        items.push(item);
         updateGrandTotal();
       });
 
@@ -127,6 +128,16 @@
       }, 1000);
     }
 
+    function changeQty(id, delta) {
+      cartRef.get(id).once(data => {
+        if (!data) return;
+        const newQty = Math.max(1, (data.quantity || 1) + delta);
+        cartRef.get(id).put({ ...data, quantity: newQty }, () => {
+          renderCart();
+        });
+      });
+    }
+
     function removeItem(id) {
       cartRef.get(id).put(null);
       setTimeout(renderCart, 300);
@@ -136,6 +147,13 @@
       e.preventDefault();
 
       if (items.length === 0) return alert("Cart is empty");
+
+      let total = 0;
+      items.forEach(item => {
+        if (item && item.quantity && item.price) {
+          total += item.price * item.quantity;
+        }
+      });
 
       const shipping = {
         name: document.getElementById("name").value,
