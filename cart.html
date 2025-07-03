@@ -85,7 +85,8 @@
       if (isNaN(newQty) || newQty < 1) return;
       cartRef.get(id).once(data => {
         if (!data) return;
-        cartRef.get(id).put({ ...data, quantity: newQty }, () => {
+        const updatedItem = { ...data, quantity: newQty };
+        cartRef.get(id).put(updatedItem, () => {
           renderCart();
         });
       });
@@ -116,8 +117,6 @@
           <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
         `;
         container.appendChild(div);
-
-        updateGrandTotal();
       });
 
       setTimeout(() => {
@@ -125,6 +124,7 @@
           container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
           document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
         }
+        updateGrandTotal();
       }, 1000);
     }
 
@@ -132,7 +132,8 @@
       cartRef.get(id).once(data => {
         if (!data) return;
         const newQty = Math.max(1, (data.quantity || 1) + delta);
-        cartRef.get(id).put({ ...data, quantity: newQty }, () => {
+        const updatedItem = { ...data, quantity: newQty };
+        cartRef.get(id).put(updatedItem, () => {
           renderCart();
         });
       });
