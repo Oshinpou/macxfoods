@@ -1,136 +1,91 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MACX Marketplace</title>
-
-  <!-- GUN and SEA -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-<script src="marketplace.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background: #f9f9f9;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: auto;
-    }
-
-    .product-card {
-      border: 1px solid #ccc;
-      background: #fff;
-      padding: 15px;
-      margin: 10px 0;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-
-    .product-card img {
-      max-width: 100px;
-      display: block;
-      margin: auto;
-    }
-
-    .product-card h3 {
-      margin: 10px 0 5px;
-    }
-
-    .product-card button {
-      margin: 5px;
-      padding: 6px 12px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/sea.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/yjs"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/peerdb"></script>
+  <script defer src="marketplace.js"></script>
 </head>
 <body>
   <div class="container">
+    <!-- Login Status Sticker -->
     <div id="notLoggedIn" style="display: none;">
       <h2>You are not logged in.</h2>
       <button id="loginRedirectBtn">Login First</button>
-    </div>
+    </div><div id="loggedInSection" style="display: none;">
+  <h1 id="userDisplay">Welcome, User</h1>
+  <button id="logoutBtn">Logout</button>
+</div>
 
-    <div id="loggedInSection" style="display: none;">
-      <h1 id="userDisplay">Welcome, User</h1>
-      <button id="logoutBtn">Logout</button>
-      <p>Enjoy shopping at MACX Marketplace!</p>
-      <div id="products"></div>
-    </div>
+<!-- Product Cards -->
+<div class="products">
+  <div class="product-card">
+    <img src="product1.jpg" alt="Product 1">
+    <h3>Product Name 1</h3>
+    <p>₹1800</p>
+    <button onclick="viewProduct('product1.html')">View Product</button>
+    <button onclick="addToCart('Product Name 1', 1800)">Add to Cart</button>
   </div>
 
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const user = gun.user();
+  <div class="product-card">
+    <img src="product2.jpg" alt="Product 2">
+    <h3>Product Name 2</h3>
+    <p>₹2500</p>
+    <button onclick="viewProduct('product2.html')">View Product</button>
+    <button onclick="addToCart('Product Name 2', 2500)">Add to Cart</button>
+  </div>
+  <!-- More products can be added -->
+</div>
 
-    const notLoggedIn = document.getElementById("notLoggedIn");
-    const loggedInSection = document.getElementById("loggedInSection");
-    const userDisplay = document.getElementById("userDisplay");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const productsDiv = document.getElementById("products");
-
-    logoutBtn.onclick = () => {
-      user.leave();
-      sessionStorage.clear();
-      location.reload();
-    };
-
-    document.getElementById("loginRedirectBtn").onclick = () => {
-      window.location.href = "login.html";
-    };
-
-    user.recall({ sessionStorage: true }, () => {
-      if (user.is) {
-        notLoggedIn.style.display = "none";
-        loggedInSection.style.display = "block";
-        userDisplay.textContent = `Welcome, ${user.is.alias}`;
-        loadProducts();
-      } else {
-        notLoggedIn.style.display = "block";
-        loggedInSection.style.display = "none";
-      }
-    });
-
-    const sampleProducts = [
-      { sku: "SKU001", name: "MACX Glow Cream", price: 2000, image: "https://via.placeholder.com/100" },
-      { sku: "SKU002", name: "MACX Sculpt Serum", price: 1800, image: "https://via.placeholder.com/100" },
-      { sku: "SKU003", name: "MACX Muscle Mist", price: 2500, image: "https://via.placeholder.com/100" }
-    ];
-
-    function loadProducts() {
-      productsDiv.innerHTML = "";
-      sampleProducts.forEach(p => {
-        const card = document.createElement("div");
-        card.className = "product-card";
-        card.innerHTML = `
-          <img src="${p.image}" alt="${p.name}" />
-          <h3>${p.name}</h3>
-          <p>Price: ₹${p.price}</p>
-          <button onclick="viewProduct('${p.name}')">View Product</button>
-          <button onclick="addToCart('${p.sku}', '${p.name}', ${p.price})">Add to Cart</button>
-        `;
-        productsDiv.appendChild(card);
-      });
-    }
-
-    function viewProduct(name) {
-      const filename = name.replace(/\\s+/g, '') + '.html';
-      window.location.href = filename;
-    }
-
-    function addToCart(sku, name, price) {
-      const username = user.is?.alias;
-      if (!username) return alert("Login required");
-      const cart = gun.get(`macx_cart_${username}`);
-      cart.get(sku).once(data => {
-        const quantity = data?.quantity || 0;
-        cart.get(sku).put({ name, price, quantity: quantity + 1 });
-        alert(`${name} added to cart`);
-      });
-    }
-  </script>
+  </div>
 </body>
-</html>
+</html><script>
+document.addEventListener("DOMContentLoaded", () => {
+  const username = localStorage.getItem("macx_loggedInUser");
+  const userDisplay = document.getElementById("userDisplay");
+  const loggedInSection = document.getElementById("loggedInSection");
+  const notLoggedIn = document.getElementById("notLoggedIn");
+  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+
+  if (username) {
+    userDisplay.textContent = `Welcome, ${username}`;
+    loggedInSection.style.display = "block";
+    notLoggedIn.style.display = "none";
+
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("macx_loggedInUser");
+      window.location.reload();
+    });
+  } else {
+    loggedInSection.style.display = "none";
+    notLoggedIn.style.display = "block";
+
+    loginRedirectBtn.addEventListener("click", () => {
+      window.location.href = "login.html";
+    });
+  }
+});
+
+function viewProduct(url) {
+  window.location.href = url;
+}
+
+function addToCart(productName, price) {
+  const username = localStorage.getItem("macx_loggedInUser");
+  if (!username) {
+    alert("Login first to add to cart.");
+    return;
+  }
+  const quantity = 1;
+  const gun = Gun();
+  const cart = gun.get('macx_cart').get(username);
+  const id = Date.now().toString();
+  cart.get(id).put({ productName, price, quantity });
+  alert("Item added to cart.");
+}
+</script>
