@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MACX Cart</title>
+
   <style>
     .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
     input,button { margin:5px 0; padding:8px; width:100% }
@@ -18,9 +19,9 @@
     .item-summary { font-size:14px; color:#444 }
   </style>
 
-  <!-- 1) Gun + SEA -->
+  <!-- 1) Gun + SEA via jsDelivr -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
 
   <!-- 2) Razorpay Checkout -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -31,13 +32,13 @@
 
 <body>
   <div class="container">
-    <!-- If not logged in -->
+    <!-- Not Logged In -->
     <div id="notLoggedIn" style="display:none">
       <h2>You are not logged in.</h2>
       <button onclick="location.href='login.html'">Login First</button>
     </div>
 
-    <!-- If logged in -->
+    <!-- Logged In -->
     <div id="loggedInSection" style="display:none">
       <h1 id="userDisplay"></h1>
       <button onclick="logout()">Logout</button>
