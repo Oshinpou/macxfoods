@@ -13,6 +13,11 @@
     img { height: 60px; margin-right: 10px; }
     .product-info { flex-grow: 1; }
     .remove-btn { background-color: crimson; color: white; border: none; padding: 5px 10px; cursor: pointer; }
+    .qty-controls { display: flex; align-items: center; gap: 5px; }
+    .qty-controls button { width: 30px; height: 30px; font-size: 18px; }
+    .qty-input { width: 40px; text-align: center; }
+    .empty-msg { color: gray; font-style: italic; text-align: center; margin-top: 10px; }
+    .item-summary { font-size: 14px; color: #444; }
   </style>
 </head>
 <body>
@@ -67,19 +72,44 @@
       }
     }
 
+    function updateGrandTotal() {
+      total = 0;
+      items.forEach(item => total += item.price * item.quantity);
+      document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+    }
+
+    function changeQuantity(id, delta) {
+      cartRef.get(id).once(data => {
+        if (!data || !data.quantity) return;
+        let newQty = data.quantity + delta;
+        if (newQty < 1) newQty = 1;
+        cartRef.get(id).put({ ...data, quantity: newQty });
+        setTimeout(renderCart, 300);
+      });
+    }
+
     function renderCart() {
       const container = document.getElementById("cartItems");
       container.innerHTML = "";
       total = 0;
       items = [];
+      let isEmpty = true;
+
       cartRef.map().once((item, id) => {
         if (!item || !item.productName) return;
+        isEmpty = false;
 
         const div = document.createElement("div");
         div.innerHTML = `
           <img src="${item.image}" alt="Product">
           <div class="product-info">
-            <p><strong>${item.productName}</strong><br>₹${item.price} × ${item.quantity}</p>
+            <p><strong>${item.productName}</strong><br>₹${item.price}</p>
+            <div class="qty-controls">
+              <button onclick="changeQuantity('${id}', -1)">-</button>
+              <input class="qty-input" value="${item.quantity}" readonly>
+              <button onclick="changeQuantity('${id}', 1)">+</button>
+            </div>
+            <div class="item-summary">Subtotal: ₹${item.price * item.quantity}</div>
           </div>
           <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
         `;
@@ -89,6 +119,11 @@
         items.push(item);
         document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
       });
+
+      if (isEmpty) {
+        container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
+        document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
+      }
     }
 
     function removeItem(id) {
