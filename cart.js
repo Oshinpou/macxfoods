@@ -1,94 +1,62 @@
-// cart.js — MACX Fully Functional Cart Logic
-console.log("🚀 cart.js loaded");
-
-// GUN setup
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-const username = localStorage.getItem('macx_loggedInUser');
-
+const username = localStorage.getItem("macx_loggedInUser");
 const cartRef = gun.get('macx_cart').get(username);
-const ordersRef = gun.get('macx_orders').get(username);
-const adminOrders = gun.get('admin_orders');
+const ordersRef = gun.get("macx_orders").get(username);
+const adminOrders = gun.get("admin_orders");
 
-let items = [];
+let items = {};
 
 function logout() {
-  localStorage.removeItem('macx_loggedInUser');
+  localStorage.removeItem("macx_loggedInUser");
   location.reload();
 }
 
 function renderLoginStatus() {
   if (!username) {
-    document.getElementById('notLoggedIn').style.display = 'block';
+    document.getElementById("notLoggedIn").style.display = "block";
     return;
   }
-
-  document.getElementById('notLoggedIn').style.display = 'none';
-  document.getElementById('loggedInSection').style.display = 'block';
-  document.getElementById('userDisplay').textContent = `Welcome, ${username}`;
-
-  renderCart();
+  document.getElementById("loggedInSection").style.display = "block";
+  document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+  listenToCart();
 }
 
-function updateGrandTotal() {
-  let total = 0;
+function listenToCart() {
+  const container = document.getElementById("cartItems");
+  items = {};
+  container.innerHTML = "";
 
-  cartRef.map().once((item, id) => {
-    if (!item || !item.price || !item.quantity) return;
-
-    const qty = parseInt(item.quantity || 1, 10);
-    const price = parseFloat(item.price || 0);
-
-    total += qty * price;
-
-    const subtotalElem = document.getElementById(`subtotal-${id}`);
-    if (subtotalElem) {
-      subtotalElem.textContent = `Subtotal: ₹${qty * price}`;
-    }
-  });
-
-  setTimeout(() => {
-    document.getElementById('grandTotal').textContent = `Grand Total: ₹${total}`;
-  }, 1000);
-}
-
-function renderCart() {
-  const container = document.getElementById('cartItems');
-  container.innerHTML = '';
-  items = [];
-
-  cartRef.map().on((item, id) => {
-    if (!item || !item.productName) {
-      const gone = container.querySelector(`[data-id="${id}"]`);
-      if (gone) gone.remove();
-      items = items.filter(x => x.id !== id);
+  cartRef.map().on((data, id) => {
+    if (!data || !data.productName) {
+      delete items[id];
+      const existing = container.querySelector(`[data-id="${id}"]`);
+      if (existing) existing.remove();
       updateGrandTotal();
       return;
     }
 
-    const qty = parseInt(item.quantity || 1, 10);
-    const product = { ...item, id, quantity: qty };
-    const existingIndex = items.findIndex(x => x.id === id);
+    items[id] = { ...data, id };
 
-    if (existingIndex >= 0) items[existingIndex] = product;
-    else items.push(product);
-
-    let div = container.querySelector(`[data-id="${id}"]`);
-    if (!div) {
-      div = document.createElement('div');
-      div.setAttribute('data-id', id);
-      container.appendChild(div);
+    let itemNode = container.querySelector(`[data-id="${id}"]`);
+    if (!itemNode) {
+      itemNode = document.createElement("div");
+      itemNode.dataset.id = id;
+      container.appendChild(itemNode);
     }
 
-    div.innerHTML = `
-      <img src="${item.image}" alt="${item.productName}" style="height:60px;margin-right:10px;">
+    const quantity = parseInt(data.quantity) || 1;
+    const subtotal = quantity * parseInt(data.price);
+
+    itemNode.innerHTML = `
+      <img src="${data.image}" alt="${data.productName}" height="60">
       <div class="product-info">
-        <p><strong>${item.productName}</strong><br>₹${item.price}</p>
+        <p><strong>${data.productName}</strong><br>₹${data.price}</p>
         <div class="qty-controls">
           <button onclick="changeQty('${id}', -1)">-</button>
-          <input class="qty-input" type="number" min="1" value="${qty}" onchange="updateQuantity('${id}', this)">
+          <input type="number" min="1" class="qty-input" value="${quantity}" onchange="updateQty('${id}', this)">
           <button onclick="changeQty('${id}', 1)">+</button>
         </div>
-        <div class="item-summary" id="subtotal-${id}">Subtotal: ₹${item.price * qty}</div>
+        <div class="item-summary" id="subtotal-${id}">Subtotal: ₹${subtotal}</div>
       </div>
       <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
     `;
@@ -97,81 +65,87 @@ function renderCart() {
   });
 
   setTimeout(() => {
-    if (container.innerHTML.trim() === "") {
+    if (container.innerHTML.trim() === '') {
       container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
-      document.getElementById('grandTotal').textContent = "Grand Total: ₹0";
+      document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
     }
-  }, 1200);
+  }, 1500);
 }
 
-window.updateQuantity = function (id, input) {
-  const newQty = parseInt(input.value, 10);
-  if (!newQty || newQty < 1) return;
-
-  cartRef.get(id).once(item => {
-    if (!item) return;
-    cartRef.get(id).put({ ...item, quantity: newQty }, () => {
-      document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${item.price * newQty}`;
-      updateGrandTotal();
-    });
+function updateGrandTotal() {
+  let total = 0;
+  Object.values(items).forEach(item => {
+    const price = parseInt(item.price) || 0;
+    const qty = parseInt(item.quantity) || 1;
+    total += price * qty;
   });
-};
+  document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+}
 
-window.changeQty = function (id, delta) {
-  cartRef.get(id).once(item => {
-    if (!item) return;
-    const newQty = Math.max(1, (item.quantity || 1) + delta);
-    cartRef.get(id).put({ ...item, quantity: newQty });
+function updateQty(id, input) {
+  const newQty = Math.max(1, parseInt(input.value) || 1);
+  cartRef.get(id).once(data => {
+    if (!data) return;
+    cartRef.get(id).put({ ...data, quantity: newQty });
   });
-};
+}
 
-window.removeItem = function (id) {
+function changeQty(id, delta) {
+  cartRef.get(id).once(data => {
+    if (!data) return;
+    const currentQty = parseInt(data.quantity) || 1;
+    const newQty = Math.max(1, currentQty + delta);
+    cartRef.get(id).put({ ...data, quantity: newQty });
+  });
+}
+
+function removeItem(id) {
   cartRef.get(id).put(null);
-};
+}
 
-// Payment and Order Submission
-document.getElementById('shippingForm').addEventListener('submit', function (e) {
+// Razorpay Order Submit
+document.getElementById("shippingForm").addEventListener("submit", function (e) {
   e.preventDefault();
-  if (items.length === 0) return alert('Cart is empty');
 
-  const total = items.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+  const cartItems = Object.values(items);
+  if (cartItems.length === 0) return alert("Your cart is empty.");
+
+  const totalAmount = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const shipping = {
-    name: document.getElementById('name').value,
-    phone: document.getElementById('phone').value,
-    email: document.getElementById('email').value,
-    address: document.getElementById('address').value,
-    country: document.getElementById('country').value,
-    pincode: document.getElementById('pincode').value
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    email: document.getElementById("email").value,
+    address: document.getElementById("address").value,
+    country: document.getElementById("country").value,
+    pincode: document.getElementById("pincode").value
   };
 
   const orderId = Date.now().toString();
 
-  const options = {
-    key: 'YOUR_RAZORPAY_KEY_ID', // replace with your Razorpay key
-    amount: total * 100,
-    currency: 'INR',
-    name: 'MACX Marketplace',
-    description: 'Order Payment',
+  const razorpayOptions = {
+    key: "YOUR_RAZORPAY_KEY_ID", // Replace with your key
+    amount: totalAmount * 100,
+    currency: "INR",
+    name: "MACX Marketplace",
+    description: "Cart Purchase",
     handler: function (response) {
-      const order = {
+      const orderData = {
+        items: cartItems,
+        total: totalAmount,
         shipping,
-        items,
-        total,
-        status: 'Paid',
         razorpayPaymentId: response.razorpay_payment_id,
+        status: "Paid",
         timestamp: Date.now()
       };
 
-      ordersRef.get(orderId).put(order);
-      adminOrders.get(orderId).put({ ...order, username });
+      ordersRef.get(orderId).put(orderData);
+      adminOrders.get(orderId).put({ ...orderData, username });
 
       // Clear cart
-      cartRef.map().once((data, id) => {
-        cartRef.get(id).put(null);
-      });
+      cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
-      alert("Order placed successfully!");
+      alert("Payment successful & order placed!");
       window.location.href = "myorders.html";
     },
     prefill: {
@@ -179,11 +153,14 @@ document.getElementById('shippingForm').addEventListener('submit', function (e) 
       email: shipping.email,
       contact: shipping.phone
     },
-    theme: { color: '#00c0b5' }
+    theme: {
+      color: "#00c0b5"
+    }
   };
 
-  const rzp = new Razorpay(options);
+  const rzp = new Razorpay(razorpayOptions);
   rzp.open();
 });
 
+// INIT
 renderLoginStatus();
