@@ -1,96 +1,108 @@
-// Initialize Gun
-const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // You can add more peers
+// Initialize GUN
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const username = localStorage.getItem("macx_loggedInUser");
 
 // References
-const cartRef = username ? gun.get("macx_cart").get(username) : null;
+const cartRef = username ? gun.get('macx_cart').get(username) : null;
 const cartContainer = document.getElementById("cartItems");
 const grandTotalDisplay = document.getElementById("grandTotal");
-let currentCartItems = [];
+let currentCartItems = {};
 
 function renderCart() {
   if (!cartRef || !cartContainer) return;
 
   cartContainer.innerHTML = "";
-  currentCartItems = [];
+  currentCartItems = {};
 
   cartRef.map().once((item, id) => {
     if (!item || !item.productName) return;
 
-    currentCartItems.push({ ...item, id });
+    currentCartItems[id] = item;
 
     const div = document.createElement("div");
     div.className = "cart-item";
     div.innerHTML = `
-      <img src="${item.image}" alt="Product" width="60">
+      <img src="${item.image}" alt="${item.productName}" width="60">
       <div style="flex-grow:1;">
         <p><strong>${item.productName}</strong></p>
         <p>Price: ₹${item.price}</p>
         <div>
-          Qty: 
+          Qty:
           <input type="number" value="${item.quantity}" min="1" 
                  onchange="updateQty('${id}', this.value)" style="width:50px;">
         </div>
-        <p>Subtotal: ₹${item.price * item.quantity}</p>
+        <p id="subtotal-${id}">Subtotal: ₹${item.price * item.quantity}</p>
       </div>
       <button onclick="removeItem('${id}')">Remove</button>
     `;
     cartContainer.appendChild(div);
   });
 
-  // Delay to wait for all items and calculate total
-  setTimeout(updateGrandTotal, 1000);
+  setTimeout(updateGrandTotal, 1000); // Wait for all items to load
 }
 
 function updateQty(id, newQty) {
-  if (!cartRef) return;
-  cartRef.get(id).once(data => {
-    if (!data) return;
-    const updated = { ...data, quantity: parseInt(newQty) || 1 };
-    cartRef.get(id).put(updated);
-    setTimeout(renderCart, 500);
-  });
+  const quantity = parseInt(newQty);
+  if (quantity < 1 || !currentCartItems[id]) return;
+
+  const item = { ...currentCartItems[id], quantity };
+  cartRef.get(id).put(item);
+  
+  // Update UI immediately
+  document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${item.price * quantity}`;
+  updateGrandTotal();
 }
 
 function removeItem(id) {
   if (!cartRef) return;
   cartRef.get(id).put(null);
-  setTimeout(renderCart, 500);
+  delete currentCartItems[id];
+  renderCart();
 }
 
 function updateGrandTotal() {
   let total = 0;
-  currentCartItems.forEach(item => {
+  for (const id in currentCartItems) {
+    const item = currentCartItems[id];
     if (item && item.price && item.quantity) {
       total += item.price * item.quantity;
     }
-  });
+  }
   if (grandTotalDisplay) {
     grandTotalDisplay.textContent = `Grand Total: ₹${total}`;
   }
 }
 
-// Call on load
-document.addEventListener("DOMContentLoaded", () => {
-  if (!username) {
-    if (document.getElementById("notLoggedIn")) {
-      document.getElementById("notLoggedIn").style.display = "block";
-    }
-    if (document.getElementById("loggedInSection")) {
-      document.getElementById("loggedInSection").style.display = "none";
-    }
-    return;
-  }
+// Login Status UI
+function handleLoginStatusUI() {
+  const notLoggedIn = document.getElementById("notLoggedIn");
+  const loggedInSection = document.getElementById("loggedInSection");
+  const userDisplay = document.getElementById("userDisplay");
+  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
 
-  if (document.getElementById("notLoggedIn")) {
-    document.getElementById("notLoggedIn").style.display = "none";
-  }
-  if (document.getElementById("loggedInSection")) {
-    document.getElementById("loggedInSection").style.display = "block";
-    const userDisplay = document.getElementById("userDisplay");
+  if (username) {
     if (userDisplay) userDisplay.textContent = `Welcome, ${username}`;
+    if (loggedInSection) loggedInSection.style.display = "block";
+    if (notLoggedIn) notLoggedIn.style.display = "none";
+    if (logoutBtn) {
+      logoutBtn.onclick = () => {
+        localStorage.removeItem("macx_loggedInUser");
+        location.reload();
+      };
+    }
+  } else {
+    if (loggedInSection) loggedInSection.style.display = "none";
+    if (notLoggedIn) notLoggedIn.style.display = "block";
+    if (loginRedirectBtn) {
+      loginRedirectBtn.onclick = () => {
+        location.href = "login.html";
+      };
+    }
   }
+}
 
+document.addEventListener("DOMContentLoaded", () => {
+  handleLoginStatusUI();
   renderCart();
 });
-
