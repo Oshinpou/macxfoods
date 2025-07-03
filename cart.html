@@ -1,49 +1,54 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Cart</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Your Cart</h1>
     <div id="cartItems"></div>
-    <h2 id="grandTotal">Grand Total: ₹0</h2>
+    <h2 id="grandTotal">Grand Total: ₹0</h2><h3>Shipping Details</h3>
+<form id="shippingForm">
+  <input type="text" id="customerName" placeholder="Full Name" required><br>
+  <input type="tel" id="customerPhone" placeholder="Phone (+91XXXXXXXXXX)" required><br>
+  <input type="email" id="customerEmail" placeholder="Email" required><br>
+  <textarea id="shippingAddress" placeholder="Shipping Address" required></textarea><br>
+  <input type="text" id="country" placeholder="Country" required><br>
+  <input type="text" id="pincode" placeholder="Pincode" required><br>
+  <button type="submit">Create Order & Pay</button>
+</form>
 
-    <h3>Shipping Details</h3>
-    <form id="shippingForm">
-      <input type="text" id="customerName" placeholder="Full Name" required><br>
-      <input type="tel" id="customerPhone" placeholder="Phone (+91XXXXXXXXXX)" required><br>
-      <input type="email" id="customerEmail" placeholder="Email" required><br>
-      <textarea id="shippingAddress" placeholder="Shipping Address" required></textarea><br>
-      <input type="text" id="country" placeholder="Country" required><br>
-      <input type="text" id="pincode" placeholder="Pincode" required><br>
-      <button type="submit">Create Order & Pay</button>
-    </form>
-  </div>
-
-  <script>
+  </div>  <script>
     const username = localStorage.getItem("macx_loggedInUser");
     const gun = Gun();
     const cartRef = gun.get("macx_cart").get(username);
     const orderRef = gun.get("macx_orders").get(username);
     const cartItemsDiv = document.getElementById("cartItems");
     const grandTotalEl = document.getElementById("grandTotal");
+
     let grandTotal = 0;
     let items = [];
 
-    cartRef.map().once((data, id) => {
-      if (!data) return;
+    cartRef.map().once((item, id) => {
+      if (!item || !item.productName || !item.price) return;
+
       const div = document.createElement("div");
-      const total = data.price * data.quantity;
+      const total = item.price * item.quantity;
       grandTotal += total;
-      items.push({...data, id});
+      items.push({...item, id});
+
       div.innerHTML = `
-        <p><strong>${data.productName}</strong> - ₹${data.price} x ${data.quantity}</p>
-        <button onclick="deleteItem('${id}')">Delete</button>
+        <div style="border:1px solid #ccc;padding:10px;margin-bottom:10px;">
+          <img src="${item.image || 'default.jpg'}" alt="${item.productName}" width="100">
+          <p><strong>${item.productName}</strong></p>
+          <p>Price: ₹${item.price}</p>
+          <p>Quantity: ${item.quantity}</p>
+          <p>Total: ₹${total}</p>
+          <button onclick="deleteItem('${id}')">Remove</button>
+        </div>
       `;
       cartItemsDiv.appendChild(div);
       grandTotalEl.textContent = `Grand Total: ₹${grandTotal}`;
@@ -54,18 +59,19 @@
       window.location.reload();
     }
 
-    document.getElementById("shippingForm").addEventListener("submit", (e) => {
+    document.getElementById("shippingForm").addEventListener("submit", function(e) {
       e.preventDefault();
       if (!username) return alert("Login first");
+      if (items.length === 0) return alert("Cart is empty");
 
-      const name = document.getElementById("customerName").value;
-      const phone = document.getElementById("customerPhone").value;
-      const email = document.getElementById("customerEmail").value;
-      const address = document.getElementById("shippingAddress").value;
-      const country = document.getElementById("country").value;
-      const pincode = document.getElementById("pincode").value;
+      const name = document.getElementById("customerName").value.trim();
+      const phone = document.getElementById("customerPhone").value.trim();
+      const email = document.getElementById("customerEmail").value.trim();
+      const address = document.getElementById("shippingAddress").value.trim();
+      const country = document.getElementById("country").value.trim();
+      const pincode = document.getElementById("pincode").value.trim();
 
-      const orderDetails = {
+      const orderData = {
         items,
         name,
         phone,
@@ -74,18 +80,17 @@
         country,
         pincode,
         grandTotal,
-        status: "Pending",
         paymentStatus: "Paid",
+        status: "Pending",
         timestamp: Date.now()
       };
 
       const orderId = Date.now().toString();
-      orderRef.get(orderId).put(orderDetails);
+      orderRef.get(orderId).put(orderData);
 
-      cartRef.map().once((_, id) => cartRef.get(id).put(null));
+      cartRef.map().once((_, key) => cartRef.get(key).put(null));
       alert("Order placed successfully!");
       window.location.href = "myorders.html";
     });
-  </script>
-</body>
+  </script></body>
 </html>
