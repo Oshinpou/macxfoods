@@ -1,15 +1,25 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Cart</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Your Cart</h1>
+    <!-- Login Status -->
+    <div id="notLoggedIn" style="display: none;">
+      <h2>You are not logged in.</h2>
+      <button id="loginRedirectBtn">Login First</button>
+    </div>
+    <div id="loggedInSection" style="display: none;">
+      <h1 id="userDisplay">Welcome, User</h1>
+      <button id="logoutBtn">Logout</button>
+    </div>
+
+    <h2>Your Cart</h2>
     <div id="cartItems"></div>
     <h3 id="grandTotal">Grand Total: ₹0</h3>
 
@@ -21,23 +31,49 @@
       <input type="text" id="address" placeholder="Shipping Address" required><br>
       <input type="text" id="country" placeholder="Country" required><br>
       <input type="text" id="pincode" placeholder="PIN Code" required><br>
-      <button type="submit">Place Order</button>
+      <button type="submit">Pay & Place Order</button>
     </form>
   </div>
 
   <script>
     const username = localStorage.getItem("macx_loggedInUser");
     const gun = Gun();
-    const cartRef = gun.get("macx_cart").get(username);
-    const ordersRef = gun.get("macx_orders").get(username);
+    const cartRef = gun.get("macx_cart").get(username || "");
+    const ordersRef = gun.get("macx_orders").get(username || "");
     const adminRef = gun.get("admin_orders");
 
+    const userDisplay = document.getElementById("userDisplay");
+    const loggedInSection = document.getElementById("loggedInSection");
+    const notLoggedIn = document.getElementById("notLoggedIn");
+    const loginRedirectBtn = document.getElementById("loginRedirectBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+
+    if (username) {
+      userDisplay.textContent = `Welcome, ${username}`;
+      loggedInSection.style.display = "block";
+      notLoggedIn.style.display = "none";
+
+      logoutBtn.onclick = () => {
+        localStorage.removeItem("macx_loggedInUser");
+        window.location.reload();
+      };
+    } else {
+      loggedInSection.style.display = "none";
+      notLoggedIn.style.display = "block";
+
+      loginRedirectBtn.onclick = () => {
+        window.location.href = "login.html";
+      };
+    }
+
     let total = 0;
+    let cartItemsList = [];
 
     function renderCart() {
       const container = document.getElementById("cartItems");
       container.innerHTML = "";
       total = 0;
+      cartItemsList = [];
 
       cartRef.map().once((item, id) => {
         if (!item || !item.productName) return;
@@ -51,6 +87,7 @@
         container.appendChild(div);
 
         total += item.price * item.quantity;
+        cartItemsList.push(item);
         document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
       });
     }
@@ -62,6 +99,12 @@
 
     document.getElementById("shippingForm").addEventListener("submit", (e) => {
       e.preventDefault();
+
+      if (!username) {
+        alert("Please login before placing order.");
+        return;
+      }
+
       const orderId = Date.now().toString();
       const shipping = {
         name: document.getElementById("name").value,
@@ -76,15 +119,9 @@
         timestamp: Date.now()
       };
 
-      const orderItems = [];
-      cartRef.map().once((item, id) => {
-        if (!item || !item.productName) return;
-        orderItems.push(item);
-      });
-
       setTimeout(() => {
-        ordersRef.get(orderId).put({ shipping, items: orderItems });
-        adminRef.get(orderId).put({ shipping, items: orderItems });
+        ordersRef.get(orderId).put({ shipping, items: cartItemsList });
+        adminRef.get(orderId).put({ shipping, items: cartItemsList });
         alert("Order placed successfully!");
         cartRef.map().once((data, id) => cartRef.get(id).put(null));
         renderCart();
