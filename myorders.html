@@ -1,74 +1,49 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>My Orders - MACX</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    .container { padding: 20px; }
-    .order-card { border: 1px solid #ccc; padding: 15px; margin: 15px 0; }
-    .order-card h4 { margin-bottom: 5px; }
-    .order-items { margin-left: 15px; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
-<div class="container">
-  <div id="notLoggedIn" style="display: none;">
-    <h2>You are not logged in.</h2>
-    <button id="loginRedirectBtn">Login First</button>
-  </div>  <div id="loggedInSection" style="display: none;">
-    <h1 id="userDisplay">My Orders</h1>
-    <button id="logoutBtn">Logout</button>
-    <div id="orders"></div>
+  <div class="container">
+    <h1>My Orders</h1>
+    <div id="ordersList"></div>
   </div>
-</div><script>
-  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
-  const user = gun.user();
 
-  const notLoggedIn = document.getElementById("notLoggedIn");
-  const loggedInSection = document.getElementById("loggedInSection");
-  const userDisplay = document.getElementById("userDisplay");
-  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-  const ordersDiv = document.getElementById("orders");
+  <script>
+    const username = localStorage.getItem("macx_loggedInUser");
+    const gun = Gun();
+    const orderRef = gun.get("macx_orders").get(username);
+    const ordersList = document.getElementById("ordersList");
 
-  loginRedirectBtn.onclick = () => window.location.href = 'login.html';
-  logoutBtn.onclick = () => user.leave();
-
-  user.recall({ sessionStorage: true }, () => {
-    if (user.is) {
-      notLoggedIn.style.display = "none";
-      loggedInSection.style.display = "block";
-      userDisplay.textContent = `Orders for ${user.is.alias}`;
-      loadOrders();
-    } else {
-      notLoggedIn.style.display = "block";
-      loggedInSection.style.display = "none";
-    }
-  });
-
-  function loadOrders() {
-    const username = user.is.alias;
-    const userOrders = gun.get(`macx_user_orders_${username}`);
-    userOrders.map().once((order, id) => {
+    orderRef.map().once((order, id) => {
       if (!order || !order.items) return;
+
       const div = document.createElement("div");
-      div.className = "order-card";
+      const items = order.items.map ? order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('') : '';
+
       div.innerHTML = `
-        <h4>Order ID: ${id}</h4>
-        <p>Status: ${order.status}</p>
-        <p>Date: ${new Date(order.date).toLocaleString()}</p>
-        <p>Total Paid: ₹${order.total}</p>
-        <h5>Items:</h5>
-        <ul class='order-items'>
-          ${order.items.map(i => `<li>${i.name} (x${i.quantity}) - ₹${i.price * i.quantity}</li>`).join('')}
-        </ul>
+        <h3>Order ID: ${id}</h3>
+        <p><strong>Status:</strong> ${order.status || 'N/A'}</p>
+        <p><strong>Payment:</strong> ${order.paymentStatus || 'N/A'} - ₹${order.grandTotal || 0}</p>
+        <p><strong>Name:</strong> ${order.name || ''}</p>
+        <p><strong>Phone:</strong> ${order.phone || ''}</p>
+        <p><strong>Address:</strong> ${order.address || ''}, ${order.country || ''} - ${order.pincode || ''}</p>
+        <ul>${items}</ul>
+        <button onclick="cancelOrder('${id}')">Cancel Order</button>
+        <hr>
       `;
-      ordersDiv.appendChild(div);
+      ordersList.appendChild(div);
     });
-  }
-</script></body>
+
+    function cancelOrder(id) {
+      gun.get("macx_orders").get(username).get(id).get("status").put("Cancelled");
+      alert("Order cancelled.");
+      window.location.reload();
+    }
+  </script>
+</body>
 </html>
