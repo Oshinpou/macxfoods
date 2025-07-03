@@ -86,9 +86,9 @@
       cartRef.get(id).once(data => {
         if (!data) return;
         const updatedItem = { ...data, quantity: newQty };
-        cartRef.get(id).put(updatedItem, () => {
-          renderCart();
-        });
+        cartRef.get(id).put(updatedItem);
+        // Save quantity permanently and update grand total
+        renderCart();
       });
     }
 
@@ -168,7 +168,7 @@
       const orderId = Date.now().toString();
 
       const options = {
-        key: "YOUR_RAZORPAY_KEY_ID", // Replace with your Razorpay key
+        key: "YOUR_RAZORPAY_KEY_ID",
         amount: total * 100,
         currency: "INR",
         name: "MACX Cosmetics",
@@ -202,4 +202,4 @@
 
     renderLoginStatus();
   </script></body>
-</html>
+      </html>
