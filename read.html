@@ -3,86 +3,128 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MACX Marketplace – Policies & Info</title>
-  <link rel="stylesheet" href="style.css" />
+  <title>MACX Policies & Info</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      line-height: 1.7;
-      background-color: #f4f4f4;
+      font-family: 'Poppins', sans-serif;
+      background: #f9f9f9;
       color: #333;
       padding: 20px;
     }
 
-    h1, h2 {
-      color: #000;
+    .container {
+      max-width: 900px;
+      margin: auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 32px;
+      color: #111;
     }
 
     section {
-      background: white;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 30px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      color: #0b7a75;
+      margin-bottom: 15px;
+      font-size: 24px;
+    }
+
+    p {
+      margin-bottom: 15px;
+      font-size: 16px;
+      line-height: 1.6;
     }
 
     .faq-question {
-      font-weight: bold;
+      font-weight: 600;
       margin-top: 15px;
     }
 
     .faq-answer {
       margin-left: 20px;
-      color: #444;
+      color: #555;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 20px;
+      }
+
+      h1 {
+        font-size: 26px;
+      }
+
+      h2 {
+        font-size: 20px;
+      }
+
+      p {
+        font-size: 15px;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="container">
+    <h1>MACX Marketplace Policies & Information</h1>
 
-  <h1>MACX Marketplace – Policies & Info</h1>
+    <section id="terms">
+      <h2>Terms and Conditions</h2>
+      <p>By using MACX Marketplace, you agree to follow all applicable laws and accept our platform terms. Products listed are subject to availability. Prices and offers may change without notice.</p>
+      <p>Any misuse, fraudulent behavior, or abuse of our platform will lead to permanent suspension of the user account.</p>
+    </section>
 
-  <section id="terms">
-    <h2>Terms and Conditions</h2>
-    <p>By using MACX Marketplace, you agree to our terms and conditions. All transactions made on our platform are legally binding. Users must not misuse our platform or violate any applicable laws. Products listed are subject to availability. Prices and descriptions are subject to change without notice.</p>
-  </section>
+    <section id="privacy">
+      <h2>Privacy Policy</h2>
+      <p>We take your privacy seriously. Your data is protected and never sold or shared without your consent. We use it only to process orders and enhance your shopping experience on MACX Marketplace.</p>
+    </section>
 
-  <section id="privacy">
-    <h2>Privacy Policy</h2>
-    <p>We respect your privacy. Any personal information collected during purchase is securely stored and never shared with third parties without consent. We use your data to process orders, provide customer service, and improve your shopping experience.</p>
-  </section>
+    <section id="returns">
+      <h2>Returns and Refunds</h2>
+      <p>Returns are accepted within 3 days of delivery, provided items are unused and in original packaging. Refunds are processed within 3 working days after returned product inspection.</p>
+      <p><strong>Note:</strong> No refunds will be issued for cancellations made after 24 hours of order placement.</p>
+    </section>
 
-  <section id="returns">
-    <h2>Returns and Refunds Policy</h2>
-    <p>We offer easy returns within 3 days of product delivery. Refunds are processed within 3 working days after the returned product is received and verified.</p>
-    <p><strong>No refunds are provided for cancellations made after 24 hours of order placement.</strong></p>
-    <p>Items must be unused, in original packaging, and not damaged. Shipping charges are non-refundable.</p>
-  </section>
+    <section id="faq">
+      <h2>Frequently Asked Questions (FAQs)</h2>
 
-  <section id="faq">
-    <h2>Frequently Asked Questions (FAQs)</h2>
+      <p class="faq-question">Q1: How long does delivery take?</p>
+      <p class="faq-answer">Orders are delivered within 30 to 60 days depending on your location and the product type.</p>
 
-    <div class="faq">
-      <p class="faq-question">Q1: How long does it take to receive my order?</p>
-      <p class="faq-answer">Orders are delivered within 30 to 60 days, depending on location and availability.</p>
+      <p class="faq-question">Q2: Can I cancel an order?</p>
+      <p class="faq-answer">Yes, you can cancel within 24 hours. After that, cancellations will not be eligible for a refund.</p>
 
-      <p class="faq-question">Q2: Can I cancel my order?</p>
-      <p class="faq-answer">Yes, you can cancel within 24 hours. After 24 hours, the order is non-refundable.</p>
+      <p class="faq-question">Q3: How do I contact customer support?</p>
+      <p class="faq-answer">Email us at <a href="mailto:macxyy12@gmail.com">macxyy12@gmail.com</a> or call us at +91 8452939172.</p>
 
-      <p class="faq-question">Q3: How do I contact customer service?</p>
-      <p class="faq-answer">You can contact us at <a href="mailto:macxyy12@gmail.com">macxyy12@gmail.com</a> or call +91-8452939172.</p>
+      <p class="faq-question">Q4: How secure is my payment?</p>
+      <p class="faq-answer">All payments are processed securely through Razorpay using industry-standard encryption.</p>
 
-      <p class="faq-question">Q4: Is there a return pickup service?</p>
-      <p class="faq-answer">Currently, we ask customers to return items via courier services. We may arrange pickup for certain regions.</p>
+      <p class="faq-question">Q5: Do you offer return pickups?</p>
+      <p class="faq-answer">Pickup is available in some regions. Otherwise, customers are requested to courier the return at their own cost.</p>
+    </section>
 
-      <p class="faq-question">Q5: Are my payment details secure?</p>
-      <p class="faq-answer">Yes, we use Razorpay to process secure payments through industry-standard encryption protocols.</p>
-    </div>
-  </section>
-
-  <section id="about">
-    <h2>About MACX Marketplace</h2>
-    <p>MACX Marketplace is your premium online destination for luxury cosmetics, food, furniture, and fashion products. Our brand stands for quality, uniqueness, and delivering a refined lifestyle to our customers. With innovative product offerings and secure checkout systems, MACX is dedicated to a seamless and elevated shopping experience across India and globally.</p>
-  </section>
-
+    <section id="about">
+      <h2>About MACX Marketplace</h2>
+      <p>MACX Marketplace is a luxury shopping destination for premium skincare, fashion, food, and lifestyle products. We combine beauty, innovation, and elegance to provide an extraordinary experience to every customer. Our products are designed for those who desire more than just average—MACX gives you the power of maximum quality and iconic results.</p>
+    </section>
+  </div>
 </body>
 </html>
