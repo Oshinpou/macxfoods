@@ -2,205 +2,108 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Luxury Serum - MACX</title>
+  <title>Product 1 - Luxury Serum</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/sea.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sea.js"></script>
   <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f5f5f5;
-    }
+    body { font-family: sans-serif; margin: 0; padding: 0; background: #f8f8f8; }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
 
-    .container {
-      padding: 20px;
-      max-width: 900px;
-      margin: auto;
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.08);
-    }
+    .slider { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; }
+    .slider img { height: 200px; border-radius: 10px; }
 
-    .status-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-    }
+    h2, h3 { margin-bottom: 10px; }
+    p { color: #444; }
 
-    .status-bar h2 {
-      margin: 0;
-      font-size: 18px;
-    }
+    .qty-controls { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+    .qty-controls button { padding: 5px 10px; font-size: 18px; }
+    .qty-controls input { width: 60px; text-align: center; font-size: 16px; }
 
-    .slider {
-      display: flex;
-      overflow-x: auto;
-      gap: 12px;
-      scroll-snap-type: x mandatory;
-      margin-bottom: 20px;
-    }
+    textarea, input[type=text], input[type=number] { width: 100%; padding: 8px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; }
 
-    .slider img {
-      width: 100%;
-      max-width: 300px;
-      border-radius: 12px;
-      scroll-snap-align: start;
-      flex-shrink: 0;
-    }
+    .review-item { background: #f0f0f0; padding: 10px; border-left: 4px solid teal; margin-bottom: 10px; border-radius: 5px; }
 
-    h2, h3 {
-      color: #222;
-    }
-
-    p {
-      color: #555;
-    }
-
-    .product-info {
-      padding: 10px 0;
-    }
-
-    .qty-controls {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      margin: 15px 0;
-    }
-
-    .qty-controls input {
-      width: 60px;
-      padding: 6px;
-      text-align: center;
-      font-size: 16px;
-    }
-
-    .qty-controls button {
-      padding: 8px 14px;
-      font-size: 16px;
-      background: #00bfa5;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #009e8e;
-    }
-
-    .review {
-      margin-top: 30px;
-      border-top: 1px solid #ddd;
-      padding-top: 20px;
-    }
-
-    textarea, input[type="text"], input[type="number"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 5px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 14px;
-    }
-
-    .review-item {
-      background: #f9f9f9;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-left: 4px solid #00bfa5;
-      border-radius: 6px;
-    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
   <div class="container">
-
     <!-- Login Status -->
-    <div id="notLoggedIn" style="display: none;">
+    <div id="notLoggedIn" class="hidden">
       <h2>You are not logged in.</h2>
       <button onclick="location.href='login.html'">Login First</button>
     </div>
 
-    <div id="loggedInSection" style="display: none;">
-      <div class="status-bar">
-        <h2 id="userDisplay">Welcome, User</h2>
-        <button onclick="logout()">Logout</button>
-      </div>
+    <div id="loggedInSection" class="hidden">
+      <h2 id="userDisplay">Welcome, User</h2>
+      <button onclick="logout()">Logout</button>
 
-      <!-- Product Image Slider -->
+      <!-- Product Images -->
       <div class="slider">
-        <img src="img/serum1.jpg" alt="Serum Image 1">
-        <img src="img/serum2.jpg" alt="Serum Image 2">
-        <img src="img/serum3.jpg" alt="Serum Image 3">
-        <img src="img/serum4.jpg" alt="Serum Image 4">
-        <img src="img/serum5.jpg" alt="Serum Image 5">
+        <img src="img/serum1.jpg" alt="img1" />
+        <img src="img/serum2.jpg" alt="img2" />
+        <img src="img/serum3.jpg" alt="img3" />
       </div>
 
-      <!-- Product Info -->
-      <div class="product-info">
-        <h2>Luxury Face Sculpting Serum</h2>
-        <p><strong>Price:</strong> ₹1800</p>
+      <h2>Luxury Face Sculpting Serum</h2>
+      <p><strong>Price:</strong> ₹1800</p>
 
-        <div class="qty-controls">
-          <button onclick="changeQty(-1)">-</button>
-          <input type="number" id="quantity" value="1" min="1" />
-          <button onclick="changeQty(1)">+</button>
-        </div>
-
-        <button onclick="addToCart()">Add to Cart</button>
-
-        <h3>Description</h3>
-        <p>A luxurious serum designed to firm, lift, and enhance your facial contours with advanced peptides and botanical nutrients.</p>
-
-        <h3>Ingredients</h3>
-        <p>Multi-Peptides, Hyaluronic Acid, Vitamin C, Plant Stem Cells, Aloe Vera.</p>
-
-        <h3>Usage</h3>
-        <p>Massage 2-3 drops into clean face and neck every morning and night.</p>
-
-        <h3>Warning</h3>
-        <p>External use only. Avoid direct eye contact. Patch test recommended before first use.</p>
+      <div class="qty-controls">
+        <button onclick="changeQty(-1)">-</button>
+        <input type="number" id="quantity" value="1" min="1" />
+        <button onclick="changeQty(1)">+</button>
       </div>
 
-      <!-- Reviews Section -->
-      <div class="review">
+      <button onclick="addToCart()">Add to Cart</button>
+
+      <h3>Description</h3>
+      <p>High-performance serum to define and sculpt facial features using peptide technology.</p>
+
+      <h3>Ingredients</h3>
+      <p>Peptides, Vitamin C, Niacinamide, Hyaluronic Acid, Silk Extract.</p>
+
+      <h3>Usage</h3>
+      <p>Apply 2 drops on clean face every night before moisturizer.</p>
+
+      <h3>Warning</h3>
+      <p>For external use only. Do not ingest. Patch test before use.</p>
+
+      <!-- Reviews -->
+      <div>
         <h3>Public Reviews</h3>
         <div id="reviewList"></div>
 
         <h4>Write a Review</h4>
-        <input type="text" id="reviewerName" placeholder="Your Name">
-        <input type="number" id="reviewStars" placeholder="Star Rating (1-5)" min="1" max="5">
-        <textarea id="reviewText" placeholder="Write your review here..."></textarea>
+        <input type="text" id="reviewerName" placeholder="Your Name" />
+        <input type="number" id="reviewStars" placeholder="Star Rating (1-5)" min="1" max="5" />
+        <textarea id="reviewText" placeholder="Write your review..."></textarea>
         <button onclick="submitReview()">Submit Review</button>
       </div>
     </div>
   </div>
 
   <script>
-    const gun = Gun();
     const username = localStorage.getItem("macx_loggedInUser");
-    const cartRef = gun.get("macx_cart").get(username);
-    const reviewRef = gun.get("macx_reviews").get("luxury_serum");
+    const gun = Gun();
+    const cart = gun.get("macx_cart").get(username);
+    const reviews = gun.get("macx_reviews").get("product1");
 
     function logout() {
       localStorage.removeItem("macx_loggedInUser");
       location.reload();
     }
 
-    function renderLoginStatus() {
+    function showPage() {
       if (username) {
-        document.getElementById("notLoggedIn").style.display = "none";
-        document.getElementById("loggedInSection").style.display = "block";
         document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+        document.getElementById("notLoggedIn").classList.add("hidden");
+        document.getElementById("loggedInSection").classList.remove("hidden");
         loadReviews();
       } else {
-        document.getElementById("notLoggedIn").style.display = "block";
-        document.getElementById("loggedInSection").style.display = "none";
+        document.getElementById("notLoggedIn").classList.remove("hidden");
+        document.getElementById("loggedInSection").classList.add("hidden");
       }
     }
 
@@ -212,13 +115,9 @@
     }
 
     function addToCart() {
-      if (!username) {
-        alert("Please login to add to cart.");
-        return;
-      }
-
+      if (!username) return alert("Login first");
       const quantity = parseInt(document.getElementById("quantity").value);
-      const product = {
+      const item = {
         productId: "p01",
         productName: "Luxury Face Sculpting Serum",
         price: 1800,
@@ -226,24 +125,19 @@
         quantity,
         timestamp: Date.now()
       };
-
       const cartId = "p01_" + Date.now();
-      cartRef.get(cartId).put(product);
-      alert("Added to cart!");
+      cart.get(cartId).put(item);
+      alert("Item added to cart!");
     }
 
     function submitReview() {
       const name = document.getElementById("reviewerName").value.trim();
       const stars = parseInt(document.getElementById("reviewStars").value);
       const text = document.getElementById("reviewText").value.trim();
+      if (!name || !stars || !text) return alert("Fill all review fields");
 
-      if (!name || !text || isNaN(stars) || stars < 1 || stars > 5) {
-        alert("Please fill all review fields correctly.");
-        return;
-      }
-
-      const review = { name, stars, text, time: Date.now() };
-      reviewRef.get(Date.now().toString()).put(review);
+      const id = Date.now().toString();
+      reviews.get(id).put({ name, stars, text, time: id });
 
       document.getElementById("reviewerName").value = "";
       document.getElementById("reviewStars").value = "";
@@ -252,18 +146,18 @@
     }
 
     function loadReviews() {
-      const list = document.getElementById("reviewList");
-      list.innerHTML = "";
-      reviewRef.map().once((data, id) => {
-        if (!data || !data.text) return;
+      const container = document.getElementById("reviewList");
+      container.innerHTML = "";
+      reviews.map().once((r, id) => {
+        if (!r || !r.text) return;
         const div = document.createElement("div");
         div.className = "review-item";
-        div.innerHTML = `<strong>${data.name}</strong> (${data.stars}★)<br>${data.text}`;
-        list.appendChild(div);
+        div.innerHTML = `<strong>${r.name}</strong> (${r.stars}★)<br>${r.text}`;
+        container.appendChild(div);
       });
     }
 
-    renderLoginStatus();
+    document.addEventListener("DOMContentLoaded", showPage);
   </script>
 </body>
 </html>
