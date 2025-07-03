@@ -14,8 +14,7 @@
     .product-info { flex-grow: 1; }
     .remove-btn { background-color: crimson; color: white; border: none; padding: 5px 10px; cursor: pointer; }
     .qty-controls { display: flex; align-items: center; gap: 5px; }
-    .qty-controls button { width: 30px; height: 30px; font-size: 18px; }
-    .qty-input { width: 40px; text-align: center; }
+    .qty-input { width: 50px; text-align: center; font-size: 16px; padding: 4px; }
     .empty-msg { color: gray; font-style: italic; text-align: center; margin-top: 10px; }
     .item-summary { font-size: 14px; color: #444; }
   </style>
@@ -82,11 +81,10 @@
       document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
     }
 
-    function changeQuantity(id, delta) {
+    function updateQuantity(id, newQty) {
+      if (newQty < 1) newQty = 1;
       cartRef.get(id).once(data => {
-        if (!data || !data.quantity) return;
-        let newQty = data.quantity + delta;
-        if (newQty < 1) newQty = 1;
+        if (!data) return;
         cartRef.get(id).put({ ...data, quantity: newQty });
         setTimeout(renderCart, 300);
       });
@@ -97,11 +95,9 @@
       container.innerHTML = "";
       total = 0;
       items = [];
-      let isEmpty = true;
 
       cartRef.map().once((item, id) => {
         if (!item || !item.productName) return;
-        isEmpty = false;
 
         const div = document.createElement("div");
         div.innerHTML = `
@@ -109,9 +105,9 @@
           <div class="product-info">
             <p><strong>${item.productName}</strong><br>₹${item.price}</p>
             <div class="qty-controls">
-              <button onclick="changeQuantity('${id}', -1)">-</button>
-              <input class="qty-input" value="${item.quantity}" readonly>
-              <button onclick="changeQuantity('${id}', 1)">+</button>
+              <button onclick="updateQuantity('${id}', ${item.quantity - 1})">-</button>
+              <input class="qty-input" type="number" value="${item.quantity}" min="1" onchange="updateQuantity('${id}', this.value)">
+              <button onclick="updateQuantity('${id}', ${item.quantity + 1})">+</button>
             </div>
             <div class="item-summary">Subtotal: ₹${item.price * item.quantity}</div>
           </div>
@@ -128,7 +124,7 @@
           container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
           document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
         }
-      }, 1500);
+      }, 1000);
     }
 
     function removeItem(id) {
