@@ -28,7 +28,7 @@
     <h3>Product Name 1</h3>
     <p>₹1800</p>
     <button onclick="viewProduct('product1.html')">View Product</button>
-    <button onclick="addToCart('Product Name 1', 1800)">Add to Cart</button>
+    <button onclick="addToCart('p01', 'Luxury Serum', 1800, 'img/serum.jpg')">Add to Cart</button>
   </div>
 
   <div class="product-card">
@@ -36,7 +36,7 @@
     <h3>Product Name 2</h3>
     <p>₹2500</p>
     <button onclick="viewProduct('product2.html')">View Product</button>
-    <button onclick="addToCart('Product Name 2', 2500)">Add to Cart</button>
+    <button onclick="addToCart('p01', 'Luxury Serum', 2500, 'img/serum.jpg')">Add to Cart</button>
   </div>
   <!-- More products can be added -->
 </div>
@@ -88,4 +88,34 @@ function addToCart(productName, price) {
   cart.get(id).put({ productName, price, quantity });
   alert("Item added to cart.");
 }
+
+
+const username = localStorage.getItem("macx_loggedInUser");
+const gun = Gun();
+const cartRef = gun.get("macx_cart").get(username);
+
+function addToCart(productId, productName, price, image) {
+  if (!username) {
+    alert("Please login first to add to cart.");
+    return;
+  }
+
+  const quantity = 1; // default quantity for now
+
+  const item = {
+    productId,
+    productName,
+    price,
+    quantity,
+    image,
+    timestamp: Date.now()
+  };
+
+  const cartItemId = productId + '_' + Date.now(); // Unique ID
+  cartRef.get(cartItemId).put(item);
+  alert("Added to cart!");
+}
+
+
+
 </script>
