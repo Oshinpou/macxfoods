@@ -1,108 +1,89 @@
-// Initialize GUN
+// CDN dependencies (make sure to include these in cart.html head or here dynamically)
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const username = localStorage.getItem("macx_loggedInUser");
+const cartRef = gun.get('macx_cart').get(username);
 
-// References
-const cartRef = username ? gun.get('macx_cart').get(username) : null;
-const cartContainer = document.getElementById("cartItems");
-const grandTotalDisplay = document.getElementById("grandTotal");
-let currentCartItems = {};
+const cartItemsContainer = document.getElementById('cartItems');
+const grandTotalElement = document.getElementById('grandTotal');
 
+let cartData = {};
+
+// Render cart items
 function renderCart() {
-  if (!cartRef || !cartContainer) return;
+  if (!username) {
+    cartItemsContainer.innerHTML = "<p>Please login to view your cart.</p>";
+    grandTotalElement.textContent = "";
+    return;
+  }
 
-  cartContainer.innerHTML = "";
-  currentCartItems = {};
+  cartItemsContainer.innerHTML = "";
+  cartData = {};
+  let total = 0;
 
   cartRef.map().once((item, id) => {
     if (!item || !item.productName) return;
 
-    currentCartItems[id] = item;
+    cartData[id] = item;
+    const subtotal = item.price * item.quantity;
+    total += subtotal;
 
-    const div = document.createElement("div");
-    div.className = "cart-item";
+    const div = document.createElement('div');
+    div.classList.add('cart-item');
     div.innerHTML = `
-      <img src="${item.image}" alt="${item.productName}" width="60">
-      <div style="flex-grow:1;">
-        <p><strong>${item.productName}</strong></p>
+      <div style="border:1px solid #ccc; padding:10px; margin-bottom:10px;">
+        <img src="${item.image}" alt="${item.productName}" width="60">
+        <h4>${item.productName}</h4>
         <p>Price: ₹${item.price}</p>
-        <div>
-          Qty:
-          <input type="number" value="${item.quantity}" min="1" 
-                 onchange="updateQty('${id}', this.value)" style="width:50px;">
-        </div>
-        <p id="subtotal-${id}">Subtotal: ₹${item.price * item.quantity}</p>
+        <label>
+          Quantity:
+          <input type="number" min="1" value="${item.quantity}" onchange="updateQuantity('${id}', this.value)">
+        </label>
+        <p>Subtotal: ₹${subtotal}</p>
+        <button onclick="removeItem('${id}')">Remove</button>
       </div>
-      <button onclick="removeItem('${id}')">Remove</button>
     `;
-    cartContainer.appendChild(div);
+    cartItemsContainer.appendChild(div);
   });
 
-  setTimeout(updateGrandTotal, 1000); // Wait for all items to load
+  setTimeout(() => {
+    grandTotalElement.textContent = `Grand Total: ₹${total}`;
+  }, 1000);
 }
 
-function updateQty(id, newQty) {
-  const quantity = parseInt(newQty);
-  if (quantity < 1 || !currentCartItems[id]) return;
+// Update quantity and save in Gun
+function updateQuantity(id, newQty) {
+  newQty = parseInt(newQty);
+  if (isNaN(newQty) || newQty < 1 || !cartData[id]) return;
 
-  const item = { ...currentCartItems[id], quantity };
-  cartRef.get(id).put(item);
-  
-  // Update UI immediately
-  document.getElementById(`subtotal-${id}`).textContent = `Subtotal: ₹${item.price * quantity}`;
-  updateGrandTotal();
+  const updatedItem = { ...cartData[id], quantity: newQty };
+  cartRef.get(id).put(updatedItem, (ack) => {
+    if (!ack.err) {
+      cartData[id] = updatedItem;
+      renderCart();
+    } else {
+      alert("Failed to update quantity.");
+    }
+  });
 }
 
+// Remove item from cart
 function removeItem(id) {
-  if (!cartRef) return;
-  cartRef.get(id).put(null);
-  delete currentCartItems[id];
+  cartRef.get(id).put(null, (ack) => {
+    if (!ack.err) {
+      delete cartData[id];
+      renderCart();
+    }
+  });
+}
+
+// Optional: Call this after payment success to clear the cart
+function clearCartAfterOrder() {
+  Object.keys(cartData).forEach(id => {
+    cartRef.get(id).put(null);
+  });
+  cartData = {};
   renderCart();
 }
 
-function updateGrandTotal() {
-  let total = 0;
-  for (const id in currentCartItems) {
-    const item = currentCartItems[id];
-    if (item && item.price && item.quantity) {
-      total += item.price * item.quantity;
-    }
-  }
-  if (grandTotalDisplay) {
-    grandTotalDisplay.textContent = `Grand Total: ₹${total}`;
-  }
-}
-
-// Login Status UI
-function handleLoginStatusUI() {
-  const notLoggedIn = document.getElementById("notLoggedIn");
-  const loggedInSection = document.getElementById("loggedInSection");
-  const userDisplay = document.getElementById("userDisplay");
-  const loginRedirectBtn = document.getElementById("loginRedirectBtn");
-  const logoutBtn = document.getElementById("logoutBtn");
-
-  if (username) {
-    if (userDisplay) userDisplay.textContent = `Welcome, ${username}`;
-    if (loggedInSection) loggedInSection.style.display = "block";
-    if (notLoggedIn) notLoggedIn.style.display = "none";
-    if (logoutBtn) {
-      logoutBtn.onclick = () => {
-        localStorage.removeItem("macx_loggedInUser");
-        location.reload();
-      };
-    }
-  } else {
-    if (loggedInSection) loggedInSection.style.display = "none";
-    if (notLoggedIn) notLoggedIn.style.display = "block";
-    if (loginRedirectBtn) {
-      loginRedirectBtn.onclick = () => {
-        location.href = "login.html";
-      };
-    }
-  }
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-  handleLoginStatusUI();
-  renderCart();
-});
+// Render cart on page load
+document.addEventListener("DOMContentLoaded", renderCart);
