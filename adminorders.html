@@ -1,78 +1,58 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin Orders - MACX</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/axe.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; }
-    .container { padding: 20px; }
-    .order-card { border: 1px solid #aaa; padding: 15px; margin: 15px 0; background: #f9f9f9; }
-    .order-card h4 { margin: 5px 0; }
-    .order-items { margin-left: 15px; }
-    .btn { padding: 6px 10px; margin-right: 5px; }
-  </style>
+  <link rel="stylesheet" href="style.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
-<div class="container">
-  <h1>MACX Admin Order Management</h1>
-  <div id="orders"></div>
-</div><script>
-  const gun = Gun(['https://macx-relay.herokuapp.com/gun']);
-  const ordersDiv = document.getElementById("orders");
+  <div class="container">
+    <h1>All Orders (Admin)</h1>
+    <div id="allOrders"></div>
+  </div>
 
-  function loadAllOrders() {
-    const orders = gun.get("macx_orders");
-    orders.map().once((order, id) => {
-      if (!order || !order.username) return;
-      const div = document.createElement("div");
-      div.className = "order-card";
-      const statusId = `status-${id}`;
-      div.innerHTML = `
-        <h4>Order ID: ${id}</h4>
-        <p>User: ${order.username}</p>
-        <p>Date: ${new Date(order.date).toLocaleString()}</p>
-        <p>Total: ₹${order.total}</p>
-        <p>Status: <input id="${statusId}" type="text" value="${order.status}" /></p>
-        <button class="btn" onclick="updateStatus('${id}', '${statusId}')">Update Status</button>
-        <button class="btn" onclick="confirmDelete('${id}')">Delete Order</button>
-        <h5>Items:</h5>
-        <ul class='order-items'>
-          ${order.items.map(i => `<li>${i.name} (x${i.quantity}) - ₹${i.price * i.quantity}</li>`).join('')}
-        </ul>
-      `;
-      ordersDiv.appendChild(div);
+  <script>
+    const gun = Gun();
+    const ordersRoot = gun.get("macx_orders");
+    const allOrders = document.getElementById("allOrders");
+
+    ordersRoot.map().once((userOrders, username) => {
+      if (!userOrders || typeof userOrders !== 'object') return;
+
+      gun.get("macx_orders").get(username).map().once((order, orderId) => {
+        if (!order || !order.items) return;
+
+        const div = document.createElement("div");
+        const itemsList = order.items.map ? order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('') : '';
+
+        div.innerHTML = `
+          <h3>User: ${username} | Order ID: ${orderId}</h3>
+          <p>Status: ${order.status || 'N/A'} | Payment: ${order.paymentStatus || 'N/A'} - ₹${order.grandTotal || 0}</p>
+          <p>Shipping: ${order.name || ''}, ${order.phone || ''}, ${order.email || ''}, ${order.address || ''}, ${order.country || ''}, ${order.pincode || ''}</p>
+          <ul>${itemsList}</ul>
+          <button onclick="updateStatus('${username}', '${orderId}', 'Delivered')">Mark Delivered</button>
+          <button onclick="deleteOrder('${username}', '${orderId}')">Delete Order</button>
+          <hr>
+        `;
+        allOrders.appendChild(div);
+      });
     });
-  }
 
-  function updateStatus(orderId, inputId) {
-    const newStatus = document.getElementById(inputId).value;
-    gun.get("macx_orders").get(orderId).get("status").put(newStatus);
-    alert("Status updated.");
-  }
+    function updateStatus(username, orderId, status) {
+      gun.get("macx_orders").get(username).get(orderId).get("status").put(status);
+      alert("Status updated.");
+      window.location.reload();
+    }
 
-  function confirmDelete(orderId) {
-    let confirmCount = 0;
-    const askDelete = () => {
-      if (confirmCount >= 5) {
-        gun.get("macx_orders").get(orderId).put(null);
+    function deleteOrder(username, orderId) {
+      if (confirm("Delete this order permanently?")) {
+        gun.get("macx_orders").get(username).get(orderId).put(null);
         alert("Order deleted.");
-        location.reload();
-        return;
+        window.location.reload();
       }
-      const sure = confirm(`(${confirmCount + 1}/5) Confirm delete order ${orderId}?`);
-      if (sure) {
-        confirmCount++;
-        askDelete();
-      } else {
-        alert("Delete cancelled.");
-      }
-    };
-    askDelete();
-  }
-
-  loadAllOrders();
-</script></body>
+    }
+  </script>
+</body>
 </html>
