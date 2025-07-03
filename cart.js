@@ -1,6 +1,3 @@
-<script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sea.js"></script>
-<script>
 // Initialize Gun
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); // You can add more peers
 const username = localStorage.getItem("macx_loggedInUser");
@@ -96,4 +93,4 @@ document.addEventListener("DOMContentLoaded", () => {
 
   renderCart();
 });
-</script>
+
