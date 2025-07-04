@@ -1,92 +1,195 @@
-<!-- adminorders.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Orders</title>
+  <title>Admin Orders - MACX</title>
   <style>
-    .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
-    .order { border:1px #ccc solid; margin-bottom:20px; padding:15px }
-    .order h3 { margin-top:0 }
-    .items td { padding:5px 10px }
-    .btn { padding:5px 10px; margin-right:8px; cursor:pointer }
-    #orderSearch { width:100%; padding:8px; margin-bottom:20px }
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f0f0f0;
+    }
+    .container {
+      max-width: 1000px;
+      margin: auto;
+    }
+    h1 {
+      text-align: center;
+    }
+    .search-bar {
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    .search-bar input {
+      padding: 8px;
+      width: 300px;
+      font-size: 16px;
+    }
+    .order {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
+    }
+    .items {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+    }
+    .items th, .items td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+    }
+    .status {
+      font-weight: bold;
+      color: #00695c;
+    }
+    .label {
+      font-weight: bold;
+    }
+    .actions button {
+      padding: 6px 12px;
+      margin-right: 10px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+    }
+    .actions .deliver { background: #4caf50; }
+    .actions .cancel  { background: #ff9800; }
+    .actions .delete  { background: #f44336; }
   </style>
+
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Admin Order Management</h1>
-    <input type="text" id="orderSearch" placeholder="Search Order ID..." onkeyup="filterOrders()" />
-    <div id="adminOrdersContainer">Loading...</div>
+    <h1>🛒 Admin - All Orders</h1>
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Search Order ID..." oninput="filterOrders()">
+    </div>
+    <div id="ordersContainer">Loading all orders...</div>
   </div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const adminOrders = gun.get("admin_orders");
+    const ordersRef = gun.get("admin_orders");
+    const container = document.getElementById("ordersContainer");
+    const searchInput = document.getElementById("searchInput");
 
-    function renderAdminOrders() {
-      const container = document.getElementById("adminOrdersContainer");
+    const ordersMap = {};
 
-      adminOrders.map().on((order, id) => {
+    function renderAllOrders() {
+      ordersRef.map().on((order, id) => {
         if (!order || !order.items) {
           const old = document.getElementById("ord-" + id);
           if (old) old.remove();
           return;
         }
 
-        let el = document.getElementById("ord-" + id);
-        if (!el) {
-          el = document.createElement("div");
-          el.id = "ord-" + id;
-          el.className = "order";
-          container.appendChild(el);
-        }
-
-        const rows = order.items.map(i => {
-          const p = parseInt(i.price)||0;
-          const q = parseInt(i.quantity)||1;
-          const sub = (p*q).toLocaleString();
-          return `<tr><td>${i.productName}</td><td>₹${p}</td><td>${q}</td><td>₹${sub}</td></tr>`;
-        }).join("");
-
-        const s = order.shipping || {};
-        const username = order.username || "Unknown";
-        const status = order.status || "Pending";
-        let actions = "";
-        if (status === "Paid") {
-          actions = `<button class='btn' onclick="markDelivered('${id}')">Mark Delivered</button>`;
-        }
-        if (status === "Cancelled" || status === "Delivered") {
-          actions += `<button class='btn' onclick="deleteOrder('${id}')">Remove</button>`;
-        }
-
-        el.innerHTML = `
-          <h3>Order #${id}</h3>
-          <p><strong>User:</strong> ${username} | <strong>Status:</strong> ${status}</p>
-          <table class="items" border="1"><tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>${rows}</table>
-          <p><strong>Total:</strong> ₹${(order.total||0).toLocaleString()}</p>
-          <p><strong>Shipping:</strong> ${s.name}, ${s.address}, ${s.country}, ${s.pincode} | 📞 ${s.phone} | ✉️ ${s.email}</p>
-          ${actions}
-        `;
+        ordersMap[id] = order;
+        displayOrder(id, order);
       });
     }
 
-    function markDelivered(id) {
-      adminOrders.get(id).put({ status: "Delivered" });
+    function displayOrder(id, order) {
+      let el = document.getElementById("ord-" + id);
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "order";
+        el.id = "ord-" + id;
+        container.appendChild(el);
+      }
+
+      const status = order.status || "Pending";
+      const paid = order.razorpayPaymentId ? `✅ Paid (${order.razorpayPaymentId})` : "🕐 Not Paid";
+      const user = order.username || "Unknown";
+
+      const rows = order.items.map(i => {
+        const p = parseInt(i.price) || 0;
+        const q = parseInt(i.quantity) || 1;
+        const sub = p * q;
+        return `<tr>
+                  <td>${i.productName}</td>
+                  <td>₹${p}</td>
+                  <td>${q}</td>
+                  <td>₹${sub}</td>
+                </tr>`;
+      }).join("");
+
+      const s = order.shipping || {};
+      const shipping = `
+        <p class="label">Shipping Info:</p>
+        <p>${s.name}, ${s.address}, ${s.country} - ${s.pincode}<br>
+        Phone: ${s.phone} | Email: ${s.email}</p>
+      `;
+
+      let actions = "";
+      if (status === "Pending") {
+        actions += `<button class="cancel" onclick="updateStatus('${id}', 'Cancelled')">Cancel</button>`;
+      }
+      if (status === "Paid") {
+        actions += `<button class="deliver" onclick="updateStatus('${id}', 'Delivered')">Mark Delivered</button>`;
+      }
+      if (status === "Cancelled" || status === "Delivered") {
+        actions += `<button class="delete" onclick="deleteOrder('${id}')">Delete</button>`;
+      }
+
+      el.innerHTML = `
+        <h3>Order #${id} <small>(User: <b>${user}</b>)</small></h3>
+        <p><span class="label">Status:</span> <span class="status">${status}</span></p>
+        <p><span class="label">Payment:</span> ${paid}</p>
+        <table class="items">
+          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+          ${rows}
+        </table>
+        <p><strong>Total:</strong> ₹${order.total}</p>
+        ${shipping}
+        <div class="actions">${actions}</div>
+      `;
     }
+
+    function updateStatus(id, newStatus) {
+      const order = ordersMap[id];
+      if (order) {
+        order.status = newStatus;
+        ordersRef.get(id).put(order);
+        if (order.username) {
+          gun.get("macx_orders").get(order.username).get(id).put(order);
+        }
+      }
+    }
+
     function deleteOrder(id) {
-      adminOrders.get(id).put(null);
-    }
-    function filterOrders() {
-      const val = document.getElementById("orderSearch").value.toLowerCase();
-      document.querySelectorAll(".order").forEach(el => {
-        el.style.display = el.id.includes(val) ? '' : 'none';
-      });
+      if (confirm("Delete this order permanently?")) {
+        ordersRef.get(id).put(null);
+        const order = ordersMap[id];
+        if (order && order.username) {
+          gun.get("macx_orders").get(order.username).get(id).put(null);
+        }
+        delete ordersMap[id];
+        const node = document.getElementById("ord-" + id);
+        if (node) node.remove();
+      }
     }
 
-    renderAdminOrders();
+    function filterOrders() {
+      const query = searchInput.value.trim().toLowerCase();
+      for (const id in ordersMap) {
+        const el = document.getElementById("ord-" + id);
+        if (!el) continue;
+        if (!query || id.toLowerCase().includes(query)) {
+          el.style.display = "block";
+        } else {
+          el.style.display = "none";
+        }
+      }
+    }
+
+    renderAllOrders();
   </script>
 </body>
 </html>
