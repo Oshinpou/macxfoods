@@ -1,3 +1,4 @@
+<!-- adminorders.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,104 +6,87 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Admin Orders</title>
   <style>
-    .container { max-width:1000px; margin:auto; padding:20px; font-family:sans-serif }
-    .order { border:1px #999 solid; margin-bottom:20px; padding:15px }
+    .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
+    .order { border:1px #ccc solid; margin-bottom:20px; padding:15px }
     .order h3 { margin-top:0 }
     .items td { padding:5px 10px }
     .btn { padding:5px 10px; margin-right:8px; cursor:pointer }
-    select { margin-right:8px }
+    #orderSearch { width:100%; padding:8px; margin-bottom:20px }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>Admin: All Orders</h1>
-    <div id="adminContainer">Loading orders…</div>
+    <h1>Admin Order Management</h1>
+    <input type="text" id="orderSearch" placeholder="Search Order ID..." onkeyup="filterOrders()" />
+    <div id="adminOrdersContainer">Loading...</div>
   </div>
 
   <script>
-  // --- Init
-  const gun       = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-  const adminRef  = gun.get("admin_orders");
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const adminOrders = gun.get("admin_orders");
 
-  // --- Render
-  function renderAdmin() {
-    const c = document.getElementById("adminContainer");
-    c.innerHTML = "";
+    function renderAdminOrders() {
+      const container = document.getElementById("adminOrdersContainer");
 
-    adminRef.map().on((o, id) => {
-      if (!o || !o.status) {
-        const old = document.getElementById("aord-" + id);
-        if (old) old.remove();
-        return;
-      }
+      adminOrders.map().on((order, id) => {
+        if (!order || !order.items) {
+          const old = document.getElementById("ord-" + id);
+          if (old) old.remove();
+          return;
+        }
 
-      let el = document.getElementById("aord-" + id);
-      if (!el) {
-        el = document.createElement("div");
-        el.id = "aord-" + id;
-        el.className = "order";
-        c.appendChild(el);
-      }
+        let el = document.getElementById("ord-" + id);
+        if (!el) {
+          el = document.createElement("div");
+          el.id = "ord-" + id;
+          el.className = "order";
+          container.appendChild(el);
+        }
 
-      // items
-      const rows = o.items.map(i => {
-        const p = parseInt(i.price) || 0;
-        const q = parseInt(i.quantity) || 1;
-        const sub = (p*q).toLocaleString();
-        return `<tr>
-          <td>${i.productName}</td>
-          <td>₹${p.toLocaleString()}</td>
-          <td>${q}</td>
-          <td>₹${sub}</td>
-        </tr>`;
-      }).join("");
+        const rows = order.items.map(i => {
+          const p = parseInt(i.price)||0;
+          const q = parseInt(i.quantity)||1;
+          const sub = (p*q).toLocaleString();
+          return `<tr><td>${i.productName}</td><td>₹${p}</td><td>${q}</td><td>₹${sub}</td></tr>`;
+        }).join("");
 
-      // shipping & user
-      const s = o.shipping || {};
-      const user = o.username || "unknown";
-      const shipInfo = `
-        <p>
-          <strong>User:</strong> ${user}<br>
-          <strong>Ship To:</strong> ${s.name}, ${s.address}, ${s.country} - ${s.pincode}<br>
-          <strong>Contact:</strong> +91${s.phone}<br>
-          <strong>Email:</strong> ${s.email}
-        </p>`;
+        const s = order.shipping || {};
+        const username = order.username || "Unknown";
+        const status = order.status || "Pending";
+        let actions = "";
+        if (status === "Paid") {
+          actions = `<button class='btn' onclick="markDelivered('${id}')">Mark Delivered</button>`;
+        }
+        if (status === "Cancelled" || status === "Delivered") {
+          actions += `<button class='btn' onclick="deleteOrder('${id}')">Remove</button>`;
+        }
 
-      // status selector
-      const statuses = ["Pending","Paid","Cancelled","Delivered"];
-      const opts = statuses.map(st =>
-        `<option value="${st}" ${o.status===st?'selected':''}>${st}</option>`
-      ).join("");
+        el.innerHTML = `
+          <h3>Order #${id}</h3>
+          <p><strong>User:</strong> ${username} | <strong>Status:</strong> ${status}</p>
+          <table class="items" border="1"><tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>${rows}</table>
+          <p><strong>Total:</strong> ₹${(order.total||0).toLocaleString()}</p>
+          <p><strong>Shipping:</strong> ${s.name}, ${s.address}, ${s.country}, ${s.pincode} | 📞 ${s.phone} | ✉️ ${s.email}</p>
+          ${actions}
+        `;
+      });
+    }
 
-      el.innerHTML = `
-        <h3>Order #${id}</h3>
-        <label>Status:</label>
-        <select onchange="adminUpdate('${id}', this.value)">
-          ${opts}
-        </select>
-        <button class="btn" onclick="adminRemove('${id}')">Delete</button>
-        <table class="items" border="1" cellspacing="0">
-          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
-          ${rows}
-        </table>
-        <p><strong>Total:</strong> ₹${(o.total||0).toLocaleString()}</p>
-        ${shipInfo}
-      `;
-    });
-  }
+    function markDelivered(id) {
+      adminOrders.get(id).put({ status: "Delivered" });
+    }
+    function deleteOrder(id) {
+      adminOrders.get(id).put(null);
+    }
+    function filterOrders() {
+      const val = document.getElementById("orderSearch").value.toLowerCase();
+      document.querySelectorAll(".order").forEach(el => {
+        el.style.display = el.id.includes(val) ? '' : 'none';
+      });
+    }
 
-  // --- Helpers
-  function adminUpdate(id, status) {
-    adminRef.get(id).put({ status });
-  }
-  function adminRemove(id) {
-    adminRef.get(id).put(null);
-  }
-
-  // --- Kickoff
-  renderAdmin();
+    renderAdminOrders();
   </script>
 </body>
 </html>
