@@ -214,25 +214,36 @@ async function startPayment() {
       cart_summary:     summaryText
     },
     theme: { color: "#00c0b5" },
-    handler(response) {
-      // mark “Paid” & clear cart
-      const paidAt = Date.now();
-      ordersRef.get(orderId).put({
-        razorpayPaymentId: response.razorpay_payment_id,
-        status: "Paid",
-        paidAt
-      });
-      adminOrders.get(orderId).put({
-        razorpayPaymentId: response.razorpay_payment_id,
-        status: "Paid",
-        paidAt
-      });
-      cartRef.map().once((_, id) => cartRef.get(id).put(null));
-      alert("✅ Payment successful! Redirecting to My Orders…");
-      window.location.href = "myorders.html";
-    }
-  };
+    handler: async function (response) {
+  const paidAt = Date.now();
+  const paymentId = response.razorpay_payment_id;
+  const paymentMethod = "Razorpay";
 
-  new Razorpay(options).open();
-      }
+  // 1. Fetch original order to preserve items/shipping/total
+  ordersRef.get(orderId).once(originalOrder => {
+    if (!originalOrder) {
+      alert("⚠️ Failed to find original order.");
+      return;
+    }
+
+    const updatedOrder = {
+      ...originalOrder,
+      razorpayPaymentId: paymentId,
+      paymentMethod,
+      status: "Paid",
+      paidAt
+    };
+
+    // 2. Save updated to user & admin orders
+    ordersRef.get(orderId).put(updatedOrder);
+    adminOrders.get(orderId).put({ ...updatedOrder, username });
+
+    // 3. Clear user's cart
+    cartRef.map().once((_, id) => cartRef.get(id).put(null));
+
+    // 4. Notify & redirect
+    alert("✅ Payment successful! Redirecting to My Orders…");
+    window.location.href = "myorders.html";
+  });
+    }
       
