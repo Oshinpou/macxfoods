@@ -104,41 +104,50 @@ function removeItem(id) {
 }
 
 
-// ------------------------------
-// Complete startPayment + renderLoginStatus
-// ------------------------------
+// 1) Wire the shipping form to invoke Razorpay checkout
+document
+  .getElementById("shippingForm")
+  .addEventListener("submit", e => {
+    e.preventDefault();
+    startPayment();
+  });
 
-window.startPayment = async function () {
-  // 1. Gather cart & shipping data
-  const cartItems = Object.values(items);
+// 2) Razorpay checkout logic only
+async function startPayment() {
+  // a) Grab & validate cart items
+  const cartItems = Object.values(items || {});
   if (!cartItems.length) {
-    alert("🛒 Your cart is empty.");
-    return;
+    return alert("🛒 Your cart is empty.");
   }
 
-  const name    = document.getElementById("name")?.value.trim();
-  const phone   = document.getElementById("phone")?.value.trim();
-  const email   = document.getElementById("email")?.value.trim();
-  const address = document.getElementById("address")?.value.trim();
-  const country = document.getElementById("country")?.value.trim();
-  const pincode = document.getElementById("pincode")?.value.trim();
+  // b) Collect & validate shipping fields
+  const get = id => document.getElementById(id)?.value.trim();
+  const [name, phone, email, address, country, pincode] =
+    ["name","phone","email","address","country","pincode"].map(get);
 
-  if (!name || !phone || !email || !address || !country || !pincode) {
-    alert("🚨 Please fill all shipping details before payment.");
-    return;
+  if (![name, phone, email, address, country, pincode].every(Boolean)) {
+    return alert("🚨 Please fill all shipping details.");
   }
 
-  const shipping     = { name, phone, email, address, country, pincode };
-  const totalAmount  = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
-  const orderId      = Date.now().toString();
-  const timestamp    = Date.now();
+  // c) Compute total & prepare orderId
+  const totalAmount = cartItems.reduce((sum, i) =>
+    sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
+  const orderId = Date.now().toString();
 
-  // 2. Save “Pending” order in GunDB (user & admin)
-  const pendingOrder = { items: cartItems, shipping, total: totalAmount, status: "Pending", createdAt: timestamp };
-  ordersRef.get(orderId).put(pendingOrder);
-  adminOrders.get(orderId).put({ ...pendingOrder, username });
+  // d) (Optional) Persist “Pending” to GunDB before payment
+  const pending = {
+    items: cartItems,
+    shipping: { name, phone, email, address, country, pincode },
+    total: totalAmount,
+    status: "Pending",
+    createdAt: Date.now()
+  };
+  await Promise.all([
+    ordersRef.get(orderId).put(pending),
+    adminOrders.get(orderId).put({ ...pending, username })
+  ]);
 
-  // 3. (Optional) create a Razorpay order server-side for secure amount lock
+  // e) (Optional) Request a server-side Razorpay order
   let razorOrder;
   try {
     const resp = await fetch("/api/createOrder", {
@@ -147,37 +156,31 @@ window.startPayment = async function () {
       body: JSON.stringify({ amount: totalAmount * 100, receipt: orderId })
     });
     razorOrder = await resp.json();
-  } catch (e) {
-    console.warn("Server-side order creation failed; proceeding client-only");
+  } catch (err) {
+    console.warn("Server-side order failed, falling back to client-only");
   }
 
-  // 4. Build Razorpay Checkout options
+  // f) Configure Razorpay checkout
   const options = {
     key: "rzp_live_ozWo08bXwqssx3",
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
-    description: "Order #" + orderId,
-    order_id: razorOrder?.id,           // include if created server-side
-    prefill: {
-      name:  shipping.name,
-      email: shipping.email,
-      contact: shipping.phone.startsWith("+")
-        ? shipping.phone
-        : `+91${shipping.phone}`
-    },
+    description: `Order #${orderId}`,
+    order_id: razorOrder?.id,    // omit if not using server order
+    prefill: { name, email, contact: phone },
     notes: {
-      customer_name:    shipping.name,
-      customer_email:   shipping.email,
-      customer_phone:   shipping.phone,
-      shipping_address: shipping.address,
-      shipping_country: shipping.country,
-      shipping_pincode: shipping.pincode,
+      shipping_name:    name,
+      shipping_phone:   phone,
+      shipping_email:   email,
+      shipping_address: address,
+      shipping_country: country,
+      shipping_pincode: pincode,
       cart_items:       JSON.stringify(cartItems)
     },
     theme: { color: "#00c0b5" },
     handler(response) {
-      // 5. On payment success, mark “Paid” & clear cart
+      // On-success: mark “Paid” and clear cart
       const paidAt = Date.now();
       ordersRef.get(orderId).put({
         razorpayPaymentId: response.razorpay_payment_id,
@@ -189,53 +192,20 @@ window.startPayment = async function () {
         status: "Paid",
         paidAt
       });
-
+      // Clear cart
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
       alert("✅ Payment successful! Redirecting…");
       window.location.href = "myorders.html";
     }
   };
 
-  // 6. Open the Checkout
+  // g) Open the Razorpay dialog
   new Razorpay(options).open();
-};
-
-
-// Show login/cart UI and wire up the shipping form
-function renderLoginStatus() {
-  if (!username) {
-    document.getElementById("notLoggedIn").style.display = "block";
-    return;
-  }
-
-  document.getElementById("loggedInSection").style.display = "block";
-  document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
-  listenToCart();
-
-  const form = document.getElementById("shippingForm");
-  if (form) {
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      startPayment();
-    });
-  } else {
-    console.warn("Shipping form not found.");
-  }
 }
 
-// Initialize on DOM ready
-document.addEventListener("DOMContentLoaded", renderLoginStatus);
-
-
-
-  
-
-
-
 
       
 
+
+
   
-  
-      
-    
