@@ -171,7 +171,19 @@ window.startPayment = function () {
 console.log("Cart.js loaded");
 console.log("Username:", username);
   
-  window.addEventListener('DOMContentLoaded', renderLoginStatus);
+ 
+document.addEventListener("DOMContentLoaded", function () {
+  renderLoginStatus();
+
+  const form = document.getElementById("shippingForm");
+  form.addEventListener("submit", function (e) {
+    e.preventDefault(); // prevent normal form submission
+    startPayment();     // now call payment logic
+  });
+});
+
+
+window.addEventListener('DOMContentLoaded', renderLoginStatus);
 
 
   
