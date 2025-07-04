@@ -21,12 +21,10 @@ function renderLoginStatus() {
     document.getElementById("notLoggedIn").style.display = "block";
     return;
   }
-
   document.getElementById("loggedInSection").style.display = "block";
   document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
   listenToCart();
 
-  // Bind shipping form submit
   const form = document.getElementById("shippingForm");
   if (form) {
     form.addEventListener("submit", e => {
@@ -35,6 +33,8 @@ function renderLoginStatus() {
     });
   }
 }
+
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
 
 // 3. Listen & render cart items reactively
 function listenToCart() {
@@ -70,7 +70,8 @@ function listenToCart() {
         <p><strong>${data.productName}</strong><br>₹${price}</p>
         <div class="qty-controls">
           <button onclick="changeQty('${id}', -1)">-</button>
-          <input type="number" min="1" class="qty-input" value="${qty}" onchange="updateQty('${id}', this)">
+          <input type="number" min="1" class="qty-input" value="${qty}"
+                 onchange="updateQty('${id}', this)">
           <button onclick="changeQty('${id}', 1)">+</button>
         </div>
         <div class="item-summary">Subtotal: ₹${subtotal}</div>
@@ -112,7 +113,9 @@ function updateCartSummary() {
     const sub = p * q;
     return `${item.productName}: ₹${p} × ${q} = ₹${sub}`;
   });
-  summaryEl.innerHTML = lines.length ? lines.join("<br>") : "<em>Your cart is empty.</em>";
+  summaryEl.innerHTML = lines.length
+    ? lines.join("<br>")
+    : "<em>Your cart is empty.</em>";
 }
 
 // 6. Quantity controls
@@ -136,22 +139,22 @@ function removeItem(id) {
   cartRef.get(id).put(null);
 }
 
-// 7. Razorpay checkout
+// 7. Razorpay checkout with pre-saved order
 async function startPayment() {
   const cartItems = Object.values(items);
-  if (!cartItems.length) return alert("🛒 Your cart is empty.");
+  if (!cartItems.length) {
+    return alert("🛒 Your cart is empty.");
+  }
 
   const get = id => document.getElementById(id)?.value.trim();
   const [name, phone, email, address, country, pincode] =
-    ["name", "phone", "email", "address", "country", "pincode"].map(get);
-
+    ["name","phone","email","address","country","pincode"].map(get);
   if (![name, phone, email, address, country, pincode].every(Boolean)) {
     return alert("🚨 Please fill all shipping details.");
   }
 
   const totalAmount = cartItems.reduce((sum, i) =>
     sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
-
   const orderId = Date.now().toString();
 
   const pending = {
@@ -162,10 +165,19 @@ async function startPayment() {
     createdAt: Date.now()
   };
 
-  await Promise.all([
-    ordersRef.get(orderId).put(pending),
-    adminOrders.get(orderId).put({ ...pending, username })
-  ]);
+  await new Promise(resolve => {
+    ordersRef.get(orderId).put(pending, ack1 => {
+      if (ack1.err) return alert("❌ Failed to save user order.");
+      adminOrders.get(orderId).put({ ...pending, username }, ack2 => {
+        if (ack2.err) return alert("❌ Failed to save admin order.");
+        resolve();
+      });
+    });
+  });
+
+  const summaryText = cartItems
+    .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
+    .join(" | ");
 
   const options = {
     key: "rzp_live_ozWo08bXwqssx3",
@@ -175,28 +187,37 @@ async function startPayment() {
     description: `Order #${orderId}`,
     prefill: { name, email, contact: phone },
     notes: {
-      address: `${address}, ${country} - ${pincode}`,
-      user: username
+      shipping_name:    name,
+      shipping_phone:   phone,
+      shipping_email:   email,
+      shipping_address: address,
+      shipping_country: country,
+      shipping_pincode: pincode,
+      cart_items:       JSON.stringify(cartItems),
+      cart_summary:     summaryText
     },
     theme: { color: "#00c0b5" },
-    handler(response) {
+    handler: function (response) {
       const paidAt = Date.now();
       const paymentId = response.razorpay_payment_id;
       const paymentMethod = "Razorpay";
 
-      ordersRef.get(orderId).once(original => {
-        if (!original) return alert("⚠️ Order not found to mark as paid.");
+      ordersRef.get(orderId).once(originalOrder => {
+        if (!originalOrder || !originalOrder.items) {
+          alert("⚠️ Order not found. Payment received, but data missing.");
+          return;
+        }
 
-        const paidOrder = {
-          ...original,
+        const updated = {
+          ...originalOrder,
           razorpayPaymentId: paymentId,
           paymentMethod,
           status: "Paid",
           paidAt
         };
 
-        ordersRef.get(orderId).put(paidOrder);
-        adminOrders.get(orderId).put({ ...paidOrder, username });
+        ordersRef.get(orderId).put(updated);
+        adminOrders.get(orderId).put({ ...updated, username });
 
         cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
@@ -207,7 +228,4 @@ async function startPayment() {
   };
 
   new Razorpay(options).open();
-}
-
-// 8. Run on DOM load
-document.addEventListener("DOMContentLoaded", renderLoginStatus);
+                                       }
