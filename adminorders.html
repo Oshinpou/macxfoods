@@ -3,193 +3,118 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin Orders - MACX</title>
+  <title>Admin Orders</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f0f0f0;
-    }
-    .container {
-      max-width: 1000px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-    }
-    .search-bar {
-      margin-bottom: 20px;
-      text-align: center;
-    }
-    .search-bar input {
-      padding: 8px;
-      width: 300px;
-      font-size: 16px;
-    }
-    .order {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.1);
-    }
-    .items {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 10px 0;
-    }
-    .items th, .items td {
-      border: 1px solid #ccc;
-      padding: 8px 10px;
-    }
-    .status {
-      font-weight: bold;
-      color: #00695c;
-    }
-    .label {
-      font-weight: bold;
-    }
-    .actions button {
-      padding: 6px 12px;
-      margin-right: 10px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      color: white;
-    }
-    .actions .deliver { background: #4caf50; }
-    .actions .cancel  { background: #ff9800; }
-    .actions .delete  { background: #f44336; }
+    body { font-family:sans-serif }
+    .container { max-width:1000px; margin:auto; padding:20px }
+    .order { border:1px solid #ccc; padding:15px; margin-bottom:20px }
+    .items th, .items td { padding:6px 10px; text-align:left }
+    .btn { padding:4px 8px; cursor:pointer; margin-right:5px }
+    #searchInput { margin-bottom:20px; padding:6px; width:300px }
   </style>
-
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>🛒 Admin - All Orders</h1>
-    <div class="search-bar">
-      <input type="text" id="searchInput" placeholder="Search Order ID..." oninput="filterOrders()">
-    </div>
-    <div id="ordersContainer">Loading all orders...</div>
+    <h1>Admin Panel - All Orders</h1>
+    <input id="searchInput" placeholder="Search Order ID..." onkeyup="filterOrders()" />
+    <div id="ordersContainer">Loading orders...</div>
   </div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const ordersRef = gun.get("admin_orders");
-    const container = document.getElementById("ordersContainer");
-    const searchInput = document.getElementById("searchInput");
+    const adminRef = gun.get("admin_orders");
 
-    const ordersMap = {};
+    function renderAdminOrders() {
+      const c = document.getElementById("ordersContainer");
+      c.innerHTML = "";
 
-    function renderAllOrders() {
-      ordersRef.map().on((order, id) => {
-        if (!order || !order.items) {
-          const old = document.getElementById("ord-" + id);
-          if (old) old.remove();
-          return;
+      adminRef.map().once((o, id) => {
+        if (!o || !o.items) return;
+
+        const itemsTable = o.items.map(i => {
+          const p = parseInt(i.price);
+          const q = parseInt(i.quantity);
+          const s = p * q;
+          return `<tr>
+            <td>${i.productName}</td>
+            <td>₹${p}</td>
+            <td>${q}</td>
+            <td>₹${s}</td>
+          </tr>`;
+        }).join("");
+
+        const shipping = o.shipping || {};
+        const info = `
+          <strong>Ship To:</strong> ${shipping.name}<br>
+          ${shipping.address}, ${shipping.country} - ${shipping.pincode}<br>
+          <strong>Phone:</strong> ${shipping.phone} <br>
+          <strong>Email:</strong> ${shipping.email}
+        `;
+
+        const status = o.status || "Pending";
+        const username = o.username || "Unknown";
+
+        let buttons = "";
+        if (status === "Paid") {
+          buttons += `<button class="btn" onclick="updateStatus('${id}', 'Delivered')">Mark Delivered</button>`;
+        }
+        if (status === "Pending") {
+          buttons += `<button class="btn" onclick="updateStatus('${id}', 'Cancelled')">Cancel</button>`;
+        }
+        if (status === "Delivered" || status === "Cancelled") {
+          buttons += `<button class="btn" onclick="removeOrder('${id}')">🗑 Delete</button>`;
         }
 
-        ordersMap[id] = order;
-        displayOrder(id, order);
+        const html = `
+          <div class="order" id="order-${id}">
+            <h3>Order ID: ${id} <small>(${username})</small></h3>
+            <p><strong>Status:</strong> ${status}</p>
+            <table class="items" border="1" cellspacing="0">
+              <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+              ${itemsTable}
+            </table>
+            <p><strong>Total:</strong> ₹${(o.total || 0)}</p>
+            <p>${info}</p>
+            ${buttons}
+          </div>
+        `;
+
+        c.innerHTML += html;
       });
     }
 
-    function displayOrder(id, order) {
-      let el = document.getElementById("ord-" + id);
-      if (!el) {
-        el = document.createElement("div");
-        el.className = "order";
-        el.id = "ord-" + id;
-        container.appendChild(el);
-      }
-
-      const status = order.status || "Pending";
-      const paid = order.razorpayPaymentId ? `✅ Paid (${order.razorpayPaymentId})` : "🕐 Not Paid";
-      const user = order.username || "Unknown";
-
-      const rows = order.items.map(i => {
-        const p = parseInt(i.price) || 0;
-        const q = parseInt(i.quantity) || 1;
-        const sub = p * q;
-        return `<tr>
-                  <td>${i.productName}</td>
-                  <td>₹${p}</td>
-                  <td>${q}</td>
-                  <td>₹${sub}</td>
-                </tr>`;
-      }).join("");
-
-      const s = order.shipping || {};
-      const shipping = `
-        <p class="label">Shipping Info:</p>
-        <p>${s.name}, ${s.address}, ${s.country} - ${s.pincode}<br>
-        Phone: ${s.phone} | Email: ${s.email}</p>
-      `;
-
-      let actions = "";
-      if (status === "Pending") {
-        actions += `<button class="cancel" onclick="updateStatus('${id}', 'Cancelled')">Cancel</button>`;
-      }
-      if (status === "Paid") {
-        actions += `<button class="deliver" onclick="updateStatus('${id}', 'Delivered')">Mark Delivered</button>`;
-      }
-      if (status === "Cancelled" || status === "Delivered") {
-        actions += `<button class="delete" onclick="deleteOrder('${id}')">Delete</button>`;
-      }
-
-      el.innerHTML = `
-        <h3>Order #${id} <small>(User: <b>${user}</b>)</small></h3>
-        <p><span class="label">Status:</span> <span class="status">${status}</span></p>
-        <p><span class="label">Payment:</span> ${paid}</p>
-        <table class="items">
-          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
-          ${rows}
-        </table>
-        <p><strong>Total:</strong> ₹${order.total}</p>
-        ${shipping}
-        <div class="actions">${actions}</div>
-      `;
-    }
-
     function updateStatus(id, newStatus) {
-      const order = ordersMap[id];
-      if (order) {
-        order.status = newStatus;
-        ordersRef.get(id).put(order);
-        if (order.username) {
-          gun.get("macx_orders").get(order.username).get(id).put(order);
+      adminRef.get(id).once(order => {
+        if (order?.username) {
+          gun.get("macx_orders").get(order.username).get(id).put({ status: newStatus });
         }
-      }
+        adminRef.get(id).put({ status: newStatus });
+        alert(`Order ${id} marked as ${newStatus}`);
+        renderAdminOrders();
+      });
     }
 
-    function deleteOrder(id) {
-      if (confirm("Delete this order permanently?")) {
-        ordersRef.get(id).put(null);
-        const order = ordersMap[id];
-        if (order && order.username) {
+    function removeOrder(id) {
+      adminRef.get(id).once(order => {
+        if (order?.username) {
           gun.get("macx_orders").get(order.username).get(id).put(null);
         }
-        delete ordersMap[id];
-        const node = document.getElementById("ord-" + id);
-        if (node) node.remove();
-      }
+        adminRef.get(id).put(null);
+        document.getElementById("order-" + id)?.remove();
+      });
     }
 
     function filterOrders() {
-      const query = searchInput.value.trim().toLowerCase();
-      for (const id in ordersMap) {
-        const el = document.getElementById("ord-" + id);
-        if (!el) continue;
-        if (!query || id.toLowerCase().includes(query)) {
-          el.style.display = "block";
-        } else {
-          el.style.display = "none";
-        }
-      }
+      const input = document.getElementById("searchInput").value.toLowerCase();
+      const allOrders = document.querySelectorAll(".order");
+      allOrders.forEach(o => {
+        const id = o.id.replace("order-", "");
+        o.style.display = id.includes(input) ? "block" : "none";
+      });
     }
 
-    renderAllOrders();
+    renderAdminOrders();
   </script>
 </body>
 </html>
