@@ -203,6 +203,50 @@ async function startPayment() {
   new Razorpay(options).open();
 }
 
+// 2) In cart.js, after each cart update call…
+function updateCartSummary() {
+  const summaryEl = document.getElementById("cartSummary");
+  const lines = Object.values(items).map(item => {
+    const name = item.productName;
+    const qty  = item.quantity;
+    const price= item.price;
+    const sub  = qty * price;
+    return `${name}: ₹${price} × ${qty} = ₹${sub}`;
+  });
+  summaryEl.innerHTML = lines.length
+    ? lines.join("<br>")
+    : "<em>Your cart is empty.</em>";
+}
+
+// Call updateCartSummary() at end of updateGrandTotal() or inside listenToCart()
+
+// 3) In startPayment(), include this summary in Razorpay notes
+async function startPayment() {
+  // … validate shipping & cartItems …
+  const cartItems = Object.values(items);
+  const summaryText = cartItems
+    .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
+    .join(" | ");
+
+  const options = {
+    // key, amount, etc…
+    prefill: { name, email, contact: phone },
+    notes: {
+      shipping_name:    name,
+      shipping_phone:   phone,
+      shipping_address: address,
+      shipping_country: country,
+      shipping_pincode: pincode,
+      cart_summary:     summaryText
+    },
+    handler(response) { /* … */ }
+  };
+
+  new Razorpay(options).open();
+}
+
+
+
 document.addEventListener("DOMContentLoaded", renderLoginStatus);
 
       
