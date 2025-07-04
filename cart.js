@@ -24,14 +24,6 @@ function renderLoginStatus() {
   document.getElementById("loggedInSection").style.display = "block";
   document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
   listenToCart();
-
-  const form = document.getElementById("shippingForm");
-  if (form) {
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      startPayment();
-    });
-  }
 }
 
 document.addEventListener("DOMContentLoaded", renderLoginStatus);
@@ -139,12 +131,10 @@ function removeItem(id) {
   cartRef.get(id).put(null);
 }
 
-// 7. Razorpay checkout with pre-saved order
+// 7. Razorpay checkout & full order process
 async function startPayment() {
   const cartItems = Object.values(items);
-  if (!cartItems.length) {
-    return alert("🛒 Your cart is empty.");
-  }
+  if (!cartItems.length) return alert("🛒 Your cart is empty.");
 
   const get = id => document.getElementById(id)?.value.trim();
   const [name, phone, email, address, country, pincode] =
@@ -157,7 +147,7 @@ async function startPayment() {
     sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
   const orderId = Date.now().toString();
 
-  const pending = {
+  const orderData = {
     items: cartItems,
     shipping: { name, phone, email, address, country, pincode },
     total: totalAmount,
@@ -165,15 +155,9 @@ async function startPayment() {
     createdAt: Date.now()
   };
 
-  await new Promise(resolve => {
-    ordersRef.get(orderId).put(pending, ack1 => {
-      if (ack1.err) return alert("❌ Failed to save user order.");
-      adminOrders.get(orderId).put({ ...pending, username }, ack2 => {
-        if (ack2.err) return alert("❌ Failed to save admin order.");
-        resolve();
-      });
-    });
-  });
+  // 1. Save order BEFORE payment
+  await ordersRef.get(orderId).put(orderData);
+  await adminOrders.get(orderId).put({ ...orderData, username });
 
   const summaryText = cartItems
     .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
@@ -199,33 +183,25 @@ async function startPayment() {
     theme: { color: "#00c0b5" },
     handler: function (response) {
       const paidAt = Date.now();
-      const paymentId = response.razorpay_payment_id;
-      const paymentMethod = "Razorpay";
+      const updated = {
+        razorpayPaymentId: response.razorpay_payment_id,
+        paymentMethod: "Razorpay",
+        status: "Paid",
+        paidAt
+      };
 
-      ordersRef.get(orderId).once(originalOrder => {
-        if (!originalOrder || !originalOrder.items) {
-          alert("⚠️ Order not found. Payment received, but data missing.");
-          return;
-        }
+      // 2. Update both user & admin orders
+      ordersRef.get(orderId).put(updated);
+      adminOrders.get(orderId).put({ ...updated, username });
 
-        const updated = {
-          ...originalOrder,
-          razorpayPaymentId: paymentId,
-          paymentMethod,
-          status: "Paid",
-          paidAt
-        };
+      // 3. Clear cart
+      cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
-        ordersRef.get(orderId).put(updated);
-        adminOrders.get(orderId).put({ ...updated, username });
-
-        cartRef.map().once((_, id) => cartRef.get(id).put(null));
-
-        alert("✅ Payment successful! Redirecting to My Orders…");
-        window.location.href = "myorders.html";
-      });
+      // 4. Redirect
+      alert("✅ Payment successful! Redirecting to My Orders…");
+      window.location.href = "myorders.html";
     }
   };
 
   new Razorpay(options).open();
-                                       }
+    }
