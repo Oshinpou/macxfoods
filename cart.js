@@ -165,7 +165,8 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
 // INIT
 renderLoginStatus();
 
-// Razorpay Order Submit
+
+//razorpay submit form
 document.getElementById("shippingForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
@@ -175,26 +176,22 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const totalAmount = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
 
   const shipping = {
-    name: document.getElementById("name").value.trim(),
-    phone: document.getElementById("phone").value.trim(),
-    email: document.getElementById("email").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    country: document.getElementById("country").value.trim(),
-    pincode: document.getElementById("pincode").value.trim()
+    name: document.getElementById("name").value,
+    phone: document.getElementById("phone").value,
+    email: document.getElementById("email").value,
+    address: document.getElementById("address").value,
+    country: document.getElementById("country").value,
+    pincode: document.getElementById("pincode").value
   };
-
-  if (!shipping.name || !shipping.phone || !shipping.email || !shipping.address || !shipping.country || !shipping.pincode) {
-    return alert("Please fill all shipping details.");
-  }
 
   const orderId = Date.now().toString();
 
-  const razorpayOptions = {
-    key: "rzp_live_ozWo08bXwqssx3", // ✅ Your Razorpay live key
+  const options = {
+    key: "rzp_live_ozWo08bXwqssx3", // ✅ your key here
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
-    description: `Order #${orderId}`,
+    description: "Order Payment",
     handler: function (response) {
       const orderData = {
         items: cartItems,
@@ -208,12 +205,8 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
       ordersRef.get(orderId).put(orderData);
       adminOrders.get(orderId).put({ ...orderData, username });
 
-      // Clear cart after successful payment
-      cartRef.map().once((item, id) => {
-        if (item) cartRef.get(id).put(null);
-      });
-
-      alert("✅ Payment successful & order placed!");
+      cartRef.map().once((_, id) => cartRef.get(id).put(null));
+      alert("Payment successful & order placed!");
       window.location.href = "myorders.html";
     },
     prefill: {
@@ -222,13 +215,16 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
       contact: shipping.phone
     },
     notes: {
-      shipping_address: `${shipping.address}, ${shipping.country}, PIN: ${shipping.pincode}`
+      address: `${shipping.address}, ${shipping.country}, PIN: ${shipping.pincode}`
     },
     theme: {
       color: "#00c0b5"
     }
   };
 
-  const rzp = new Razorpay(razorpayOptions);
+  const rzp = new Razorpay(options);
   rzp.open();
 });
+        
+
+      
