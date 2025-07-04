@@ -104,18 +104,21 @@ function removeItem(id) {
 }
 
 
-// Razorpay Checkout with Full Shipping + “Pending” → “Paid” Flow
+// ------------------------------
+// Complete startPayment + renderLoginStatus
+// ------------------------------
+
 window.startPayment = async function () {
+  // 1. Gather cart & shipping data
   const cartItems = Object.values(items);
-  if (cartItems.length === 0) {
+  if (!cartItems.length) {
     alert("🛒 Your cart is empty.");
     return;
   }
 
-  // 1. Collect & validate shipping info
-  const name = document.getElementById("name")?.value.trim();
-  const phone = document.getElementById("phone")?.value.trim();
-  const email = document.getElementById("email")?.value.trim();
+  const name    = document.getElementById("name")?.value.trim();
+  const phone   = document.getElementById("phone")?.value.trim();
+  const email   = document.getElementById("email")?.value.trim();
   const address = document.getElementById("address")?.value.trim();
   const country = document.getElementById("country")?.value.trim();
   const pincode = document.getElementById("pincode")?.value.trim();
@@ -125,23 +128,17 @@ window.startPayment = async function () {
     return;
   }
 
-  const shipping = { name, phone, email, address, country, pincode };
-  const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const orderId = Date.now().toString();
+  const shipping     = { name, phone, email, address, country, pincode };
+  const totalAmount  = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const orderId      = Date.now().toString();
+  const timestamp    = Date.now();
 
-  // 2. Save “Pending” order to user & admin nodes
-  const pendingOrder = {
-    items: cartItems,
-    shipping,
-    total: totalAmount,
-    status: "Pending",
-    createdAt: Date.now()
-  };
+  // 2. Save “Pending” order in GunDB (user & admin)
+  const pendingOrder = { items: cartItems, shipping, total: totalAmount, status: "Pending", createdAt: timestamp };
   ordersRef.get(orderId).put(pendingOrder);
   adminOrders.get(orderId).put({ ...pendingOrder, username });
 
-  // 3. (Optional) Create a Razorpay Order server-side for better security
-  //    You need an endpoint /api/createOrder that returns { id: razorpay_order_id, ... }
+  // 3. (Optional) create a Razorpay order server-side for secure amount lock
   let razorOrder;
   try {
     const resp = await fetch("/api/createOrder", {
@@ -151,55 +148,60 @@ window.startPayment = async function () {
     });
     razorOrder = await resp.json();
   } catch (e) {
-    console.warn("Could not create server-side order, falling back to client-only");
+    console.warn("Server-side order creation failed; proceeding client-only");
   }
 
-  // 4. Configure & open Razorpay Checkout
+  // 4. Build Razorpay Checkout options
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3",    // your test/live key
-    amount: totalAmount * 100,         // in paise
+    key: "rzp_live_ozWo08bXwqssx3",
+    amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
-    description: "Cart Checkout Payment",
-    order_id: razorOrder?.id,          // only if server-generated
+    description: "Order #" + orderId,
+    order_id: razorOrder?.id,           // include if created server-side
     prefill: {
-      name: shipping.name,
+      name:  shipping.name,
       email: shipping.email,
       contact: shipping.phone.startsWith("+")
         ? shipping.phone
         : `+91${shipping.phone}`
     },
     notes: {
-      items: JSON.stringify(cartItems),
-      address: `${shipping.address}, ${shipping.pincode}, ${shipping.country}`
+      customer_name:    shipping.name,
+      customer_email:   shipping.email,
+      customer_phone:   shipping.phone,
+      shipping_address: shipping.address,
+      shipping_country: shipping.country,
+      shipping_pincode: shipping.pincode,
+      cart_items:       JSON.stringify(cartItems)
     },
     theme: { color: "#00c0b5" },
     handler(response) {
-      // 5. Update “Pending” → “Paid”
+      // 5. On payment success, mark “Paid” & clear cart
+      const paidAt = Date.now();
       ordersRef.get(orderId).put({
         razorpayPaymentId: response.razorpay_payment_id,
         status: "Paid",
-        paidAt: Date.now()
+        paidAt
       });
-      adminOrders.get(orderId).get(username).put({
+      adminOrders.get(orderId).put({
         razorpayPaymentId: response.razorpay_payment_id,
         status: "Paid",
-        paidAt: Date.now()
+        paidAt
       });
 
-      // 6. Clear the cart
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
-
-      alert("✅ Payment successful! Redirecting to My Orders…");
+      alert("✅ Payment successful! Redirecting…");
       window.location.href = "myorders.html";
     }
   };
 
-  const rzp = new Razorpay(options);
-  rzp.open();
+  // 6. Open the Checkout
+  new Razorpay(options).open();
 };
 
-// Render login status, wire up form on page load
+
+// Show login/cart UI and wire up the shipping form
 function renderLoginStatus() {
   if (!username) {
     document.getElementById("notLoggedIn").style.display = "block";
@@ -212,17 +214,26 @@ function renderLoginStatus() {
 
   const form = document.getElementById("shippingForm");
   if (form) {
-    form.addEventListener("submit", function (e) {
+    form.addEventListener("submit", e => {
       e.preventDefault();
       startPayment();
     });
   } else {
-    console.warn("Shipping form not found in DOM.");
+    console.warn("Shipping form not found.");
   }
 }
 
+// Initialize on DOM ready
 document.addEventListener("DOMContentLoaded", renderLoginStatus);
 
+
+
+  
+
+
+
+
+      
 
   
   
