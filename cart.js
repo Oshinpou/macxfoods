@@ -170,20 +170,24 @@ window.startPayment = function () {
       
 console.log("Cart.js loaded");
 console.log("Username:", username);
-  
- 
+
 document.addEventListener("DOMContentLoaded", function () {
   renderLoginStatus();
 
   const form = document.getElementById("shippingForm");
-  form.addEventListener("submit", function (e) {
-    e.preventDefault(); // prevent normal form submission
-    startPayment();     // now call payment logic
-  });
+  if (form) {
+    console.log("Shipping form found and event attached");
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); // prevent full page reload
+      startPayment();     // call your Razorpay payment handler
+    });
+  } else {
+    console.error("Shipping form NOT found in the DOM");
+  }
 });
 
 
-window.addEventListener('DOMContentLoaded', renderLoginStatus);
+
 
 
   
