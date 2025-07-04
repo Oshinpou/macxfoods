@@ -171,8 +171,12 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   e.preventDefault();
 
   const cartItems = Object.values(items);
-  if (cartItems.length === 0) return alert("Your cart is empty.");
+  if (cartItems.length === 0) {
+    alert("Your cart is empty.");
+    return;
+  }
 
+  // 📦 Collect shipping details
   const name = document.getElementById("name").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -180,9 +184,8 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const country = document.getElementById("country").value.trim();
   const pincode = document.getElementById("pincode").value.trim();
 
-  // 🔐 Validate form fields before payment
   if (!name || !phone || !email || !address || !country || !pincode) {
-    alert("Please fill in all shipping details before proceeding.");
+    alert("Please fill all shipping details.");
     return;
   }
 
@@ -190,36 +193,40 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const totalAmount = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const orderId = Date.now().toString();
 
+  // ✅ Setup Razorpay options
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // ✅ use your live key here
+    key: "rzp_live_ozWo08bXwqssx3", // Replace with your actual Razorpay key
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
     description: "Order Payment",
-    prefill: {
-      name,
-      email,
-      contact: phone
-    },
-    notes: {
-      address: `${address}, ${country}, PIN: ${pincode}`
-    },
     handler: function (response) {
-      const orderData = {
+      // ✅ On successful payment, store order in GUN
+      const order = {
+        shipping,
         items: cartItems,
         total: totalAmount,
-        shipping,
         razorpayPaymentId: response.razorpay_payment_id,
         status: "Paid",
         timestamp: Date.now()
       };
 
-      ordersRef.get(orderId).put(orderData);
-      adminOrders.get(orderId).put({ ...orderData, username });
+      ordersRef.get(orderId).put(order);
+      adminOrders.get(orderId).put({ ...order, username });
 
+      // Clear cart
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
+
       alert("Payment successful & order placed!");
       window.location.href = "myorders.html";
+    },
+    prefill: {
+      name: name,
+      email: email,
+      contact: phone
+    },
+    notes: {
+      address: `${address}, ${country} - ${pincode}`
     },
     theme: {
       color: "#00c0b5"
@@ -227,10 +234,20 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   };
 
   const rzp = new Razorpay(options);
+
+  // ✅ THIS FIXES THE ISSUE!
+  rzp.on('payment.failed', function (response) {
+    alert("Payment failed or cancelled.");
+    console.error(response.error);
+  });
+
   rzp.open();
 });
   
 
+  
+    
+      
   
     
         
