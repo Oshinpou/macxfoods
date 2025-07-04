@@ -103,42 +103,40 @@ function removeItem(id) {
   cartRef.get(id).put(null);
 }
 
-// Razorpay Order Submit
+
+// Razorpay Checkout with Full Shipping + Order Save
 window.startPayment = function () {
   const cartItems = Object.values(items);
   if (cartItems.length === 0) {
-    alert("Your cart is empty.");
+    alert("🛒 Your cart is empty.");
     return;
   }
 
-console.log("startPayment() called");
+  // Get shipping info
+  const name = document.getElementById("name")?.value.trim();
+  const phone = document.getElementById("phone")?.value.trim();
+  const email = document.getElementById("email")?.value.trim();
+  const address = document.getElementById("address")?.value.trim();
+  const country = document.getElementById("country")?.value.trim();
+  const pincode = document.getElementById("pincode")?.value.trim();
 
-const name = document.getElementById("name").value.trim();
-const phone = document.getElementById("phone").value.trim();
-const email = document.getElementById("email").value.trim();
-const address = document.getElementById("address").value.trim();
-const country = document.getElementById("country").value.trim();
-const pincode = document.getElementById("pincode").value.trim();
-
-console.log("Shipping:", { name, phone, email, address, country, pincode });
-
-  
   if (!name || !phone || !email || !address || !country || !pincode) {
-    alert("Please fill all the fields.");
+    alert("🚨 Please fill all shipping details before payment.");
     return;
   }
 
   const shipping = { name, phone, email, address, country, pincode };
-  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const orderId = Date.now().toString();
 
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // replace with your live/test key
+    key: "rzp_live_ozWo08bXwqssx3", // Replace with your live/test key
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
-    description: "Order Payment",
+    description: "Cart Checkout Payment",
     handler: function (response) {
+      // Save order to user & admin
       const orderData = {
         items: cartItems,
         shipping,
@@ -151,15 +149,16 @@ console.log("Shipping:", { name, phone, email, address, country, pincode });
       ordersRef.get(orderId).put(orderData);
       adminOrders.get(orderId).put({ ...orderData, username });
 
+      // Clear cart after order placed
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
-      alert("✅ Payment successful & order placed!");
+      alert("✅ Payment successful! Your order has been placed.");
       window.location.href = "myorders.html";
     },
     prefill: {
-      name: name,
-      email: email,
-      contact: phone
+      name: shipping.name,
+      email: shipping.email,
+      contact: shipping.phone
     },
     notes: {
       address: `${address}, ${country} - ${pincode}`
@@ -172,40 +171,32 @@ console.log("Shipping:", { name, phone, email, address, country, pincode });
   const rzp = new Razorpay(options);
   rzp.open();
 };
-      
-console.log("Cart.js loaded");
-console.log("Username:", username);
 
-document.addEventListener("DOMContentLoaded", function () {
-  renderLoginStatus();
+// Render Login Status & Attach Form Submit
+function renderLoginStatus() {
+  if (!username) {
+    document.getElementById("notLoggedIn").style.display = "block";
+    return;
+  }
 
+  document.getElementById("loggedInSection").style.display = "block";
+  document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+  listenToCart();
+
+  // Attach submit to form only when user is logged in
   const form = document.getElementById("shippingForm");
   if (form) {
-    console.log("Shipping form found and event attached");
     form.addEventListener("submit", function (e) {
-      e.preventDefault(); // prevent normal form submission
-      startPayment();     // this triggers Razorpay with form data
+      e.preventDefault();
+      startPayment();
     });
   } else {
-    console.error("Shipping form NOT found in the DOM");
+    console.warn("Shipping form not found in DOM.");
   }
-});
+}
 
-
-
-
-
-  
-
-      
-      
-  
+// Run login check when page loads
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
 
   
     
-      
-  
-    
-        
-
-      
