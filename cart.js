@@ -2,9 +2,9 @@
 
 // 0. Initialize GunDB & References
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-const username = localStorage.getItem("macx_loggedInUser");
-const cartRef = gun.get('macx_cart').get(username);
-const ordersRef = gun.get("macx_orders").get(username);
+let username = localStorage.getItem("macx_loggedInUser");
+let cartRef = gun.get('macx_cart').get(username);
+let ordersRef = gun.get("macx_orders").get(username);
 const adminOrders = gun.get("admin_orders");
 
 let items = {};
@@ -17,10 +17,15 @@ function logout() {
 
 // 2. Render login/cart UI
 function renderLoginStatus() {
+  username = localStorage.getItem("macx_loggedInUser");
   if (!username) {
     document.getElementById("notLoggedIn").style.display = "block";
     return;
   }
+
+  cartRef = gun.get('macx_cart').get(username);
+  ordersRef = gun.get("macx_orders").get(username);
+
   document.getElementById("loggedInSection").style.display = "block";
   document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
   listenToCart();
@@ -145,13 +150,9 @@ function removeItem(id) {
 
 // 7. Razorpay checkout with cart summary & shipping notes
 async function startPayment() {
-  // a) Validate cart
   const cartItems = Object.values(items);
-  if (!cartItems.length) {
-    return alert("🛒 Your cart is empty.");
-  }
+  if (!cartItems.length) return alert("🛒 Your cart is empty.");
 
-  // b) Validate shipping fields
   const get = id => document.getElementById(id)?.value.trim();
   const [name, phone, email, address, country, pincode] =
     ["name","phone","email","address","country","pincode"].map(get);
@@ -159,12 +160,10 @@ async function startPayment() {
     return alert("🚨 Please fill all shipping details.");
   }
 
-  // c) Compute total & orderId
   const totalAmount = cartItems.reduce((sum, i) =>
     sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
   const orderId = Date.now().toString();
 
-  // d) Save “Pending” in GunDB
   const pending = {
     items: cartItems,
     shipping: { name, phone, email, address, country, pincode },
@@ -177,20 +176,6 @@ async function startPayment() {
     adminOrders.get(orderId).put({ ...pending, username })
   ]);
 
-  // e) (Optional) create server-side Razorpay order
-  let razorOrder;
-  try {
-    const resp = await fetch("/api/createOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: totalAmount * 100, receipt: orderId })
-    });
-    razorOrder = await resp.json();
-  } catch (err) {
-    console.warn("Server-side order creation failed, falling back client-only");
-  }
-
-  // f) Configure & open Razorpay checkout
   const summaryText = cartItems
     .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
     .join(" | ");
@@ -201,7 +186,6 @@ async function startPayment() {
     currency: "INR",
     name: "MACX Marketplace",
     description: `Order #${orderId}`,
-    order_id: razorOrder?.id,    // include only if using server order
     prefill: { name, email, contact: phone },
     notes: {
       shipping_name:    name,
@@ -215,36 +199,34 @@ async function startPayment() {
     },
     theme: { color: "#00c0b5" },
     handler: async function (response) {
-  const paidAt = Date.now();
-  const paymentId = response.razorpay_payment_id;
-  const paymentMethod = "Razorpay";
+      const paidAt = Date.now();
+      const paymentId = response.razorpay_payment_id;
+      const paymentMethod = "Razorpay";
 
-  // 1. Fetch original order to preserve items/shipping/total
-  ordersRef.get(orderId).once(originalOrder => {
-    if (!originalOrder) {
-      alert("⚠️ Failed to find original order.");
-      return;
+      ordersRef.get(orderId).once(originalOrder => {
+        if (!originalOrder) {
+          alert("⚠️ Failed to find original order.");
+          return;
+        }
+
+        const updatedOrder = {
+          ...originalOrder,
+          razorpayPaymentId: paymentId,
+          paymentMethod,
+          status: "Paid",
+          paidAt
+        };
+
+        ordersRef.get(orderId).put(updatedOrder);
+        adminOrders.get(orderId).put({ ...updatedOrder, username });
+
+        cartRef.map().once((_, id) => cartRef.get(id).put(null));
+
+        alert("✅ Payment successful! Redirecting to My Orders…");
+        window.location.href = "myorders.html";
+      });
     }
+  };
 
-    const updatedOrder = {
-      ...originalOrder,
-      razorpayPaymentId: paymentId,
-      paymentMethod,
-      status: "Paid",
-      paidAt
-    };
-
-    // 2. Save updated to user & admin orders
-    ordersRef.get(orderId).put(updatedOrder);
-    adminOrders.get(orderId).put({ ...updatedOrder, username });
-
-    // 3. Clear user's cart
-    cartRef.map().once((_, id) => cartRef.get(id).put(null));
-
-    // 4. Notify & redirect
-    alert("✅ Payment successful! Redirecting to My Orders…");
-    window.location.href = "myorders.html";
-  });
+  new Razorpay(options).open();
     }
-      
-document.addEventListener("DOMContentLoaded", renderLoginStatus);
