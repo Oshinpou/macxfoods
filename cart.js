@@ -247,3 +247,4 @@ async function startPayment() {
   });
     }
       
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
