@@ -171,7 +171,8 @@ window.startPayment = function () {
 console.log("Cart.js loaded");
 console.log("Username:", username);
   
-  
+  window.addEventListener('DOMContentLoaded', renderLoginStatus);
+
 
   
 
