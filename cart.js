@@ -171,10 +171,11 @@ async function startPayment() {
     status: "Pending",
     createdAt: Date.now()
   };
-  await Promise.all([
-    ordersRef.get(orderId).put(pending),
-    adminOrders.get(orderId).put({ ...pending, username })
-  ]);
+  await new Promise(resolve => {
+  ordersRef.get(orderId).put(pending, () => {
+    adminOrders.get(orderId).put({ ...pending, username }, resolve);
+  });
+});
 
   const summaryText = cartItems
     .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
