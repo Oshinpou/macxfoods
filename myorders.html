@@ -3,157 +3,90 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Orders - MACX</title>
+  <title>My Orders</title>
   <style>
-    body {
-      font-family: sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    .container {
-      max-width: 900px;
-      margin: auto;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-    .order {
-      background: white;
-      border-radius: 8px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.1);
-    }
-    .order h3 {
-      margin: 0 0 10px;
-      color: #333;
-    }
-    .items {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 10px 0;
-    }
-    .items th, .items td {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-    }
-    .order-actions button {
-      margin-right: 10px;
-      padding: 6px 12px;
-      cursor: pointer;
-      background: #00c0b5;
-      color: white;
-      border: none;
-      border-radius: 4px;
-    }
-    .order-actions button.delete {
-      background: #f44336;
-    }
-    .status {
-      font-weight: bold;
-      color: #00695c;
-    }
-    .label {
-      font-weight: bold;
-    }
+    body { font-family:sans-serif }
+    .container { max-width:800px; margin:auto; padding:20px }
+    .order { border:1px solid #ccc; padding:15px; margin-bottom:20px }
+    .items th, .items td { padding:6px 10px; text-align:left }
+    .btn { padding:4px 8px; cursor:pointer; margin-top:10px }
   </style>
-
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>My Orders</h1>
-    <div id="ordersContainer">Loading your orders...</div>
+    <div id="ordersContainer">Loading...</div>
   </div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const username = localStorage.getItem("macx_loggedInUser");
+    const ordersRef = username && gun.get("macx_orders").get(username);
 
     if (!username) {
-      alert("🔐 Please login first.");
+      alert("Please login first.");
       window.location.href = "login.html";
     }
 
-    const ordersRef = gun.get("macx_orders").get(username);
-    const container = document.getElementById("ordersContainer");
-
     function renderOrders() {
-      container.innerHTML = "";
+      const c = document.getElementById("ordersContainer");
+      c.innerHTML = "";
 
-      ordersRef.map().on((order, id) => {
-        if (!order || !order.items) return;
+      ordersRef.map().once((o, id) => {
+        if (!o || !o.items) return;
 
-        const existing = document.getElementById("order-" + id);
-        if (existing) existing.remove();
-
-        const el = document.createElement("div");
-        el.className = "order";
-        el.id = "order-" + id;
-
-        const status = order.status || "Pending";
-        const paidNote = order.razorpayPaymentId ? `✅ Paid (${order.razorpayPaymentId})` : "🕐 Not Paid";
-        const actions = [];
-
-        if (status === "Pending") {
-          actions.push(`<button onclick="updateStatus('${id}', 'Cancelled')">Cancel Order</button>`);
-        }
-        if (status === "Cancelled" || status === "Delivered") {
-          actions.push(`<button class="delete" onclick="removeOrder('${id}')">Delete</button>`);
-        }
-
-        const rows = order.items.map(i => {
-          const p = parseInt(i.price) || 0;
-          const q = parseInt(i.quantity) || 1;
-          const sub = p * q;
+        const itemsTable = o.items.map(i => {
+          const p = parseInt(i.price);
+          const q = parseInt(i.quantity);
+          const s = p * q;
           return `<tr>
-                    <td>${i.productName}</td>
-                    <td>₹${p}</td>
-                    <td>${q}</td>
-                    <td>₹${sub}</td>
-                  </tr>`;
+            <td>${i.productName}</td>
+            <td>₹${p}</td>
+            <td>${q}</td>
+            <td>₹${s}</td>
+          </tr>`;
         }).join("");
 
-        const s = order.shipping || {};
-        const shippingDetails = `
-          <p class="label">Shipping Details:</p>
-          <p>
-            ${s.name}, ${s.address}, ${s.country} - ${s.pincode}<br>
-            Phone: ${s.phone} | Email: ${s.email}
-          </p>
+        const shipping = o.shipping || {};
+        const info = `
+          <strong>Ship To:</strong> ${shipping.name}<br>
+          ${shipping.address}, ${shipping.country} - ${shipping.pincode}<br>
+          <strong>Phone:</strong> ${shipping.phone} <br>
+          <strong>Email:</strong> ${shipping.email}
         `;
 
-        el.innerHTML = `
-          <h3>Order #${id}</h3>
-          <p><span class="label">Status:</span> <span class="status">${status}</span></p>
-          <p><span class="label">Payment:</span> ${paidNote}</p>
-          <table class="items">
-            <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
-            ${rows}
-          </table>
-          <p><span class="label">Total:</span> ₹${order.total}</p>
-          ${shippingDetails}
-          <div class="order-actions">${actions.join("")}</div>
+        const status = o.status || "Pending";
+        let actionBtn = "";
+        if (status === "Pending") {
+          actionBtn = `<button class="btn" onclick="updateStatus('${id}', 'Cancelled')">Cancel Order</button>`;
+        } else if (status === "Paid") {
+          actionBtn = `<span style="color:green">Paid</span>`;
+        }
+
+        const html = `
+          <div class="order" id="order-${id}">
+            <h3>Order #${id}</h3>
+            <p><strong>Status:</strong> ${status}</p>
+            <table class="items" border="1" cellspacing="0">
+              <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+              ${itemsTable}
+            </table>
+            <p><strong>Total:</strong> ₹${(o.total || 0)}</p>
+            <p>${info}</p>
+            ${actionBtn}
+          </div>
         `;
 
-        container.appendChild(el);
+        c.innerHTML += html;
       });
     }
 
     function updateStatus(id, newStatus) {
-      ordersRef.get(id).once(order => {
-        if (order) {
-          ordersRef.get(id).put({ ...order, status: newStatus });
-        }
-      });
-    }
-
-    function removeOrder(id) {
-      if (confirm("Are you sure you want to delete this order?")) {
-        ordersRef.get(id).put(null);
-      }
+      ordersRef.get(id).put({ status: newStatus });
+      gun.get("admin_orders").get(id).put({ status: newStatus });
+      alert("Status updated");
+      renderOrders();
     }
 
     renderOrders();
