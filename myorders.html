@@ -1,51 +1,120 @@
-<!-- myorders.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>My Orders - MACX</title>
-  <link rel="stylesheet" href="style.css" />
-  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>My Orders</title>
+  <style>
+    .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
+    .order { border:1px #ccc solid; margin-bottom:20px; padding:15px }
+    .order h3 { margin-top:0 }
+    .items td { padding:5px 10px; }
+    .btn { margin-right:10px; padding:5px 10px; cursor:pointer }
+  </style>
+
+  <!-- Gun + SEA -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>My Orders</h1>
-    <div id="ordersList"></div>
+    <div id="ordersContainer">Loading…</div>
   </div>
 
   <script>
-    const username = localStorage.getItem("macx_loggedInUser");
-    const gun = Gun();
-    const orderRef = gun.get("macx_orders").get(username);
-    const ordersList = document.getElementById("ordersList");
+  // 0. Init
+  const gun       = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const username  = localStorage.getItem("macx_loggedInUser");
+  const ordersRef = username && gun.get("macx_orders").get(username);
 
-    orderRef.map().once((order, id) => {
-      if (!order || !order.items) return;
+  // 1. Redirect if not logged in
+  if (!username) {
+    alert("Please login first.");
+    window.location.href = "login.html";
+  }
 
-      const div = document.createElement("div");
-      const items = order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('');
+  // 2. Render each order
+  function renderOrders() {
+    const container = document.getElementById("ordersContainer");
+    container.innerHTML = "";
 
-      div.innerHTML = `
-        <h3>Order ID: ${id}</h3>
-        <p><strong>Status:</strong> ${order.status || 'Pending'}</p>
-        <p><strong>Payment Status:</strong> ${order.status || 'N/A'}</p>
-        <p><strong>Total Paid:</strong> ₹${order.total || 0}</p>
-        <p><strong>Name:</strong> ${order.shipping?.name || ''}</p>
-        <p><strong>Phone:</strong> ${order.shipping?.phone || ''}</p>
-        <p><strong>Address:</strong> ${order.shipping?.address || ''}, ${order.shipping?.country || ''} - ${order.shipping?.pincode || ''}</p>
-        <ul>${items}</ul>
-        <button onclick="cancelOrder('${id}')">Cancel Order</button>
-        <hr>
+    ordersRef.map().on((order, id) => {
+      // if deleted record
+      if (!order || !order.items) {
+        const el = document.getElementById("order-"+id);
+        if (el) el.remove();
+        return;
+      }
+
+      // build order card
+      let el = document.getElementById("order-"+id);
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "order-"+id;
+        el.className = "order";
+        container.appendChild(el);
+      }
+
+      // status badge
+      const st = order.status;
+      const badge = `<strong>Status:</strong> ${st}`;
+
+      // items table
+      const rows = order.items.map(i => {
+        const sub = (i.price*i.quantity).toLocaleString();
+        return `<tr>
+          <td>${i.productName}</td>
+          <td>₹${i.price}</td>
+          <td>${i.quantity}</td>
+          <td>₹${sub}</td>
+        </tr>`;
+      }).join("");
+
+      // shipping info
+      const s = order.shipping;
+      const shippingHTML = `
+        <p><strong>Ship To:</strong> ${s.name}<br>
+        ${s.address}, ${s.country} - ${s.pincode}<br>
+        <strong>Contact:</strong> +91${s.phone}<br>
+        <strong>Email:</strong> ${s.email}</p>`;
+
+      // actions
+      let actions = "";
+      if (st === "Pending") {
+        actions += `<button class="btn" onclick="updateStatus('${id}','Cancelled')">Cancel</button>`;
+      }
+      if (st === "Cancelled" || st === "Paid") {
+        actions += `<button class="btn" onclick="removeOrder('${id}')">Remove</button>`;
+      }
+
+      // total
+      const total = order.total.toLocaleString();
+
+      el.innerHTML = `
+        <h3>Order #${id}</h3>
+        ${badge}<br><br>
+        <table class="items" border="1" cellspacing="0">
+          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
+          ${rows}
+        </table>
+        <p><strong>Order Total:</strong> ₹${total}</p>
+        ${shippingHTML}
+        ${actions}
       `;
-      ordersList.appendChild(div);
     });
+  }
 
-    function cancelOrder(id) {
-      orderRef.get(id).get("status").put("Cancelled");
-      alert("Order cancelled.");
-      location.reload();
-    }
+  // 3. Helpers
+  function updateStatus(id, status) {
+    ordersRef.get(id).put({ status });
+  }
+  function removeOrder(id) {
+    ordersRef.get(id).put(null);
+  }
+
+  // 4. Kickoff
+  renderOrders();
   </script>
 </body>
 </html>
