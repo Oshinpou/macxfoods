@@ -101,3 +101,4 @@ try {
 
 new Razorpay(options).open(); }
 
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
