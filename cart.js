@@ -203,6 +203,7 @@ async function startPayment() {
   new Razorpay(options).open();
 }
 
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
 
       
 
