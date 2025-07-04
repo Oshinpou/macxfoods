@@ -104,69 +104,6 @@ function removeItem(id) {
 }
 
 // Razorpay Order Submit
-document.getElementById("shippingForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
-  const cartItems = Object.values(items);
-  if (cartItems.length === 0) return alert("Your cart is empty.");
-
-  const totalAmount = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-  const shipping = {
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    address: document.getElementById("address").value,
-    country: document.getElementById("country").value,
-    pincode: document.getElementById("pincode").value
-  };
-
-  const orderId = Date.now().toString();
-
-  const razorpayOptions = {
-    key: "rzp_live_ozWo08bXwqssx3", // Replace with your key
-    amount: totalAmount * 100,
-    currency: "INR",
-    name: "MACX Marketplace",
-    description: "Cart Purchase",
-    handler: function (response) {
-      const orderData = {
-        items: cartItems,
-        total: totalAmount,
-        shipping,
-        razorpayPaymentId: response.razorpay_payment_id,
-        status: "Paid",
-        timestamp: Date.now()
-      };
-
-      ordersRef.get(orderId).put(orderData);
-      adminOrders.get(orderId).put({ ...orderData, username });
-
-      // Clear cart
-      cartRef.map().once((_, id) => cartRef.get(id).put(null));
-
-      alert("Payment successful & order placed!");
-      window.location.href = "myorders.html";
-    },
-    prefill: {
-      name: shipping.name,
-      email: shipping.email,
-      contact: shipping.phone
-    },
-    theme: {
-      color: "#00c0b5"
-    }
-  };
-
-  const rzp = new Razorpay(razorpayOptions);
-  rzp.open();
-});
-
-// INIT
-renderLoginStatus();
-
-
-//razorpay submit form
 window.startPayment = function () {
   const cartItems = Object.values(items);
   if (cartItems.length === 0) {
@@ -191,7 +128,7 @@ window.startPayment = function () {
   const orderId = Date.now().toString();
 
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // replace with live/test key
+    key: "rzp_live_ozWo08bXwqssx3", // replace with your live/test key
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
@@ -230,6 +167,9 @@ window.startPayment = function () {
   const rzp = new Razorpay(options);
   rzp.open();
 };
+      
+
+  
   
 
   
