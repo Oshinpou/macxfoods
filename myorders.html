@@ -1,3 +1,4 @@
+<!-- myorders.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,107 +11,83 @@
     .order h3 { margin-top:0 }
     .items td { padding:5px 10px }
     .btn { padding:5px 10px; margin-right:8px; cursor:pointer }
+    .login-status { float:right; color:green; font-weight:bold; }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>My Orders</h1>
+    <h1>My Orders <span class="login-status" id="userDisplay"></span></h1>
     <div id="ordersContainer">Loading orders…</div>
   </div>
 
   <script>
-  // --- Init & Redirect if Not Logged In
-  const gun        = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-  const username   = localStorage.getItem("macx_loggedInUser");
-  const ordersRef  = username && gun.get("macx_orders").get(username);
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const username = localStorage.getItem("macx_loggedInUser");
+    const ordersRef = gun.get("macx_orders").get(username);
 
-  if (!username) {
-    alert("Please login first");
-    window.location.href = "login.html";
-  }
+    if (!username) {
+      alert("Please login first");
+      window.location.href = "login.html";
+    }
 
-  // --- Render & Reactively Update
-  function renderOrders() {
-    const c = document.getElementById("ordersContainer");
-    c.innerHTML = "";
+    document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
 
-    ordersRef.map().on((o, id) => {
-      if (!o || !o.items) {
-        const old = document.getElementById("ord-" + id);
-        if (old) old.remove();
-        return;
-      }
+    function renderOrders() {
+      const container = document.getElementById("ordersContainer");
+      container.innerHTML = "";
 
-      let el = document.getElementById("ord-" + id);
-      if (!el) {
-        el = document.createElement("div");
-        el.id = "ord-" + id;
-        el.className = "order";
-        c.appendChild(el);
-      }
+      ordersRef.map().on((order, id) => {
+        if (!order || !order.items) {
+          const old = document.getElementById("ord-" + id);
+          if (old) old.remove();
+          return;
+        }
 
-      // build items table
-      const rows = o.items.map(i => {
-        const p = parseInt(i.price) || 0;
-        const q = parseInt(i.quantity) || 1;
-        const sub = (p*q).toLocaleString();
-        return `<tr>
-          <td>${i.productName}</td>
-          <td>₹${p.toLocaleString()}</td>
-          <td>${q}</td>
-          <td>₹${sub}</td>
-        </tr>`;
-      }).join("");
+        let el = document.getElementById("ord-" + id);
+        if (!el) {
+          el = document.createElement("div");
+          el.id = "ord-" + id;
+          el.className = "order";
+          container.appendChild(el);
+        }
 
-      // shipping & contact
-      const s = o.shipping || {};
-      const shipInfo = `
-        <p>
-          <strong>Ship To:</strong> ${s.name}<br>
-          ${s.address}, ${s.country} - ${s.pincode}<br>
-          <strong>Contact:</strong> +91${s.phone}<br>
-          <strong>Email:</strong> ${s.email}
-        </p>`;
+        const rows = order.items.map(i => {
+          const p = parseInt(i.price)||0;
+          const q = parseInt(i.quantity)||1;
+          const sub = (p*q).toLocaleString();
+          return `<tr><td>${i.productName}</td><td>₹${p}</td><td>${q}</td><td>₹${sub}</td></tr>`;
+        }).join("");
 
-      // status & actions
-      const status = o.status || "Pending";
-      let actions = "";
-      if (status === "Pending") {
-        actions += `<button class="btn" onclick="updateStatus('${id}','Cancelled')">Cancel Order</button>`;
-      }
-      if (status === "Paid") {
-        actions += `<button class="btn" onclick="updateStatus('${id}','Delivered')">Mark Delivered</button>`;
-      }
-      if (status === "Cancelled" || status === "Delivered") {
-        actions += `<button class="btn" onclick="removeOrder('${id}')">Remove</button>`;
-      }
+        const s = order.shipping || {};
+        const status = order.status || "Pending";
+        let actions = "";
+        if (status === "Pending") {
+          actions = `<button class="btn" onclick="cancelOrder('${id}')">Cancel</button>`;
+        }
+        if (status === "Delivered" || status === "Cancelled") {
+          actions += `<button class="btn" onclick="deleteOrder('${id}')">Remove</button>`;
+        }
 
-      el.innerHTML = `
-        <h3>Order #${id}</h3>
-        <p><strong>Status:</strong> ${status}</p>
-        <table class="items" border="1" cellspacing="0">
-          <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
-          ${rows}
-        </table>
-        <p><strong>Total:</strong> ₹${(o.total||0).toLocaleString()}</p>
-        ${shipInfo}
-        ${actions}
-      `;
-    });
-  }
+        el.innerHTML = `
+          <h3>Order #${id}</h3>
+          <p><strong>Status:</strong> ${status}</p>
+          <table class="items" border="1"><tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>${rows}</table>
+          <p><strong>Total:</strong> ₹${(order.total||0).toLocaleString()}</p>
+          <p><strong>Shipping:</strong> ${s.name}, ${s.address}, ${s.country}, ${s.pincode} | 📞 ${s.phone} | ✉️ ${s.email}</p>
+          ${actions}
+        `;
+      });
+    }
 
-  // --- Helpers
-  function updateStatus(id, newStatus) {
-    ordersRef.get(id).put({ status: newStatus });
-  }
-  function removeOrder(id) {
-    ordersRef.get(id).put(null);
-  }
+    function cancelOrder(id) {
+      ordersRef.get(id).put({ status: "Cancelled" });
+    }
+    function deleteOrder(id) {
+      ordersRef.get(id).put(null);
+    }
 
-  // --- Kickoff
-  renderOrders();
+    renderOrders();
   </script>
 </body>
 </html>
