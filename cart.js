@@ -111,13 +111,18 @@ window.startPayment = function () {
     return;
   }
 
-  const name = document.getElementById("name").value.trim();
-  const phone = document.getElementById("phone").value.trim();
-  const email = document.getElementById("email").value.trim();
-  const address = document.getElementById("address").value.trim();
-  const country = document.getElementById("country").value.trim();
-  const pincode = document.getElementById("pincode").value.trim();
+console.log("startPayment() called");
 
+const name = document.getElementById("name").value.trim();
+const phone = document.getElementById("phone").value.trim();
+const email = document.getElementById("email").value.trim();
+const address = document.getElementById("address").value.trim();
+const country = document.getElementById("country").value.trim();
+const pincode = document.getElementById("pincode").value.trim();
+
+console.log("Shipping:", { name, phone, email, address, country, pincode });
+
+  
   if (!name || !phone || !email || !address || !country || !pincode) {
     alert("Please fill all the fields.");
     return;
@@ -178,8 +183,8 @@ document.addEventListener("DOMContentLoaded", function () {
   if (form) {
     console.log("Shipping form found and event attached");
     form.addEventListener("submit", function (e) {
-      e.preventDefault(); // prevent full page reload
-      startPayment();     // call your Razorpay payment handler
+      e.preventDefault(); // prevent normal form submission
+      startPayment();     // this triggers Razorpay with form data
     });
   } else {
     console.error("Shipping form NOT found in the DOM");
