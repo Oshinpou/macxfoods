@@ -173,25 +173,37 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const cartItems = Object.values(items);
   if (cartItems.length === 0) return alert("Your cart is empty.");
 
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const address = document.getElementById("address").value.trim();
+  const country = document.getElementById("country").value.trim();
+  const pincode = document.getElementById("pincode").value.trim();
+
+  // 🔐 Validate form fields before payment
+  if (!name || !phone || !email || !address || !country || !pincode) {
+    alert("Please fill in all shipping details before proceeding.");
+    return;
+  }
+
+  const shipping = { name, phone, email, address, country, pincode };
   const totalAmount = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-  const shipping = {
-    name: document.getElementById("name").value,
-    phone: document.getElementById("phone").value,
-    email: document.getElementById("email").value,
-    address: document.getElementById("address").value,
-    country: document.getElementById("country").value,
-    pincode: document.getElementById("pincode").value
-  };
-
   const orderId = Date.now().toString();
 
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // ✅ your key here
+    key: "rzp_live_ozWo08bXwqssx3", // ✅ use your live key here
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
     description: "Order Payment",
+    prefill: {
+      name,
+      email,
+      contact: phone
+    },
+    notes: {
+      address: `${address}, ${country}, PIN: ${pincode}`
+    },
     handler: function (response) {
       const orderData = {
         items: cartItems,
@@ -209,14 +221,6 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
       alert("Payment successful & order placed!");
       window.location.href = "myorders.html";
     },
-    prefill: {
-      name: shipping.name,
-      email: shipping.email,
-      contact: shipping.phone
-    },
-    notes: {
-      address: `${shipping.address}, ${shipping.country}, PIN: ${shipping.pincode}`
-    },
     theme: {
       color: "#00c0b5"
     }
@@ -225,6 +229,10 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const rzp = new Razorpay(options);
   rzp.open();
 });
+  
+
+  
+    
         
 
       
