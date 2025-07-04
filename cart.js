@@ -168,7 +168,8 @@ window.startPayment = function () {
   rzp.open();
 };
       
-
+console.log("Cart.js loaded");
+console.log("Username:", username);
   
   
 
