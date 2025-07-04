@@ -124,7 +124,7 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const orderId = Date.now().toString();
 
   const razorpayOptions = {
-    key: "YOUR_RAZORPAY_KEY_ID", // Replace with your key
+    key: "rzp_live_ozWo08bXwqssx3", // Replace with your key
     amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
