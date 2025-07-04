@@ -167,16 +167,13 @@ renderLoginStatus();
 
 
 //razorpay submit form
-document.getElementById("shippingForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
+window.startPayment = function () {
   const cartItems = Object.values(items);
   if (cartItems.length === 0) {
     alert("Your cart is empty.");
     return;
   }
 
-  // 1. Get all shipping inputs
   const name = document.getElementById("name").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -193,15 +190,13 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const orderId = Date.now().toString();
 
-  // 2. Create Razorpay payment popup config
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // ✅ Replace with your real Razorpay live key
-    amount: totalAmount * 100, // Amount in paisa
+    key: "rzp_live_ozWo08bXwqssx3", // replace with live/test key
+    amount: totalAmount * 100,
     currency: "INR",
     name: "MACX Marketplace",
     description: "Order Payment",
     handler: function (response) {
-      // 3. On successful payment, save the order
       const orderData = {
         items: cartItems,
         shipping,
@@ -214,7 +209,6 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
       ordersRef.get(orderId).put(orderData);
       adminOrders.get(orderId).put({ ...orderData, username });
 
-      // 4. Clear cart
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
       alert("✅ Payment successful & order placed!");
@@ -233,10 +227,11 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
     }
   };
 
-  // 5. Open Razorpay checkout
   const rzp = new Razorpay(options);
   rzp.open();
-});
+};
+  
+
   
 
       
