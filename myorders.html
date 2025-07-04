@@ -1,3 +1,4 @@
+<!-- myorders.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,15 +24,16 @@
       if (!order || !order.items) return;
 
       const div = document.createElement("div");
-      const items = order.items.map ? order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('') : '';
+      const items = order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('');
 
       div.innerHTML = `
         <h3>Order ID: ${id}</h3>
-        <p><strong>Status:</strong> ${order.status || 'N/A'}</p>
-        <p><strong>Payment:</strong> ${order.paymentStatus || 'N/A'} - ₹${order.grandTotal || 0}</p>
-        <p><strong>Name:</strong> ${order.name || ''}</p>
-        <p><strong>Phone:</strong> ${order.phone || ''}</p>
-        <p><strong>Address:</strong> ${order.address || ''}, ${order.country || ''} - ${order.pincode || ''}</p>
+        <p><strong>Status:</strong> ${order.status || 'Pending'}</p>
+        <p><strong>Payment Status:</strong> ${order.status || 'N/A'}</p>
+        <p><strong>Total Paid:</strong> ₹${order.total || 0}</p>
+        <p><strong>Name:</strong> ${order.shipping?.name || ''}</p>
+        <p><strong>Phone:</strong> ${order.shipping?.phone || ''}</p>
+        <p><strong>Address:</strong> ${order.shipping?.address || ''}, ${order.shipping?.country || ''} - ${order.shipping?.pincode || ''}</p>
         <ul>${items}</ul>
         <button onclick="cancelOrder('${id}')">Cancel Order</button>
         <hr>
@@ -40,9 +42,9 @@
     });
 
     function cancelOrder(id) {
-      gun.get("macx_orders").get(username).get(id).get("status").put("Cancelled");
+      orderRef.get(id).get("status").put("Cancelled");
       alert("Order cancelled.");
-      window.location.reload();
+      location.reload();
     }
   </script>
 </body>
