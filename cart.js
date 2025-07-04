@@ -104,15 +104,15 @@ function removeItem(id) {
 }
 
 
-// Razorpay Checkout with Full Shipping + Order Save
-window.startPayment = function () {
+// Razorpay Checkout with Full Shipping + “Pending” → “Paid” Flow
+window.startPayment = async function () {
   const cartItems = Object.values(items);
   if (cartItems.length === 0) {
     alert("🛒 Your cart is empty.");
     return;
   }
 
-  // Get shipping info
+  // 1. Collect & validate shipping info
   const name = document.getElementById("name")?.value.trim();
   const phone = document.getElementById("phone")?.value.trim();
   const email = document.getElementById("email")?.value.trim();
@@ -129,42 +129,69 @@ window.startPayment = function () {
   const totalAmount = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const orderId = Date.now().toString();
 
+  // 2. Save “Pending” order to user & admin nodes
+  const pendingOrder = {
+    items: cartItems,
+    shipping,
+    total: totalAmount,
+    status: "Pending",
+    createdAt: Date.now()
+  };
+  ordersRef.get(orderId).put(pendingOrder);
+  adminOrders.get(orderId).put({ ...pendingOrder, username });
+
+  // 3. (Optional) Create a Razorpay Order server-side for better security
+  //    You need an endpoint /api/createOrder that returns { id: razorpay_order_id, ... }
+  let razorOrder;
+  try {
+    const resp = await fetch("/api/createOrder", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: totalAmount * 100, receipt: orderId })
+    });
+    razorOrder = await resp.json();
+  } catch (e) {
+    console.warn("Could not create server-side order, falling back to client-only");
+  }
+
+  // 4. Configure & open Razorpay Checkout
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // Replace with your live/test key
-    amount: totalAmount * 100,
+    key: "rzp_live_ozWo08bXwqssx3",    // your test/live key
+    amount: totalAmount * 100,         // in paise
     currency: "INR",
     name: "MACX Marketplace",
     description: "Cart Checkout Payment",
-    handler: function (response) {
-      // Save order to user & admin
-      const orderData = {
-        items: cartItems,
-        shipping,
-        total: totalAmount,
-        razorpayPaymentId: response.razorpay_payment_id,
-        status: "Paid",
-        timestamp: Date.now()
-      };
-
-      ordersRef.get(orderId).put(orderData);
-      adminOrders.get(orderId).put({ ...orderData, username });
-
-      // Clear cart after order placed
-      cartRef.map().once((_, id) => cartRef.get(id).put(null));
-
-      alert("✅ Payment successful! Your order has been placed.");
-      window.location.href = "myorders.html";
-    },
+    order_id: razorOrder?.id,          // only if server-generated
     prefill: {
       name: shipping.name,
       email: shipping.email,
-      contact: shipping.phone
+      contact: shipping.phone.startsWith("+")
+        ? shipping.phone
+        : `+91${shipping.phone}`
     },
     notes: {
-      address: `${address}, ${country} - ${pincode}`
+      items: JSON.stringify(cartItems),
+      address: `${shipping.address}, ${shipping.pincode}, ${shipping.country}`
     },
-    theme: {
-      color: "#00c0b5"
+    theme: { color: "#00c0b5" },
+    handler(response) {
+      // 5. Update “Pending” → “Paid”
+      ordersRef.get(orderId).put({
+        razorpayPaymentId: response.razorpay_payment_id,
+        status: "Paid",
+        paidAt: Date.now()
+      });
+      adminOrders.get(orderId).get(username).put({
+        razorpayPaymentId: response.razorpay_payment_id,
+        status: "Paid",
+        paidAt: Date.now()
+      });
+
+      // 6. Clear the cart
+      cartRef.map().once((_, id) => cartRef.get(id).put(null));
+
+      alert("✅ Payment successful! Redirecting to My Orders…");
+      window.location.href = "myorders.html";
     }
   };
 
@@ -172,7 +199,7 @@ window.startPayment = function () {
   rzp.open();
 };
 
-// Render Login Status & Attach Form Submit
+// Render login status, wire up form on page load
 function renderLoginStatus() {
   if (!username) {
     document.getElementById("notLoggedIn").style.display = "block";
@@ -183,7 +210,6 @@ function renderLoginStatus() {
   document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
   listenToCart();
 
-  // Attach submit to form only when user is logged in
   const form = document.getElementById("shippingForm");
   if (form) {
     form.addEventListener("submit", function (e) {
@@ -195,8 +221,10 @@ function renderLoginStatus() {
   }
 }
 
-// Run login check when page loads
 document.addEventListener("DOMContentLoaded", renderLoginStatus);
 
+
   
+  
+      
     
