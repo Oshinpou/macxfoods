@@ -8,90 +8,92 @@
     .container { max-width:1000px; margin:auto; padding:20px; font-family:sans-serif }
     .order { border:1px #999 solid; margin-bottom:20px; padding:15px }
     .order h3 { margin-top:0 }
-    .items td { padding:5px 10px; }
-    .btn { margin-right:10px; padding:5px 10px; cursor:pointer }
-    select { margin-right:10px }
+    .items td { padding:5px 10px }
+    .btn { padding:5px 10px; margin-right:8px; cursor:pointer }
+    select { margin-right:8px }
   </style>
-
-  <!-- Gun + SEA -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>Admin: All Orders</h1>
-    <div id="adminOrdersContainer">Loading…</div>
+    <div id="adminContainer">Loading orders…</div>
   </div>
 
   <script>
-  // 0. Init
-  const gun        = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-  const adminRef   = gun.get("admin_orders");
+  // --- Init
+  const gun       = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+  const adminRef  = gun.get("admin_orders");
 
-  // 1. Render all orders
-  function renderAdminOrders() {
-    const container = document.getElementById("adminOrdersContainer");
-    container.innerHTML = "";
+  // --- Render
+  function renderAdmin() {
+    const c = document.getElementById("adminContainer");
+    c.innerHTML = "";
 
-    adminRef.map().on((order, id) => {
-      if (!order || !order.status) {
-        const el = document.getElementById("aorder-"+id);
-        if (el) el.remove();
+    adminRef.map().on((o, id) => {
+      if (!o || !o.status) {
+        const old = document.getElementById("aord-" + id);
+        if (old) old.remove();
         return;
       }
 
-      let el = document.getElementById("aorder-"+id);
+      let el = document.getElementById("aord-" + id);
       if (!el) {
         el = document.createElement("div");
-        el.id = "aorder-"+id;
+        el.id = "aord-" + id;
         el.className = "order";
-        container.appendChild(el);
+        c.appendChild(el);
       }
 
-      // items table
-      const rows = order.items.map(i => {
-        const sub = (i.price*i.quantity).toLocaleString();
+      // items
+      const rows = o.items.map(i => {
+        const p = parseInt(i.price) || 0;
+        const q = parseInt(i.quantity) || 1;
+        const sub = (p*q).toLocaleString();
         return `<tr>
           <td>${i.productName}</td>
-          <td>₹${i.price}</td>
-          <td>${i.quantity}</td>
+          <td>₹${p.toLocaleString()}</td>
+          <td>${q}</td>
           <td>₹${sub}</td>
         </tr>`;
       }).join("");
 
-      // shipping / user info
-      const s = order.shipping;
-      const user = order.username;
-      const shippingHTML = `
-        <p><strong>User:</strong> ${user}<br>
-        <strong>Ship To:</strong> ${s.name}, ${s.address}, ${s.country} - ${s.pincode}<br>
-        <strong>Contact:</strong> +91${s.phone}<br>
-        <strong>Email:</strong> ${s.email}</p>`;
+      // shipping & user
+      const s = o.shipping || {};
+      const user = o.username || "unknown";
+      const shipInfo = `
+        <p>
+          <strong>User:</strong> ${user}<br>
+          <strong>Ship To:</strong> ${s.name}, ${s.address}, ${s.country} - ${s.pincode}<br>
+          <strong>Contact:</strong> +91${s.phone}<br>
+          <strong>Email:</strong> ${s.email}
+        </p>`;
 
       // status selector
-      const statuses = ["Pending","Paid","Cancelled"];
-      const options = statuses.map(st => 
-        `<option value="${st}" ${order.status===st?'selected':''}>${st}</option>`
+      const statuses = ["Pending","Paid","Cancelled","Delivered"];
+      const opts = statuses.map(st =>
+        `<option value="${st}" ${o.status===st?'selected':''}>${st}</option>`
       ).join("");
 
       el.innerHTML = `
         <h3>Order #${id}</h3>
         <label>Status:</label>
         <select onchange="adminUpdate('${id}', this.value)">
-          ${options}
+          ${opts}
         </select>
         <button class="btn" onclick="adminRemove('${id}')">Delete</button>
         <table class="items" border="1" cellspacing="0">
           <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
           ${rows}
         </table>
-        <p><strong>Total:</strong> ₹${order.total.toLocaleString()}</p>
-        ${shippingHTML}
+        <p><strong>Total:</strong> ₹${(o.total||0).toLocaleString()}</p>
+        ${shipInfo}
       `;
     });
   }
 
-  // 2. Helpers
+  // --- Helpers
   function adminUpdate(id, status) {
     adminRef.get(id).put({ status });
   }
@@ -99,8 +101,8 @@
     adminRef.get(id).put(null);
   }
 
-  // 3. Kickoff
-  renderAdminOrders();
+  // --- Kickoff
+  renderAdmin();
   </script>
 </body>
 </html>
