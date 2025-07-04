@@ -176,7 +176,7 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
     return;
   }
 
-  // 📦 Collect shipping details
+  // 1. Get all shipping inputs
   const name = document.getElementById("name").value.trim();
   const phone = document.getElementById("phone").value.trim();
   const email = document.getElementById("email").value.trim();
@@ -185,39 +185,39 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
   const pincode = document.getElementById("pincode").value.trim();
 
   if (!name || !phone || !email || !address || !country || !pincode) {
-    alert("Please fill all shipping details.");
+    alert("Please fill all the fields.");
     return;
   }
 
   const shipping = { name, phone, email, address, country, pincode };
-  const totalAmount = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+  const totalAmount = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const orderId = Date.now().toString();
 
-  // ✅ Setup Razorpay options
+  // 2. Create Razorpay payment popup config
   const options = {
-    key: "rzp_live_ozWo08bXwqssx3", // Replace with your actual Razorpay key
-    amount: totalAmount * 100,
+    key: "rzp_live_ozWo08bXwqssx3", // ✅ Replace with your real Razorpay live key
+    amount: totalAmount * 100, // Amount in paisa
     currency: "INR",
     name: "MACX Marketplace",
     description: "Order Payment",
     handler: function (response) {
-      // ✅ On successful payment, store order in GUN
-      const order = {
-        shipping,
+      // 3. On successful payment, save the order
+      const orderData = {
         items: cartItems,
+        shipping,
         total: totalAmount,
         razorpayPaymentId: response.razorpay_payment_id,
         status: "Paid",
         timestamp: Date.now()
       };
 
-      ordersRef.get(orderId).put(order);
-      adminOrders.get(orderId).put({ ...order, username });
+      ordersRef.get(orderId).put(orderData);
+      adminOrders.get(orderId).put({ ...orderData, username });
 
-      // Clear cart
+      // 4. Clear cart
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
-      alert("Payment successful & order placed!");
+      alert("✅ Payment successful & order placed!");
       window.location.href = "myorders.html";
     },
     prefill: {
@@ -233,16 +233,14 @@ document.getElementById("shippingForm").addEventListener("submit", function (e) 
     }
   };
 
+  // 5. Open Razorpay checkout
   const rzp = new Razorpay(options);
-
-  // ✅ THIS FIXES THE ISSUE!
-  rzp.on('payment.failed', function (response) {
-    alert("Payment failed or cancelled.");
-    console.error(response.error);
-  });
-
   rzp.open();
 });
+  
+
+      
+      
   
 
   
