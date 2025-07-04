@@ -1,3 +1,4 @@
+<!-- adminorders.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,49 +10,50 @@
 </head>
 <body>
   <div class="container">
-    <h1>All Orders (Admin)</h1>
-    <div id="allOrders"></div>
+    <h1>All Orders (Admin View)</h1>
+    <div id="allOrdersList"></div>
   </div>
 
   <script>
     const gun = Gun();
-    const ordersRoot = gun.get("macx_orders");
-    const allOrders = document.getElementById("allOrders");
+    const adminOrders = gun.get("admin_orders");
+    const allOrdersList = document.getElementById("allOrdersList");
 
-    ordersRoot.map().once((userOrders, username) => {
-      if (!userOrders || typeof userOrders !== 'object') return;
+    adminOrders.map().once((order, id) => {
+      if (!order || !order.items) return;
 
-      gun.get("macx_orders").get(username).map().once((order, orderId) => {
-        if (!order || !order.items) return;
+      const div = document.createElement("div");
+      const items = order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('');
 
-        const div = document.createElement("div");
-        const itemsList = order.items.map ? order.items.map(item => `<li>${item.productName} x ${item.quantity} - ₹${item.price}</li>`).join('') : '';
-
-        div.innerHTML = `
-          <h3>User: ${username} | Order ID: ${orderId}</h3>
-          <p>Status: ${order.status || 'N/A'} | Payment: ${order.paymentStatus || 'N/A'} - ₹${order.grandTotal || 0}</p>
-          <p>Shipping: ${order.name || ''}, ${order.phone || ''}, ${order.email || ''}, ${order.address || ''}, ${order.country || ''}, ${order.pincode || ''}</p>
-          <ul>${itemsList}</ul>
-          <button onclick="updateStatus('${username}', '${orderId}', 'Delivered')">Mark Delivered</button>
-          <button onclick="deleteOrder('${username}', '${orderId}')">Delete Order</button>
-          <hr>
-        `;
-        allOrders.appendChild(div);
-      });
+      div.innerHTML = `
+        <h3>Order ID: ${id}</h3>
+        <p><strong>User:</strong> ${order.username}</p>
+        <p><strong>Status:</strong> ${order.status || 'Pending'}</p>
+        <p><strong>Payment ID:</strong> ${order.razorpayPaymentId || 'N/A'}</p>
+        <p><strong>Total Paid:</strong> ₹${order.total || 0}</p>
+        <p><strong>Name:</strong> ${order.shipping?.name || ''}</p>
+        <p><strong>Phone:</strong> ${order.shipping?.phone || ''}</p>
+        <p><strong>Address:</strong> ${order.shipping?.address || ''}, ${order.shipping?.country || ''} - ${order.shipping?.pincode || ''}</p>
+        <ul>${items}</ul>
+        <button onclick="updateStatus('${id}', 'Completed')">Mark as Completed</button>
+        <button onclick="deleteOrder('${id}')">Delete (Garbage Clean)</button>
+        <hr>
+      `;
+      allOrdersList.appendChild(div);
     });
 
-    function updateStatus(username, orderId, status) {
-      gun.get("macx_orders").get(username).get(orderId).get("status").put(status);
-      alert("Status updated.");
-      window.location.reload();
+    function updateStatus(id, newStatus) {
+      adminOrders.get(id).get("status").put(newStatus);
+      alert("Status updated to " + newStatus);
+      location.reload();
     }
 
-    function deleteOrder(username, orderId) {
-      if (confirm("Delete this order permanently?")) {
-        gun.get("macx_orders").get(username).get(orderId).put(null);
-        alert("Order deleted.");
-        window.location.reload();
-      }
+    function deleteOrder(id) {
+      const sure = confirm("Are you sure you want to delete this order?");
+      if (!sure) return;
+      adminOrders.get(id).put(null);
+      alert("Order deleted.");
+      location.reload();
     }
   </script>
 </body>
