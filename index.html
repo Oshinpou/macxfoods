@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Marketplace</title>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
+
   <style>
     * {
       margin: 0;
@@ -15,268 +16,216 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(to bottom right, #ffffff, #f9f9ff, #f3f8ff);
-      color: #1d1f22;
+      font-family: 'Great Vibes', cursive;
+      color: gold;
+      background-size: cover;
+      background-position: center;
+      animation: bgSlide 30s infinite;
       min-height: 100vh;
       overflow-x: hidden;
     }
 
-    header {
+    @keyframes bgSlide {
+      0%   { background-image: url('img/bg1.jpg'); }
+      33%  { background-image: url('img/bg2.jpg'); }
+      66%  { background-image: url('img/bg3.jpg'); }
+      100% { background-image: url('img/bg1.jpg'); }
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: auto;
+      padding: 40px 20px;
       text-align: center;
-      padding: 50px 20px 20px;
-      background: url('bg-header.jpg') no-repeat center center/cover;
-      color: #003366;
     }
 
-    .logo {
-      width: 100px;
-      margin-bottom: 10px;
+    h1, h2, p {
+      color: gold;
+      text-shadow: 1px 1px 2px #fff, 0 0 15px #d4af37, 0 0 5px #b8860b;
     }
 
-    .title {
-      font-family: 'Playfair Display', serif;
-      font-size: 36px;
-      font-weight: 600;
-    }
-
-    .subtitle {
-      font-size: 16px;
-      margin-top: 5px;
-    }
-
-    #loggedInSection, #notLoggedIn {
-      display: inline-block;
-      background: #ffffffcc;
-      padding: 16px 20px;
-      border-radius: 10px;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-      margin-top: 20px;
+    #notLoggedIn, #loggedInSection {
+      background: rgba(0,0,0,0.6);
+      border: 2px solid gold;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      display: none;
     }
 
     #userDisplay {
-      font-weight: bold;
-      font-size: 15px;
+      font-size: 28px;
     }
 
     #logoutBtn, #loginRedirectBtn {
-      background: #003366;
-      color: #fff;
+      background: gold;
+      color: #000;
+      padding: 10px 20px;
       border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 13px;
+      border-radius: 8px;
+      font-size: 14px;
       margin-top: 10px;
-    }
-
-    .hero {
-      background: url('bg-hero.jpg') no-repeat center center/cover;
-      padding: 60px 20px;
-      text-align: center;
-      color: #002244;
-    }
-
-    .hero h2 {
-      font-family: 'Playfair Display', serif;
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
-
-    .hero p {
-      font-size: 16px;
-      color: #222;
-    }
-
-    .features-section {
-      padding: 50px 20px;
-      background: url('bg-features.jpg') no-repeat center center/cover;
-      background-attachment: fixed;
-    }
-
-    .features-section h3 {
-      text-align: center;
-      font-size: 24px;
-      color: #002244;
-      margin-bottom: 30px;
+      cursor: pointer;
     }
 
     .features {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 15px;
+      gap: 12px;
+      margin: 30px 0;
     }
 
     .feature-btn {
-      background: rgba(255, 255, 255, 0.9);
-      border: 1px solid #ccc;
-      padding: 14px 18px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: #003366;
-      min-width: 120px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid gold;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 16px;
+      color: gold;
       cursor: pointer;
-      transition: all 0.3s ease;
+      min-width: 120px;
+      text-shadow: 1px 1px 2px #fff;
+      transition: 0.3s;
     }
 
     .feature-btn:hover {
-      background: #e6f0ff;
-      transform: translateY(-3px);
+      background: gold;
+      color: black;
+      transform: scale(1.05);
     }
 
-    .products-section {
-      padding: 50px 20px;
-      background: url('bg-products.jpg') no-repeat center center/cover;
-      background-attachment: fixed;
+    .description {
+      font-size: 20px;
+      margin: 30px auto;
+      max-width: 700px;
     }
 
-    .products-section h3 {
-      text-align: center;
-      font-size: 24px;
-      color: #002244;
-      margin-bottom: 30px;
-    }
-
-    .product-grid {
+    .products {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px;
+      margin-top: 40px;
     }
 
     .product-card {
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid gold;
       border-radius: 10px;
-      padding: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-      text-align: center;
+      padding: 15px;
+      color: gold;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.4);
     }
 
     .product-card img {
       width: 100%;
-      border-radius: 8px;
+      border-radius: 10px;
+      margin-bottom: 10px;
     }
 
-    .product-card h4 {
-      font-size: 14px;
-      margin: 10px 0 5px;
-      color: #003366;
+    .product-title {
+      font-size: 18px;
+      margin-bottom: 10px;
     }
 
-    .product-card button {
-      padding: 6px 10px;
-      background: #003366;
-      color: #fff;
+    .view-btn {
+      background: gold;
+      color: black;
       border: none;
+      padding: 8px 14px;
       border-radius: 6px;
-      font-size: 12px;
       cursor: pointer;
     }
 
-    .product-card button:hover {
-      background: #001d3d;
-    }
-
-    footer {
-      padding: 30px;
-      background: #f0f0f0;
-      text-align: center;
-      font-size: 13px;
-      color: #333;
+    .view-btn:hover {
+      background: #ffd700;
     }
 
     .error-msg {
-      text-align: center;
-      color: crimson;
+      color: red;
       font-size: 14px;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
-    @media (max-width: 600px) {
-      .features {
-        flex-direction: column;
-        align-items: center;
-      }
+    .footer {
+      margin-top: 50px;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.7);
+      color: gold;
+      border-top: 1px solid gold;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <img src="emacx.png" class="logo" alt="MACX Logo">
-    <h1 class="title">MACX Marketplace</h1>
-    <p class="subtitle">Where High-Class Beauty Meets Maximum Power</p>
-    <div id="notLoggedIn" style="display: none;">
-      <p>You are not logged in.</p>
+  <div class="container">
+    <h1>💫 MACX Marketplace</h1>
+    <p class="description">Welcome to the world of premium beauty, power, and timeless elegance. Explore elite products designed to sculpt, define, and enhance your lifestyle.</p>
+
+    <div id="notLoggedIn">
+      <h2>You are not logged in.</h2>
       <button id="loginRedirectBtn">Login First</button>
     </div>
-    <div id="loggedInSection" style="display: none;">
-      <p id="userDisplay">Welcome, User</p>
+
+    <div id="loggedInSection">
+      <h2 id="userDisplay">Welcome, User</h2>
       <button id="logoutBtn">Logout</button>
     </div>
-  </header>
 
-  <section class="hero">
-    <h2>Discover Iconic Elegance</h2>
-    <p>Explore elite skincare, luxury cosmetics, designer furniture, and accessories — crafted for perfectionists.</p>
-  </section>
-
-  <section class="features-section">
-    <h3>Explore MACX Features</h3>
     <div class="features">
       <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
       <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
       <button class="feature-btn" onclick="openFeature('myorders.html')">Orders</button>
-      <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
-      <button class="feature-btn" onclick="openFeature('luxury.html')">Luxury</button>
-      <button class="feature-btn" onclick="openFeature('offers.html')">Offers</button>
-      <button class="feature-btn" onclick="openFeature('membership.html')">Membership</button>
       <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
-      <button class="feature-btn" onclick="openFeature('contact.html')">Contact</button>
+      <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
+      <button class="feature-btn" onclick="openFeature('wishlist.html')">Wishlist</button>
+      <button class="feature-btn" onclick="openFeature('offers.html')">Offers</button>
+      <button class="feature-btn" onclick="openFeature('luxury.html')">Luxury</button>
       <button class="feature-btn" onclick="openFeature('support.html')">Support</button>
+      <button class="feature-btn" onclick="openFeature('contact.html')">Contact</button>
     </div>
+
     <div id="featureError" class="error-msg"></div>
-  </section>
 
-  <section class="products-section">
-    <h3>Featured Products</h3>
-    <div class="product-grid">
+    <h2>🌟 Featured Products</h2>
+    <div class="products">
       <div class="product-card">
-        <img src="product1.jpg" alt="Iconic Face Cream">
-        <h4>Iconic Face Cream</h4>
-        <button onclick="checkLogin('product1.html')">View Product</button>
+        <img src="img/product1.jpg" alt="Product 1">
+        <div class="product-title">Iconic Face Cream</div>
+        <button class="view-btn" onclick="viewProduct('product1.html')">View Product</button>
       </div>
       <div class="product-card">
-        <img src="product2.jpg" alt="Silk Serum">
-        <h4>Silk Serum</h4>
-        <button onclick="checkLogin('product2.html')">View Product</button>
+        <img src="img/product2.jpg" alt="Product 2">
+        <div class="product-title">Silk Skin Serum</div>
+        <button class="view-btn" onclick="viewProduct('product2.html')">View Product</button>
       </div>
       <div class="product-card">
-        <img src="product3.jpg" alt="Luxury Sofa">
-        <h4>Luxury Sofa</h4>
-        <button onclick="checkLogin('product3.html')">View Product</button>
-      </div>
-      <div class="product-card">
-        <img src="product4.jpg" alt="Designer Candle">
-        <h4>Designer Candle</h4>
-        <button onclick="checkLogin('product4.html')">View Product</button>
+        <img src="img/product3.jpg" alt="Product 3">
+        <div class="product-title">Elixir Moisturizer</div>
+        <button class="view-btn" onclick="viewProduct('product3.html')">View Product</button>
       </div>
     </div>
-  </section>
 
-  <footer>
-    © 2025 MACX Marketplace · Designed for Elegance. Crafted for Icons.
-  </footer>
+    <div class="footer">
+      <p>© 2025 MACX Marketplace. All Rights Reserved. Created with Beauty & Power.</p>
+    </div>
+  </div>
 
   <script>
     const username = localStorage.getItem("macx_loggedInUser");
 
     function showStatus() {
-      document.getElementById("loggedInSection").style.display = username ? "inline-block" : "none";
-      document.getElementById("notLoggedIn").style.display = username ? "none" : "inline-block";
-      if (username) document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+      const loggedIn = document.getElementById("loggedInSection");
+      const notLoggedIn = document.getElementById("notLoggedIn");
+
+      if (username) {
+        document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+        loggedIn.style.display = "block";
+        notLoggedIn.style.display = "none";
+      } else {
+        loggedIn.style.display = "none";
+        notLoggedIn.style.display = "block";
+      }
     }
 
     function openFeature(page) {
@@ -287,9 +236,9 @@
       }
     }
 
-    function checkLogin(page) {
+    function viewProduct(page) {
       if (!username) {
-        alert("Please login first to view this product.");
+        alert("Please login to view product details.");
       } else {
         window.location.href = page;
       }
