@@ -8,174 +8,122 @@
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
 <script>
-  
-  * {
-  margin: 10;
-  padding: 10;
+* {
+  margin: 0;
+  padding: 0;
   box-sizing: border-box;
 }
 
-html, body {
-  width: 100%;
-  min-height: 100vh;
+body {
   font-family: "Segoe UI", sans-serif;
-  background-color: #fefefe;
+  background: linear-gradient(to right, #f0f4ff, #ffffff);
   color: #222;
-  overflow-x: none;
-  scroll-behavior: smooth;
+  min-height: 100vh;
+  overflow-x: hidden;
 }
 
-/* Top Navigation Bar */
-.top-bar {
-  width: 100%;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  background-color: #ffffff;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid #e0e0e0;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-}
-
-.top-bar h1 {
-  font-size: 22px;
-  font-weight: bold;
-  color: #003366;
-}
-
-.auth-buttons {
-  display: flex;
-  gap: 10px;
-}
-
-.auth-buttons button {
-  padding: 8px 14px;
-  font-size: 14px;
-  border: none;
-  border-radius: 6px;
-  background-color: #003366;
-  color: white;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.auth-buttons button:hover {
-  background-color: #001d3d;
-}
-
-/* Main Container */
+/* Container wrapper */
 .container {
-  width: 100%;
-  max-width: 1100px;
-  margin: 0 auto;
+  max-width: 1200px;
+  margin: auto;
   padding: 20px;
-  box-sizing: border-box;
 }
 
-/* Welcome Section */
-.welcome {
-  text-align: center;
-  padding: 20px 10px;
+/* Top Status Section */
+#notLoggedIn, #loggedInSection {
+  display: none;
+  background: #ffffff;
+  padding: 15px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
 }
 
-.welcome h2 {
-  font-size: 26px;
-  color: #002244;
+#userDisplay {
+  font-weight: bold;
+  font-size: 20px;
+  color: #003366;
   margin-bottom: 10px;
 }
 
-.welcome p {
-  font-size: 16px;
-  color: #666;
+#logoutBtn, #loginRedirectBtn {
+  background-color: #003366;
+  color: #fff;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s ease;
 }
 
-/* Feature Grid */
+#logoutBtn:hover, #loginRedirectBtn:hover {
+  background-color: #001d3d;
+}
+
+/* Feature Section */
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 20px;
-  padding: 20px 0;
+  margin-top: 30px;
 }
 
 .feature-btn {
-  background-color: #ffffff;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
   padding: 16px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  text-align: center;
+  border-radius: 12px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   color: #003366;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  transition: all 0.2s ease-in-out;
+  text-align: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
   cursor: pointer;
 }
 
 .feature-btn:hover {
-  background-color: #f0f4ff;
-  transform: translateY(-2px);
+  background: #f0f6ff;
+  transform: translateY(-3px);
   box-shadow: 0 5px 10px rgba(0,0,0,0.1);
 }
 
+/* Error message */
 .error-msg {
+  color: red;
   text-align: center;
-  color: #d10000;
   font-weight: bold;
   margin-top: 20px;
 }
 
-/* Responsive Adjustments */
+/* Responsive */
 @media (max-width: 768px) {
-  .top-bar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .top-bar h1 {
-    margin-bottom: 10px;
-  }
-
-  .auth-buttons {
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
   .features {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 
-  .feature-btn {
-    font-size: 15px;
-    padding: 12px;
+  #userDisplay {
+    font-size: 18px;
+  }
+
+  #logoutBtn, #loginRedirectBtn {
+    width: 100%;
+    margin-top: 10px;
   }
 }
 
 @media (max-width: 480px) {
-  .top-bar {
-    padding: 10px;
-  }
-
-  .top-bar h1 {
-    font-size: 18px;
-  }
-
-  .auth-buttons button {
-    font-size: 13px;
-    padding: 7px 12px;
-  }
-
-  .welcome h2 {
-    font-size: 22px;
-  }
-
-  .welcome p {
+  body {
     font-size: 14px;
   }
+
+  .feature-btn {
+    font-size: 14px;
+    padding: 14px;
+  }
 }
+
 </style>
 </head>
 <body>
