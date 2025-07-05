@@ -5,125 +5,109 @@
   <title>My Orders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <link rel="stylesheet" href="style.css" />
   <style>
     body {
       font-family: sans-serif;
+      background: #f4f4f4;
       margin: 0;
-      padding: 20px;
-      background: #f0f0f0;
+      padding: 0;
     }
+
     .container {
       max-width: 900px;
       margin: auto;
+      padding: 20px;
     }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
     .order-box {
       background: #fff;
       padding: 15px;
-      border-radius: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
       box-shadow: 0 0 10px #ccc;
-      margin-bottom: 20px;
     }
-    .order-box h3 {
-      margin-top: 0;
+
+    .order-box h4 {
+      margin: 0 0 10px 0;
     }
+
     .order-box ul {
       padding-left: 20px;
+      margin: 10px 0;
     }
-    .order-box button {
-      margin-right: 10px;
-      padding: 5px 10px;
-      background: #d9534f;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    .order-box button.cancel {
-      background: #f0ad4e;
-    }
-    .order-box button:hover {
-      opacity: 0.9;
-    }
+
     .empty-msg {
       text-align: center;
       font-size: 18px;
+      color: #888;
       margin-top: 50px;
-      color: gray;
+    }
+
+    .status {
+      font-weight: bold;
+      color: teal;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>My Orders</h1>
+    <h2>My Orders</h2>
     <div id="ordersContainer"></div>
   </div>
 
   <script>
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
     const username = localStorage.getItem("macx_loggedInUser");
-    const ordersRef = gun.get("macx_orders").get(username);
 
     if (!username) {
-      document.getElementById("ordersContainer").innerHTML =
-        "<p class='empty-msg'>Please log in to view your orders.</p>";
-    } else {
-      loadOrders();
+      document.body.innerHTML = `
+        <div style="text-align:center;padding:20px;">
+          <h2>You must login to view your orders</h2>
+          <button onclick="location.href='login.html'">Go to Login</button>
+        </div>
+      `;
+      throw new Error("Not logged in");
     }
 
-    function loadOrders() {
-      const container = document.getElementById("ordersContainer");
-      container.innerHTML = "";
+    const ordersRef = gun.get("macx_orders").get(username);
+    const ordersContainer = document.getElementById("ordersContainer");
+    let foundAny = false;
 
-      ordersRef.map().once((order, id) => {
-        if (!order || !order.items) return;
+    ordersRef.map().once((order, id) => {
+      if (!order || !order.status) return;
 
-        const box = document.createElement("div");
-        box.className = "order-box";
+      foundAny = true;
+      const orderBox = document.createElement("div");
+      orderBox.className = "order-box";
 
-        const orderTime = new Date(order.createdAt).toLocaleString();
-        const itemList = order.items
-          .map(i => `<li>${i.productName} - ₹${i.price} × ${i.quantity}</li>`)
-          .join("");
+      const itemList = order.items
+        .map(i => `<li>${i.productName} - ₹${i.price} × ${i.quantity}</li>`)
+        .join("");
 
-        box.innerHTML = `
-          <h3>Order ID: ${id}</h3>
-          <p><strong>Status:</strong> ${order.status}</p>
-          <p><strong>Total:</strong> ₹${order.total}</p>
-          <p><strong>Placed on:</strong> ${orderTime}</p>
-          <h4>Items:</h4>
-          <ul>${itemList}</ul>
-          <button class="cancel" onclick="cancelOrder('${id}')">Cancel</button>
-          <button onclick="deleteOrder('${id}')">Delete</button>
-        `;
+      orderBox.innerHTML = `
+        <h4>Order ID: ${id}</h4>
+        <p><strong>Total:</strong> ₹${order.total}</p>
+        <p class="status"><strong>Status:</strong> ${order.status}</p>
+        <p><strong>Created:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
+        <p><strong>Shipping to:</strong> ${order.shipping.name}, ${order.shipping.address}, ${order.shipping.country}, PIN: ${order.shipping.pincode}</p>
+        <ul>${itemList}</ul>
+      `;
 
-        container.appendChild(box);
-      });
+      ordersContainer.appendChild(orderBox);
+    });
 
-      // Show message if no orders after delay
-      setTimeout(() => {
-        if (!container.innerHTML.trim()) {
-          container.innerHTML = "<p class='empty-msg'>No orders found.</p>";
-        }
-      }, 2000);
-    }
-
-    function cancelOrder(orderId) {
-      ordersRef.get(orderId).once(order => {
-        if (order && order.status !== "Cancelled") {
-          ordersRef.get(orderId).put({ ...order, status: "Cancelled" });
-          alert("Order cancelled.");
-          loadOrders();
-        }
-      });
-    }
-
-    function deleteOrder(orderId) {
-      if (confirm("Are you sure you want to delete this order?")) {
-        ordersRef.get(orderId).put(null);
-        alert("Order deleted.");
-        loadOrders();
+    // Show empty message if nothing found after 2 seconds
+    setTimeout(() => {
+      if (!foundAny) {
+        ordersContainer.innerHTML = `<div class="empty-msg">No orders found.</div>`;
       }
-    }
+    }, 2000);
   </script>
 </body>
 </html>
