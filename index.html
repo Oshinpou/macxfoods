@@ -8,114 +8,114 @@
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
 <style>
-  
-/* GLOBAL RESET */
-* {
+  * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
-html, body {
-  height: 100%;
-  font-family: "Segoe UI", Helvetica, Arial, sans-serif;
-  background: #f8fafc;
-  color: #333;
-  scroll-behavior: smooth;
-  font-size: 14px; /* Smaller base font */
+
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(120deg, #f6faff, #fdfdff, #f0f9ff);
+  min-height: 100vh;
+  color: #1e2a38;
+  font-size: 13px;
 }
 
-/* CONTAINER */
+/* Container */
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
+  max-width: 1100px;
+  margin: auto;
   padding: 16px;
 }
 
-/* STATUS BAR */
+/* Status bars */
 #notLoggedIn,
 #loggedInSection {
   display: flex;
   align-items: center;
   justify-content: space-between;
   background: #ffffff;
-  padding: 10px 16px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  padding: 10px 14px;
+  border-radius: 8px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
   margin-bottom: 16px;
-}
-#notLoggedIn h2,
-#loggedInSection h1 {
-  font-size: 1rem;
-  color: linear-gradient(90deg, #0055ff, #00d4ff);
-}
-#loginRedirectBtn,
-#logoutBtn {
-  background-color: #0d2244;
-  color: linear-gradient(90deg, #0055ff, #00d4ff);
-  border: none;
-  border-radius: 5px;
-  padding: 6px 14px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-#loginRedirectBtn:hover,
-#logoutBtn:hover {
-  background-color: #051129;
+  font-size: 13px;
 }
 
-/* FEATURE GRID */
+#userDisplay {
+  font-weight: 600;
+  font-size: 13px;
+  color: #003366;
+}
+
+#loginRedirectBtn,
+#logoutBtn {
+  background-color: #0052cc;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#loginRedirectBtn:hover,
+#logoutBtn:hover {
+  background-color: #003f99;
+}
+
+/* Features */
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 16px;
+  gap: 12px;
 }
+
 .feature-btn {
-  background: #fff;
+  background: #ffffff;
   border: none;
   border-radius: 10px;
-  padding: 14px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #ff0055 ;
+  padding: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1e2a38;
   text-align: center;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.03);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
   cursor: pointer;
-}
-.feature-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+  transition: all 0.2s ease;
 }
 
-/* ERROR MESSAGE */
+.feature-btn:hover {
+  background: #eef6ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* Error Message */
 .error-msg {
   text-align: center;
-  color: #cc0000;
-  font-size: 0.85rem;
-  padding-top: 10px;
+  color: #d60000;
+  margin-top: 14px;
+  font-size: 12px;
 }
 
-/* RESPONSIVE */
+/* Responsive */
 @media (max-width: 768px) {
-  .container {
-    padding: 12px;
-  }
-  .feature-btn {
-    font-size: 0.85rem;
-    padding: 10px;
+  .features {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
+
 @media (max-width: 480px) {
-  html {
-    font-size: 13px;
-  }
   #loginRedirectBtn,
   #logoutBtn {
     width: 100%;
-    margin-top: 10px;
+    margin-top: 8px;
   }
 }
+
 </style>
 </head>
 <body>
