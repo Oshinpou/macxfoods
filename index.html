@@ -14,66 +14,44 @@
       box-sizing: border-box;
     }
 
-    body, html {
+    body {
       font-family: 'Inter', sans-serif;
-      height: 100%;
+      background: linear-gradient(to bottom right, #ffffff, #f9f9ff, #f3f8ff);
+      color: #1d1f22;
+      min-height: 100vh;
       overflow-x: hidden;
-      color: #1c1c1c;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      z-index: -1;
-      animation: slideshow 24s infinite;
-      opacity: 0.15;
-    }
-
-    @keyframes slideshow {
-      0% { background-image: url('bg1.jpg'); }
-      25% { background-image: url('bg2.jpg'); }
-      50% { background-image: url('bg3.jpg'); }
-      75% { background-image: url('bg4.jpg'); }
-      100% { background-image: url('bg1.jpg'); }
     }
 
     header {
       text-align: center;
-      padding: 40px 20px 20px;
+      padding: 50px 20px 20px;
+      background: url('bg-header.jpg') no-repeat center center/cover;
+      color: #003366;
     }
 
     .logo {
-      width: 80px;
+      width: 100px;
       margin-bottom: 10px;
     }
 
     .title {
       font-family: 'Playfair Display', serif;
       font-size: 36px;
-      background: linear-gradient(to right, #003366, #00b4db);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-weight: 600;
     }
 
     .subtitle {
       font-size: 16px;
-      color: #333;
       margin-top: 5px;
     }
 
     #loggedInSection, #notLoggedIn {
       display: inline-block;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 14px 20px;
+      background: #ffffffcc;
+      padding: 16px 20px;
       border-radius: 10px;
-      margin-top: 20px;
       box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+      margin-top: 20px;
     }
 
     #userDisplay {
@@ -82,7 +60,6 @@
     }
 
     #logoutBtn, #loginRedirectBtn {
-      margin-top: 10px;
       background: #003366;
       color: #fff;
       border: none;
@@ -90,77 +67,77 @@
       border-radius: 6px;
       cursor: pointer;
       font-size: 13px;
-    }
-
-    .features {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 14px;
-      margin: 40px 20px;
-    }
-
-    .feature-btn {
-      background: rgba(255, 255, 255, 0.8);
-      border: 1px solid #ddd;
-      border-radius: 10px;
-      padding: 12px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 500;
-      color: #002244;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-    }
-
-    .feature-btn:hover {
-      background: #f0f8ff;
-      transform: translateY(-3px);
-    }
-
-    .error-msg {
-      text-align: center;
-      color: crimson;
-      font-size: 14px;
-      margin-top: 20px;
+      margin-top: 10px;
     }
 
     .hero {
-      margin: 30px 0;
+      background: url('bg-hero.jpg') no-repeat center center/cover;
+      padding: 60px 20px;
       text-align: center;
-      background: rgba(255, 255, 255, 0.8);
-      padding: 30px 20px;
-      border-radius: 12px;
-      max-width: 900px;
-      margin-left: auto;
-      margin-right: auto;
+      color: #002244;
     }
 
     .hero h2 {
       font-family: 'Playfair Display', serif;
-      font-size: 26px;
-      color: #002244;
+      font-size: 32px;
       margin-bottom: 10px;
     }
 
     .hero p {
-      color: #444;
-      font-size: 15px;
+      font-size: 16px;
+      color: #222;
+    }
+
+    .features-section {
+      padding: 50px 20px;
+      background: url('bg-features.jpg') no-repeat center center/cover;
+      background-attachment: fixed;
+    }
+
+    .features-section h3 {
+      text-align: center;
+      font-size: 24px;
+      color: #002244;
+      margin-bottom: 30px;
+    }
+
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+
+    .feature-btn {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #ccc;
+      padding: 14px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #003366;
+      min-width: 120px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .feature-btn:hover {
+      background: #e6f0ff;
+      transform: translateY(-3px);
     }
 
     .products-section {
-      padding: 30px 20px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 12px;
-      margin: 30px 20px;
+      padding: 50px 20px;
+      background: url('bg-products.jpg') no-repeat center center/cover;
+      background-attachment: fixed;
     }
 
     .products-section h3 {
-      font-family: 'Playfair Display', serif;
+      text-align: center;
       font-size: 24px;
       color: #002244;
-      margin-bottom: 20px;
-      text-align: center;
+      margin-bottom: 30px;
     }
 
     .product-grid {
@@ -170,7 +147,7 @@
     }
 
     .product-card {
-      background: #fff;
+      background: rgba(255, 255, 255, 0.95);
       border-radius: 10px;
       padding: 10px;
       box-shadow: 0 3px 10px rgba(0,0,0,0.05);
@@ -203,10 +180,25 @@
     }
 
     footer {
-      margin: 40px 0 20px;
+      padding: 30px;
+      background: #f0f0f0;
       text-align: center;
-      color: #555;
       font-size: 13px;
+      color: #333;
+    }
+
+    .error-msg {
+      text-align: center;
+      color: crimson;
+      font-size: 14px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 600px) {
+      .features {
+        flex-direction: column;
+        align-items: center;
+      }
     }
   </style>
 </head>
@@ -216,12 +208,10 @@
     <img src="macx-logo.png" class="logo" alt="MACX Logo">
     <h1 class="title">MACX Marketplace</h1>
     <p class="subtitle">Where High-Class Beauty Meets Maximum Power</p>
-
     <div id="notLoggedIn" style="display: none;">
       <p>You are not logged in.</p>
       <button id="loginRedirectBtn">Login First</button>
     </div>
-
     <div id="loggedInSection" style="display: none;">
       <p id="userDisplay">Welcome, User</p>
       <button id="logoutBtn">Logout</button>
@@ -230,47 +220,54 @@
 
   <section class="hero">
     <h2>Discover Iconic Elegance</h2>
-    <p>Explore elite skincare, cosmetics, furniture and accessories — crafted for those who demand perfection in every detail.</p>
+    <p>Explore elite skincare, luxury cosmetics, designer furniture, and accessories — crafted for perfectionists.</p>
   </section>
 
-  <section class="features">
-    <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
-    <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
-    <button class="feature-btn" onclick="openFeature('myorders.html')">Orders</button>
-    <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
-    <button class="feature-btn" onclick="openFeature('luxury.html')">Luxury</button>
-    <button class="feature-btn" onclick="openFeature('offers.html')">Offers</button>
-    <button class="feature-btn" onclick="openFeature('membership.html')">Membership</button>
-    <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
-    <button class="feature-btn" onclick="openFeature('contact.html')">Contact</button>
-    <button class="feature-btn" onclick="openFeature('support.html')">Support</button>
+  <section class="features-section">
+    <h3>Explore MACX Features</h3>
+    <div class="features">
+      <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
+      <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
+      <button class="feature-btn" onclick="openFeature('myorders.html')">Orders</button>
+      <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
+      <button class="feature-btn" onclick="openFeature('luxury.html')">Luxury</button>
+      <button class="feature-btn" onclick="openFeature('offers.html')">Offers</button>
+      <button class="feature-btn" onclick="openFeature('membership.html')">Membership</button>
+      <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
+      <button class="feature-btn" onclick="openFeature('contact.html')">Contact</button>
+      <button class="feature-btn" onclick="openFeature('support.html')">Support</button>
+    </div>
+    <div id="featureError" class="error-msg"></div>
   </section>
-
-  <div id="featureError" class="error-msg"></div>
 
   <section class="products-section">
     <h3>Featured Products</h3>
     <div class="product-grid">
       <div class="product-card">
-        <img src="product1.jpg" alt="Product 1">
+        <img src="product1.jpg" alt="Iconic Face Cream">
         <h4>Iconic Face Cream</h4>
         <button onclick="checkLogin('product1.html')">View Product</button>
       </div>
       <div class="product-card">
-        <img src="product2.jpg" alt="Product 2">
+        <img src="product2.jpg" alt="Silk Serum">
         <h4>Silk Serum</h4>
         <button onclick="checkLogin('product2.html')">View Product</button>
       </div>
       <div class="product-card">
-        <img src="product3.jpg" alt="Product 3">
+        <img src="product3.jpg" alt="Luxury Sofa">
         <h4>Luxury Sofa</h4>
         <button onclick="checkLogin('product3.html')">View Product</button>
+      </div>
+      <div class="product-card">
+        <img src="product4.jpg" alt="Designer Candle">
+        <h4>Designer Candle</h4>
+        <button onclick="checkLogin('product4.html')">View Product</button>
       </div>
     </div>
   </section>
 
   <footer>
-    © 2025 MACX Marketplace · Where Trillion Dollar Dreams Begin
+    © 2025 MACX Marketplace · Designed for Elegance. Crafted for Icons.
   </footer>
 
   <script>
