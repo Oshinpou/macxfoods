@@ -79,3 +79,5 @@ cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
 }; new Razorpay(options).open(); }
 
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
+
