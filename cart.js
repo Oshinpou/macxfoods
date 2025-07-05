@@ -1,16 +1,14 @@
+// cart.js
+
 const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
 const username = localStorage.getItem("macx_loggedInUser");
-const cartRef = gun.get('macx_cart').get(username);
+const cartRef = gun.get("macx_cart").get(username);
 const ordersRef = gun.get("macx_orders").get(username);
 const adminOrders = gun.get("admin_orders");
 
 let items = {};
 
-function logout() {
-  localStorage.removeItem("macx_loggedInUser");
-  location.reload();
-}
-
+// 1. Login status rendering
 function renderLoginStatus() {
   if (!username) {
     document.getElementById("notLoggedIn").style.display = "block";
@@ -19,8 +17,17 @@ function renderLoginStatus() {
   document.getElementById("loggedInSection").style.display = "block";
   document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
   listenToCart();
+
+  const form = document.getElementById("shippingForm");
+  if (form) {
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      startPayment();
+    });
+  }
 }
 
+// 2. Load cart items from GunDB
 function listenToCart() {
   const container = document.getElementById("cartItems");
   items = {};
@@ -29,8 +36,8 @@ function listenToCart() {
   cartRef.map().on((data, id) => {
     if (!data || !data.productName) {
       delete items[id];
-      const existing = container.querySelector(`[data-id="${id}"]`);
-      if (existing) existing.remove();
+      const old = container.querySelector(`[data-id="${id}"]`);
+      if (old) old.remove();
       updateGrandTotal();
       updateCartSummary();
       return;
@@ -38,26 +45,26 @@ function listenToCart() {
 
     items[id] = { ...data, id };
 
-    let itemNode = container.querySelector(`[data-id="${id}"]`);
-    if (!itemNode) {
-      itemNode = document.createElement("div");
-      itemNode.dataset.id = id;
-      container.appendChild(itemNode);
+    let el = container.querySelector(`[data-id="${id}"]`);
+    if (!el) {
+      el = document.createElement("div");
+      el.dataset.id = id;
+      container.appendChild(el);
     }
 
-    const quantity = parseInt(data.quantity) || 1;
-    const subtotal = quantity * parseInt(data.price);
+    const qty = parseInt(data.quantity) || 1;
+    const subtotal = qty * parseInt(data.price || 0);
 
-    itemNode.innerHTML = `
+    el.innerHTML = `
       <img src="${data.image}" alt="${data.productName}" height="60">
       <div class="product-info">
         <p><strong>${data.productName}</strong><br>₹${data.price}</p>
         <div class="qty-controls">
           <button onclick="changeQty('${id}', -1)">-</button>
-          <input type="number" min="1" class="qty-input" value="${quantity}" onchange="updateQty('${id}', this)">
+          <input type="number" min="1" class="qty-input" value="${qty}" onchange="updateQty('${id}', this)">
           <button onclick="changeQty('${id}', 1)">+</button>
         </div>
-        <div class="item-summary" id="subtotal-${id}">Subtotal: ₹${subtotal}</div>
+        <div class="item-summary">Subtotal: ₹${subtotal}</div>
       </div>
       <button class="remove-btn" onclick="removeItem('${id}')">Remove</button>
     `;
@@ -67,7 +74,7 @@ function listenToCart() {
   });
 
   setTimeout(() => {
-    if (container.innerHTML.trim() === '') {
+    if (!container.innerHTML.trim()) {
       container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
       document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
       updateCartSummary();
@@ -75,41 +82,20 @@ function listenToCart() {
   }, 1500);
 }
 
-function updateGrandTotal() {
-  let total = 0;
-  Object.values(items).forEach(item => {
-    const price = parseInt(item.price) || 0;
-    const qty = parseInt(item.quantity) || 1;
-    total += price * qty;
-  });
-  document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
-}
-
-function updateCartSummary() {
-  const summaryEl = document.getElementById("cartSummary");
-  const lines = Object.values(items).map(item => {
-    const sub = item.quantity * item.price;
-    return `${item.productName}: ₹${item.price} × ${item.quantity} = ₹${sub}`;
-  });
-  summaryEl.innerHTML = lines.length
-    ? lines.join("<br>")
-    : "<em>Your cart is empty.</em>";
-}
-
+// 3. Quantity control
 function updateQty(id, input) {
-  const newQty = Math.max(1, parseInt(input.value) || 1);
+  const q = Math.max(1, parseInt(input.value) || 1);
   cartRef.get(id).once(data => {
-    if (!data) return;
-    cartRef.get(id).put({ ...data, quantity: newQty });
+    if (data) cartRef.get(id).put({ ...data, quantity: q });
   });
 }
 
 function changeQty(id, delta) {
   cartRef.get(id).once(data => {
     if (!data) return;
-    const currentQty = parseInt(data.quantity) || 1;
-    const newQty = Math.max(1, currentQty + delta);
-    cartRef.get(id).put({ ...data, quantity: newQty });
+    const cur = parseInt(data.quantity) || 1;
+    const next = Math.max(1, cur + delta);
+    cartRef.get(id).put({ ...data, quantity: next });
   });
 }
 
@@ -117,24 +103,43 @@ function removeItem(id) {
   cartRef.get(id).put(null);
 }
 
-// 1) Razorpay checkout logic only
+// 4. Update cart summary
+function updateGrandTotal() {
+  let total = 0;
+  Object.values(items).forEach(i => {
+    const price = parseInt(i.price) || 0;
+    const qty = parseInt(i.quantity) || 1;
+    total += price * qty;
+  });
+  document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+}
+
+function updateCartSummary() {
+  const summary = document.getElementById("cartSummary");
+  const lines = Object.values(items).map(i => {
+    const sub = i.quantity * i.price;
+    return `${i.productName}: ₹${i.price} × ${i.quantity} = ₹${sub}`;
+  });
+  summary.innerHTML = lines.length ? lines.join("<br>") : "<em>Your cart is empty.</em>";
+}
+
+// 5. Razorpay Checkout
 async function startPayment() {
-  const cartArray = Object.values(items || {});
-  if (!cartArray.length) return alert("🛒 Your cart is empty.");
+  const cartItems = Object.values(items || {});
+  if (!cartItems.length) return alert("🛒 Your cart is empty.");
 
   const get = id => document.getElementById(id)?.value.trim();
   const [name, phone, email, address, country, pincode] =
     ["name", "phone", "email", "address", "country", "pincode"].map(get);
-  if (![name, phone, email, address, country, pincode].every(Boolean)) {
+  if (![name, phone, email, address, country, pincode].every(Boolean))
     return alert("🚨 Please fill all shipping details.");
-  }
 
-  const totalAmount = cartArray.reduce((sum, i) =>
+  const totalAmount = cartItems.reduce((sum, i) =>
     sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
   const orderId = Date.now().toString();
 
-  const pending = {
-    items: cartArray,
+  const order = {
+    items: cartItems,
     shipping: { name, phone, email, address, country, pincode },
     total: totalAmount,
     status: "Pending",
@@ -142,24 +147,12 @@ async function startPayment() {
   };
 
   await Promise.all([
-    ordersRef.get(orderId).put(pending),
-    adminOrders.get(orderId).put({ ...pending, username })
+    ordersRef.get(orderId).put(order),
+    adminOrders.get(orderId).put({ ...order, username })
   ]);
 
-  let razorOrder;
-  try {
-    const resp = await fetch("/api/createOrder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: totalAmount * 100, receipt: orderId })
-    });
-    razorOrder = await resp.json();
-  } catch (err) {
-    console.warn("Server-side order failed, falling back to client-only");
-  }
-
-  const summaryText = cartArray
-    .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
+  const summaryText = cartItems
+    .map(i => `${i.productName} (qty:${i.quantity}, ₹${i.price})`)
     .join(" | ");
 
   const options = {
@@ -168,7 +161,6 @@ async function startPayment() {
     currency: "INR",
     name: "MACX Marketplace",
     description: `Order #${orderId}`,
-    order_id: razorOrder?.id,
     prefill: { name, email, contact: phone },
     notes: {
       shipping_name: name,
@@ -177,24 +169,21 @@ async function startPayment() {
       shipping_address: address,
       shipping_country: country,
       shipping_pincode: pincode,
-      cart_items: JSON.stringify(cartArray),
+      cart_items: JSON.stringify(cartItems),
       cart_summary: summaryText
     },
     theme: { color: "#00c0b5" },
     handler(response) {
       const paidAt = Date.now();
-      ordersRef.get(orderId).put({
+      const paid = {
         razorpayPaymentId: response.razorpay_payment_id,
         status: "Paid",
         paidAt
-      });
-      adminOrders.get(orderId).put({
-        razorpayPaymentId: response.razorpay_payment_id,
-        status: "Paid",
-        paidAt
-      });
+      };
+      ordersRef.get(orderId).put(paid);
+      adminOrders.get(orderId).put({ ...paid, username });
       cartRef.map().once((_, id) => cartRef.get(id).put(null));
-      alert("✅ Payment successful! Redirecting…");
+      alert("✅ Payment successful! Redirecting to My Orders…");
       window.location.href = "myorders.html";
     }
   };
@@ -202,14 +191,5 @@ async function startPayment() {
   new Razorpay(options).open();
 }
 
-// 2) Attach submit listener only after DOM is ready
-document.addEventListener("DOMContentLoaded", () => {
-  renderLoginStatus();
-  const form = document.getElementById("shippingForm");
-  if (form) {
-    form.addEventListener("submit", e => {
-      e.preventDefault();
-      startPayment();
-    });
-  }
-});
+// 6. Init
+document.addEventListener("DOMContentLoaded", renderLoginStatus);
