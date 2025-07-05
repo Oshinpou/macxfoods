@@ -8,7 +8,7 @@
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
 <style>
-  * {
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -16,104 +16,96 @@
 
 body {
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(120deg, #f6faff, #fdfdff, #f0f9ff);
+  background: linear-gradient(to right, #fefefe, #f0f6ff);
   min-height: 100vh;
   color: #1e2a38;
   font-size: 13px;
+  overflow-x: hidden;
 }
 
-/* Container */
+/* Container for alignment */
 .container {
-  max-width: 1100px;
-  margin: auto;
-  padding: 16px;
+  max-width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+  text-align: center;
 }
 
-/* Status bars */
+/* Status Section - centered top */
 #notLoggedIn,
 #loggedInSection {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: inline-block;
   background: #ffffff;
-  padding: 10px 14px;
+  padding: 10px 16px;
   border-radius: 8px;
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.03);
-  margin-bottom: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  margin-bottom: 20px;
+  text-align: center;
   font-size: 13px;
 }
 
 #userDisplay {
-  font-weight: 600;
-  font-size: 13px;
+  font-weight: bold;
+  font-size: 14px;
   color: #003366;
 }
 
-#loginRedirectBtn,
-#logoutBtn {
-  background-color: #0052cc;
+#logoutBtn,
+#loginRedirectBtn {
+  background-color: #003366;
   color: #fff;
+  padding: 6px 12px;
   border: none;
-  border-radius: 4px;
-  padding: 6px 10px;
+  border-radius: 6px;
   font-size: 12px;
+  margin-left: 8px;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: 0.3s ease;
 }
 
-#loginRedirectBtn:hover,
-#logoutBtn:hover {
-  background-color: #003f99;
+#logoutBtn:hover,
+#loginRedirectBtn:hover {
+  background-color: #001d3d;
 }
 
-/* Features */
+/* Features section - horizontal line */
 .features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 12px;
+  justify-content: center;
+  padding: 10px 0;
+  margin-top: 10px;
 }
 
 .feature-btn {
+  flex: 0 0 auto;
   background: #ffffff;
-  border: none;
-  border-radius: 10px;
-  padding: 12px;
+  border: 1px solid #ddd;
+  padding: 10px 14px;
   font-size: 12px;
   font-weight: 500;
-  color: #1e2a38;
+  color: #003366;
+  border-radius: 8px;
+  min-width: 100px;
   text-align: center;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .feature-btn:hover {
   background: #eef6ff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
 }
 
 /* Error Message */
 .error-msg {
-  text-align: center;
   color: #d60000;
-  margin-top: 14px;
+  text-align: center;
   font-size: 12px;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .features {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 480px) {
-  #loginRedirectBtn,
-  #logoutBtn {
-    width: 100%;
-    margin-top: 8px;
-  }
+  margin-top: 14px;
 }
 
 </style>
