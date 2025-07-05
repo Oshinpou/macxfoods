@@ -133,44 +133,6 @@ body {
 </div>
 
 <div id="featureError" class="error-msg"></div>
-<script>
   
-  const username = localStorage.getItem("macx_loggedInUser");
-
-  function showStatus() {
-    const loggedIn = document.getElementById("loggedInSection");
-    const notLoggedIn = document.getElementById("notLoggedIn");
-
-    if (username) {
-      document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
-      loggedIn.style.display = "block";
-      notLoggedIn.style.display = "none";
-    } else {
-      loggedIn.style.display = "none";
-      notLoggedIn.style.display = "block";
-    }
-  }
-
-  document.getElementById("loginRedirectBtn")?.addEventListener("click", () => {
-    window.location.href = "login.html";
-  });
-
-  document.getElementById("logoutBtn")?.addEventListener("click", () => {
-    localStorage.removeItem("macx_loggedInUser");
-    location.reload();
-  });
-
-  function openFeature(page) {
-    if (!username) {
-      document.getElementById("featureError").textContent = "Please login to access features.";
-    } else {
-      window.location.href = page;
-    }
-  }
-
-  document.addEventListener("DOMContentLoaded", showStatus);
-</script>
-  
-  
-    </body>
+ </body>
 </html>
