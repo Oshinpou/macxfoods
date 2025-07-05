@@ -8,6 +8,128 @@
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.2/dist/pouchdb.min.js"></script>
   <script defer src="auth.js"></script>
+<style>
+
+  /* Lux MACX Style Auth Page */
+
+body {
+  margin: 0;
+  padding: 0;
+  background: #0b0f14;
+  font-family: 'Segoe UI', sans-serif;
+  color: #ffffff;
+}
+
+.container {
+  max-width: 480px;
+  margin: 60px auto;
+  background: #11151c;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 0 30px rgba(0, 255, 200, 0.1);
+  text-align: center;
+}
+
+h1.title {
+  font-size: 26px;
+  margin-bottom: 30px;
+  color: #00e0d3;
+}
+
+h2 {
+  font-size: 20px;
+  margin-bottom: 15px;
+  color: #ffffff;
+}
+
+form {
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+input {
+  width: 100%;
+  padding: 12px;
+  margin: 10px 0;
+  background: #1a1f27;
+  border: 1px solid #333;
+  border-radius: 8px;
+  color: #eee;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+input:focus {
+  border-color: #00e0d3;
+  outline: none;
+  background: #20252f;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: #00e0d3;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #000;
+  font-weight: bold;
+  margin-top: 10px;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #00b7ad;
+}
+
+.message {
+  margin-bottom: 20px;
+  color: #ff8585;
+}
+
+.form-switch {
+  display: grid;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.form-switch button {
+  background: #222c35;
+  color: #eee;
+  border: 1px solid #333;
+}
+
+.form-switch button:hover {
+  background: #00e0d3;
+  color: #000;
+}
+
+label {
+  display: block;
+  font-size: 14px;
+  margin: 10px 0;
+  color: #ccc;
+  text-align: left;
+}
+
+.admin-link {
+  font-size: 13px;
+  color: #ccc;
+  margin-top: 20px;
+}
+
+.admin-link a {
+  color: #00e0d3;
+  text-decoration: none;
+}
+
+.admin-link a:hover {
+  text-decoration: underline;
+}
+</style>
+
 </head>
 <body>
   <div class="container">
