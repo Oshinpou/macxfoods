@@ -2,94 +2,121 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>My Orders</title>
+  <title>My Orders - MACX Marketplace</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
-    body { font-family:sans-serif }
-    .container { max-width:800px; margin:auto; padding:20px }
-    .order { border:1px solid #ccc; padding:15px; margin-bottom:20px }
-    .items th, .items td { padding:6px 10px; text-align:left }
-    .btn { padding:4px 8px; cursor:pointer; margin-top:10px }
-  </style>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
-</head>
-<body>
-  <div class="container">
-    <h1>My Orders</h1>
-    <div id="ordersContainer">Loading...</div>
-  </div>
-
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const username = localStorage.getItem("macx_loggedInUser");
-    const ordersRef = username && gun.get("macx_orders").get(username);
-
-    if (!username) {
-      alert("Please login first.");
-      window.location.href = "login.html";
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f4f4;
     }
 
-    function renderOrders() {
-      const c = document.getElementById("ordersContainer");
-      c.innerHTML = "";
+    h1 {
+      text-align: center;
+    }
 
-      ordersRef.map().once((o, id) => {
-        if (!o || !o.items) return;
+    .order {
+      background: #fff;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-left: 5px solid teal;
+      border-radius: 10px;
+      box-shadow: 0 0 5px #ccc;
+    }
 
-        const itemsTable = o.items.map(i => {
-          const p = parseInt(i.price);
-          const q = parseInt(i.quantity);
-          const s = p * q;
-          return `<tr>
-            <td>${i.productName}</td>
-            <td>₹${p}</td>
-            <td>${q}</td>
-            <td>₹${s}</td>
-          </tr>`;
-        }).join("");
+    .order h2 {
+      margin-top: 0;
+    }
 
-        const shipping = o.shipping || {};
-        const info = `
-          <strong>Ship To:</strong> ${shipping.name}<br>
-          ${shipping.address}, ${shipping.country} - ${shipping.pincode}<br>
-          <strong>Phone:</strong> ${shipping.phone} <br>
-          <strong>Email:</strong> ${shipping.email}
+    .item {
+      margin-left: 15px;
+    }
+
+    .label {
+      font-weight: bold;
+    }
+
+    .status-paid {
+      color: green;
+      font-weight: bold;
+    }
+
+    .status-pending {
+      color: orange;
+      font-weight: bold;
+    }
+
+    .logout-btn {
+      float: right;
+      margin-top: -40px;
+      background: crimson;
+      color: white;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <h1>My Orders</h1>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+  <div id="ordersContainer">Loading your orders...</div>
+
+  <script>
+    const username = localStorage.getItem("macx_loggedInUser");
+    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+    const orders = gun.get("macx_orders").get(username);
+    const container = document.getElementById("ordersContainer");
+
+    if (!username) {
+      container.innerHTML = "<p>You are not logged in. <a href='login.html'>Login</a> to view your orders.</p>";
+    } else {
+      container.innerHTML = "";
+      orders.map().once((order, orderId) => {
+        if (!order || !order.items) return;
+
+        const div = document.createElement("div");
+        div.className = "order";
+
+        const paid = order.status === "Paid";
+        const statusClass = paid ? "status-paid" : "status-pending";
+        const paidInfo = paid
+          ? `<p><span class="label">Paid On:</span> ${new Date(order.paidAt).toLocaleString()}<br><span class="label">Razorpay ID:</span> ${order.razorpayPaymentId}</p>`
+          : "";
+
+        const itemList = order.items.map(i => `
+          <div class="item">🔹 ${i.productName} - ₹${i.price} × ${i.quantity}</div>
+        `).join("");
+
+        const shipping = order.shipping || {};
+        const shippingInfo = `
+          <p><span class="label">Shipping To:</span><br>
+          ${shipping.name}, ${shipping.phone}<br>
+          ${shipping.email}<br>
+          ${shipping.address}, ${shipping.country} - ${shipping.pincode}</p>
         `;
 
-        const status = o.status || "Pending";
-        let actionBtn = "";
-        if (status === "Pending") {
-          actionBtn = `<button class="btn" onclick="updateStatus('${id}', 'Cancelled')">Cancel Order</button>`;
-        } else if (status === "Paid") {
-          actionBtn = `<span style="color:green">Paid</span>`;
-        }
-
-        const html = `
-          <div class="order" id="order-${id}">
-            <h3>Order #${id}</h3>
-            <p><strong>Status:</strong> ${status}</p>
-            <table class="items" border="1" cellspacing="0">
-              <tr><th>Product</th><th>Price</th><th>Qty</th><th>Subtotal</th></tr>
-              ${itemsTable}
-            </table>
-            <p><strong>Total:</strong> ₹${(o.total || 0)}</p>
-            <p>${info}</p>
-            ${actionBtn}
-          </div>
+        div.innerHTML = `
+          <h2>🧾 Order #${orderId}</h2>
+          <p><span class="label">Status:</span> <span class="${statusClass}">${order.status}</span></p>
+          <p><span class="label">Total:</span> ₹${order.total}</p>
+          <p><span class="label">Date:</span> ${new Date(order.createdAt).toLocaleString()}</p>
+          ${itemList}
+          ${shippingInfo}
+          ${paidInfo}
         `;
 
-        c.innerHTML += html;
+        container.appendChild(div);
       });
     }
 
-    function updateStatus(id, newStatus) {
-      ordersRef.get(id).put({ status: newStatus });
-      gun.get("admin_orders").get(id).put({ status: newStatus });
-      alert("Status updated");
-      renderOrders();
+    function logout() {
+      localStorage.removeItem("macx_loggedInUser");
+      location.reload();
     }
-
-    renderOrders();
   </script>
 </body>
 </html>
