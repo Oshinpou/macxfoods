@@ -2,112 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Orders</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Contact Us - MACX Marketplace</title>
   <link rel="stylesheet" href="style.css" />
   <style>
     body {
       font-family: sans-serif;
-      background: #f4f4f4;
       margin: 0;
       padding: 0;
+      background: #f5f5f5;
     }
-
     .container {
-      max-width: 900px;
-      margin: auto;
-      padding: 20px;
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .order-box {
+      max-width: 700px;
+      margin: 50px auto;
       background: #fff;
-      padding: 15px;
-      margin-bottom: 15px;
-      border-radius: 8px;
+      padding: 30px;
+      border-radius: 10px;
       box-shadow: 0 0 10px #ccc;
     }
-
-    .order-box h4 {
-      margin: 0 0 10px 0;
-    }
-
-    .order-box ul {
-      padding-left: 20px;
-      margin: 10px 0;
-    }
-
-    .empty-msg {
+    h1 {
       text-align: center;
-      font-size: 18px;
-      color: #888;
-      margin-top: 50px;
+      color: #00c0b5;
     }
-
-    .status {
-      font-weight: bold;
-      color: teal;
+    p {
+      font-size: 16px;
+      color: #333;
+      line-height: 1.6;
+    }
+    .email {
+      background: #eef;
+      padding: 10px;
+      margin: 10px 0;
+      border-left: 4px solid #00c0b5;
+      border-radius: 5px;
+    }
+    a {
+      color: #00c0b5;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .support-link {
+      margin-top: 20px;
+      display: block;
+      text-align: center;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>My Orders</h2>
-    <div id="ordersContainer"></div>
+    <h1>Contact Us</h1>
+    <p>We’re here to help you with your MACX Marketplace experience. Reach out to us anytime via the emails below:</p>
+    
+    <div class="email"><strong>Email 1:</strong> <a href="mailto:macxyy35@gmail.com">macxyy35@gmail.com</a></div>
+    <div class="email"><strong>Email 2:</strong> <a href="mailto:macxyy12@gmail.com">macxyy12@gmail.com</a></div>
+
+    <p class="support-link">
+      📄 For more help, visit our <a href="support.html">Support Page</a>
+    </p>
   </div>
-
-  <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const username = localStorage.getItem("macx_loggedInUser");
-
-    if (!username) {
-      document.body.innerHTML = `
-        <div style="text-align:center;padding:20px;">
-          <h2>You must login to view your orders</h2>
-          <button onclick="location.href='login.html'">Go to Login</button>
-        </div>
-      `;
-      throw new Error("Not logged in");
-    }
-
-    const ordersRef = gun.get("macx_orders").get(username);
-    const ordersContainer = document.getElementById("ordersContainer");
-    let foundAny = false;
-
-    ordersRef.map().once((order, id) => {
-      if (!order || !order.status) return;
-
-      foundAny = true;
-      const orderBox = document.createElement("div");
-      orderBox.className = "order-box";
-
-      const itemList = order.items
-        .map(i => `<li>${i.productName} - ₹${i.price} × ${i.quantity}</li>`)
-        .join("");
-
-      orderBox.innerHTML = `
-        <h4>Order ID: ${id}</h4>
-        <p><strong>Total:</strong> ₹${order.total}</p>
-        <p class="status"><strong>Status:</strong> ${order.status}</p>
-        <p><strong>Created:</strong> ${new Date(order.createdAt).toLocaleString()}</p>
-        <p><strong>Shipping to:</strong> ${order.shipping.name}, ${order.shipping.address}, ${order.shipping.country}, PIN: ${order.shipping.pincode}</p>
-        <ul>${itemList}</ul>
-      `;
-
-      ordersContainer.appendChild(orderBox);
-    });
-
-    // Show empty message if nothing found after 2 seconds
-    setTimeout(() => {
-      if (!foundAny) {
-        ordersContainer.innerHTML = `<div class="empty-msg">No orders found.</div>`;
-      }
-    }, 2000);
-  </script>
 </body>
 </html>
