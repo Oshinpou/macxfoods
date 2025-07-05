@@ -6,7 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/sea.js"></script>
   <style>
     body { font-family: sans-serif; margin: 0; padding: 0; background: #f8f8f8; }
     .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
@@ -31,63 +30,64 @@
 <body>
   <div class="container">
     <!-- Login Status -->
-    <div id="notLoggedIn" class="hidden">
-      <h2>You are not logged in.</h2>
-      <button onclick="location.href='login.html'">Login First</button>
+    <div id="loginStatus" style="margin-bottom: 20px;">
+      <div id="notLoggedIn" class="hidden">
+        <p><strong>You are not logged in.</strong></p>
+        <button onclick="location.href='login.html'">Login</button>
+      </div>
+      <div id="loggedInSection" class="hidden">
+        <p id="userDisplay">Welcome, User</p>
+        <button onclick="logout()">Logout</button>
+      </div>
     </div>
 
-    <div id="loggedInSection" class="hidden">
-      <h2 id="userDisplay">Welcome, User</h2>
-      <button onclick="logout()">Logout</button>
+    <!-- Product Info Always Visible -->
+    <div class="slider">
+      <img src="img/elixir1.jpg" alt="img1" />
+      <img src="img/elixir2.jpg" alt="img2" />
+      <img src="img/elixir3.jpg" alt="img3" />
+    </div>
 
-      <!-- Product Images -->
-      <div class="slider">
-        <img src="img/elixir1.jpg" alt="img1" />
-        <img src="img/elixir2.jpg" alt="img2" />
-        <img src="img/elixir3.jpg" alt="img3" />
-      </div>
+    <h2>Luxury Hydrating Elixir</h2>
+    <p><strong>Price:</strong> ₹2500</p>
 
-      <h2>Luxury Hydrating Elixir</h2>
-      <p><strong>Price:</strong> ₹2500</p>
+    <div class="qty-controls">
+      <button onclick="changeQty(-1)">-</button>
+      <input type="number" id="quantity" value="1" min="1" />
+      <button onclick="changeQty(1)">+</button>
+    </div>
 
-      <div class="qty-controls">
-        <button onclick="changeQty(-1)">-</button>
-        <input type="number" id="quantity" value="1" min="1" />
-        <button onclick="changeQty(1)">+</button>
-      </div>
+    <button onclick="addToCart()">Add to Cart</button>
 
-      <button onclick="addToCart()">Add to Cart</button>
+    <h3>Description</h3>
+    <p>A deeply hydrating elixir that restores moisture balance and plumps skin with rich botanical nutrients.</p>
 
-      <h3>Description</h3>
-      <p>A deeply hydrating elixir that restores moisture balance and plumps skin with rich botanical nutrients.</p>
+    <h3>Ingredients</h3>
+    <p>Botanical Oils, Hyaluronic Acid, Glycerin, Pro-Vitamin B5, Chamomile Extract.</p>
 
-      <h3>Ingredients</h3>
-      <p>Botanical Oils, Hyaluronic Acid, Glycerin, Pro-Vitamin B5, Chamomile Extract.</p>
+    <h3>Usage</h3>
+    <p>Apply 3 drops to clean skin morning and evening. Follow with moisturizer.</p>
 
-      <h3>Usage</h3>
-      <p>Apply 3 drops to clean skin morning and evening. Follow with moisturizer.</p>
+    <h3>Warning</h3>
+    <p>For external use only. Avoid contact with eyes. Discontinue if irritation occurs.</p>
 
-      <h3>Warning</h3>
-      <p>For external use only. Avoid contact with eyes. Discontinue if irritation occurs.</p>
+    <!-- Reviews -->
+    <div>
+      <h3>Public Reviews</h3>
+      <div id="reviewList"></div>
 
-      <!-- Reviews -->
-      <div>
-        <h3>Public Reviews</h3>
-        <div id="reviewList"></div>
-
-        <h4>Write a Review</h4>
-        <input type="text" id="reviewerName" placeholder="Your Name" />
-        <input type="number" id="reviewStars" placeholder="Star Rating (1-5)" min="1" max="5" />
-        <textarea id="reviewText" placeholder="Write your review..."></textarea>
-        <button onclick="submitReview()">Submit Review</button>
-      </div>
+      <h4>Write a Review</h4>
+      <input type="text" id="reviewerName" placeholder="Your Name" />
+      <input type="number" id="reviewStars" placeholder="Star Rating (1-5)" min="1" max="5" />
+      <textarea id="reviewText" placeholder="Write your review..."></textarea>
+      <button onclick="submitReview()">Submit Review</button>
     </div>
   </div>
 
   <script>
     const username = localStorage.getItem("macx_loggedInUser");
     const gun = Gun();
-    const cart = gun.get("macx_cart").get(username);
+    const cart = gun.get("macx_cart").get(username || "guest");
     const reviews = gun.get("macx_reviews").get("product2");
 
     function logout() {
@@ -100,11 +100,11 @@
         document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
         document.getElementById("notLoggedIn").classList.add("hidden");
         document.getElementById("loggedInSection").classList.remove("hidden");
-        loadReviews();
       } else {
         document.getElementById("notLoggedIn").classList.remove("hidden");
         document.getElementById("loggedInSection").classList.add("hidden");
       }
+      loadReviews();
     }
 
     function changeQty(delta) {
@@ -115,7 +115,8 @@
     }
 
     function addToCart() {
-      if (!username) return alert("Login first");
+      if (!username) return alert("❌ Please login first to add items to cart.");
+
       const quantity = parseInt(document.getElementById("quantity").value);
       const item = {
         productId: "p02",
@@ -127,14 +128,14 @@
       };
       const cartId = "p02_" + Date.now();
       cart.get(cartId).put(item);
-      alert("Item added to cart!");
+      alert("✅ Item added to cart!");
     }
 
     function submitReview() {
       const name = document.getElementById("reviewerName").value.trim();
       const stars = parseInt(document.getElementById("reviewStars").value);
       const text = document.getElementById("reviewText").value.trim();
-      if (!name || !stars || !text) return alert("Fill all review fields");
+      if (!name || !stars || !text) return alert("⚠️ Fill all review fields");
 
       const id = Date.now().toString();
       reviews.get(id).put({ name, stars, text, time: id });
