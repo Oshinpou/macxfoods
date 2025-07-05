@@ -32,6 +32,7 @@ function listenToCart() {
       const existing = container.querySelector(`[data-id="${id}"]`);
       if (existing) existing.remove();
       updateGrandTotal();
+      updateCartSummary();
       return;
     }
 
@@ -62,12 +63,14 @@ function listenToCart() {
     `;
 
     updateGrandTotal();
+    updateCartSummary();
   });
 
   setTimeout(() => {
     if (container.innerHTML.trim() === '') {
       container.innerHTML = '<p class="empty-msg">Your cart is empty.</p>';
       document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
+      updateCartSummary();
     }
   }, 1500);
 }
@@ -80,6 +83,17 @@ function updateGrandTotal() {
     total += price * qty;
   });
   document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+}
+
+function updateCartSummary() {
+  const summaryEl = document.getElementById("cartSummary");
+  const lines = Object.values(items).map(item => {
+    const sub = item.quantity * item.price;
+    return `${item.productName}: ₹${item.price} × ${item.quantity} = ₹${sub}`;
+  });
+  summaryEl.innerHTML = lines.length
+    ? lines.join("<br>")
+    : "<em>Your cart is empty.</em>";
 }
 
 function updateQty(id, input) {
@@ -103,51 +117,35 @@ function removeItem(id) {
   cartRef.get(id).put(null);
 }
 
-
-// 1) Wire the shipping form to invoke Razorpay checkout
-document
-  .getElementById("shippingForm")
-  .addEventListener("submit", e => {
-    e.preventDefault();
-    startPayment();
-  });
-
-// 2) Razorpay checkout logic only
+// 1) Razorpay checkout logic only
 async function startPayment() {
-  // a) Grab & validate cart items
-  const cartItems = Object.values(items || {});
-  if (!cartItems.length) {
-    return alert("🛒 Your cart is empty.");
-  }
+  const cartArray = Object.values(items || {});
+  if (!cartArray.length) return alert("🛒 Your cart is empty.");
 
-  // b) Collect & validate shipping fields
   const get = id => document.getElementById(id)?.value.trim();
   const [name, phone, email, address, country, pincode] =
-    ["name","phone","email","address","country","pincode"].map(get);
-
+    ["name", "phone", "email", "address", "country", "pincode"].map(get);
   if (![name, phone, email, address, country, pincode].every(Boolean)) {
     return alert("🚨 Please fill all shipping details.");
   }
 
-  // c) Compute total & prepare orderId
-  const totalAmount = cartItems.reduce((sum, i) =>
+  const totalAmount = cartArray.reduce((sum, i) =>
     sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
   const orderId = Date.now().toString();
 
-  // d) (Optional) Persist “Pending” to GunDB before payment
   const pending = {
-    items: cartItems,
+    items: cartArray,
     shipping: { name, phone, email, address, country, pincode },
     total: totalAmount,
     status: "Pending",
     createdAt: Date.now()
   };
+
   await Promise.all([
     ordersRef.get(orderId).put(pending),
     adminOrders.get(orderId).put({ ...pending, username })
   ]);
 
-  // e) (Optional) Request a server-side Razorpay order
   let razorOrder;
   try {
     const resp = await fetch("/api/createOrder", {
@@ -160,9 +158,7 @@ async function startPayment() {
     console.warn("Server-side order failed, falling back to client-only");
   }
 
-    // f) Configure Razorpay checkout
-  const cartItems     = Object.values(items);
-  const summaryText   = cartItems
+  const summaryText = cartArray
     .map(i => `${i.productName} (qty:${i.quantity}, price:₹${i.price})`)
     .join(" | ");
 
@@ -172,21 +168,20 @@ async function startPayment() {
     currency: "INR",
     name: "MACX Marketplace",
     description: `Order #${orderId}`,
-    order_id: razorOrder?.id,    // omit if not using server order
+    order_id: razorOrder?.id,
     prefill: { name, email, contact: phone },
     notes: {
-      shipping_name:    name,
-      shipping_phone:   phone,
-      shipping_email:   email,
+      shipping_name: name,
+      shipping_phone: phone,
+      shipping_email: email,
       shipping_address: address,
       shipping_country: country,
       shipping_pincode: pincode,
-      cart_items:       JSON.stringify(cartItems),
-      cart_summary:     summaryText
+      cart_items: JSON.stringify(cartArray),
+      cart_summary: summaryText
     },
     theme: { color: "#00c0b5" },
     handler(response) {
-      // On-success: mark “Paid” and clear cart
       const paidAt = Date.now();
       ordersRef.get(orderId).put({
         razorpayPaymentId: response.razorpay_payment_id,
@@ -204,30 +199,17 @@ async function startPayment() {
     }
   };
 
-  // g) Open the Razorpay dialog
   new Razorpay(options).open();
 }
 
-// 2) Render a cart summary above your form
-function updateCartSummary() {
-  const summaryEl = document.getElementById("cartSummary");
-  const lines = Object.values(items).map(item => {
-    const sub = item.quantity * item.price;
-    return `${item.productName}: ₹${item.price} × ${item.quantity} = ₹${sub}`;
-  });
-  summaryEl.innerHTML = lines.length
-    ? lines.join("<br>")
-    : "<em>Your cart is empty.</em>";
-}
-
-// 3) Call updateCartSummary() inside listenToCart(), right after updateGrandTotal()
-
-// 4) Re‐attach login status logic
-document.addEventListener("DOMContentLoaded", renderLoginStatus);
-
-      
-
-
-
-
-        
+// 2) Attach submit listener only after DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  renderLoginStatus();
+  const form = document.getElementById("shippingForm");
+  if (form) {
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      startPayment();
+    });
+  }
+});
