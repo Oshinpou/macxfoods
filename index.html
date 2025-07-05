@@ -9,18 +9,19 @@
   <script defer src="home.js"></script>
 <style>
 
-  /* Reset & Base */
   * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
   }
 
-  body {
-    font-family: "Inter", "Segoe UI", sans-serif;
-    background: #f7f8fa;
-    color: #222;
+  html, body {
+    width: 100%;
     min-height: 100vh;
+    font-family: "Segoe UI", sans-serif;
+    background-color: #f9f9fc;
+    color: #222;
+    overflow-x: hidden;
   }
 
   a {
@@ -28,127 +29,125 @@
     color: inherit;
   }
 
-  /* Header Bar (like 1stDibs top) */
+  /* Top Bar */
   .top-bar {
-    width: 100%;
-    background: #ffffff;
-    padding: 15px 30px;
-    border-bottom: 1px solid #e0e0e0;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+    background-color: #ffffff;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
+    padding: 15px 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-bottom: 1px solid #ddd;
+    flex-wrap: wrap;
   }
 
   .top-bar h1 {
-    font-size: 24px;
-    color: #222;
+    font-size: 22px;
+    color: #003366;
     font-weight: 600;
+    margin-bottom: 10px;
+  }
+
+  .top-bar .auth-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
   }
 
   .top-bar .auth-buttons button {
-    margin-left: 10px;
-    padding: 8px 16px;
-    border: 1px solid #ccc;
-    background: #fff;
-    font-weight: 500;
-    border-radius: 6px;
+    padding: 8px 14px;
+    background-color: #003366;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s ease;
   }
 
   .top-bar .auth-buttons button:hover {
-    background: #f0f0f0;
+    background-color: #002244;
   }
 
   /* Welcome Section */
   .welcome {
+    padding: 30px 20px 10px;
     text-align: center;
-    padding: 40px 20px 20px;
   }
 
   .welcome h2 {
-    font-size: 28px;
-    font-weight: 600;
-    color: #003366;
+    font-size: 26px;
     margin-bottom: 10px;
+    color: #002244;
   }
 
   .welcome p {
-    font-size: 16px;
+    font-size: 15px;
     color: #555;
   }
 
-  /* Feature Buttons */
+  /* Features Grid */
   .features {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 20px;
+    padding: 20px;
     max-width: 1000px;
-    margin: 30px auto 60px;
-    padding: 0 20px;
+    margin: auto;
   }
 
   .feature-btn {
-    padding: 18px;
-    background: #fff;
-    border: 1px solid #ddd;
+    background-color: #fff;
+    padding: 16px;
     border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    text-align: center;
     font-size: 16px;
     font-weight: 500;
     color: #003366;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: 0.3s;
     cursor: pointer;
-    text-align: center;
-    transition: all 0.3s ease;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
   }
 
   .feature-btn:hover {
-    background: #f4f7fc;
-    color: #001a4d;
-    transform: translateY(-3px);
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+    background-color: #f4f8ff;
+    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
   }
 
-  /* Error Message */
   .error-msg {
+    color: red;
     text-align: center;
-    color: #cc0000;
-    font-weight: 600;
-    font-size: 15px;
-    margin-top: 15px;
+    margin-top: 20px;
+    font-weight: bold;
   }
 
-  /* User Display and Auth Section */
-  #userDisplay {
-    font-size: 18px;
-    font-weight: 500;
-    color: #003366;
+  /* Responsive Utility */
+  @media (max-width: 600px) {
+    .top-bar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .top-bar h1 {
+      margin-bottom: 10px;
+    }
+
+    .features {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    }
+
+    .feature-btn {
+      font-size: 14px;
+      padding: 12px;
+    }
   }
-
-  #logoutBtn, #loginRedirectBtn {
-    margin-top: 10px;
-    padding: 8px 20px;
-    font-size: 14px;
-    background: #003366;
-    color: #fff;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    transition: background 0.3s;
-  }
-
-  #logoutBtn:hover, #loginRedirectBtn:hover {
-    background: #001a4d;
-  }
-    
-
-  
-
-
 </style>
+
 </head>
 <body>
   <div class="container">
