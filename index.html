@@ -8,81 +8,144 @@
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
 <style>
-  body {
+
+  /* Reset & Base */
+  * {
+    box-sizing: border-box;
     margin: 0;
     padding: 0;
-    background: radial-gradient(circle at top left, #ffffff 0%, #f0f0f8 35%, #e5ebf5 100%);
-    font-family: "Segoe UI", "Inter", sans-serif;
-    color: #222;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
   }
 
-  .container {
+  body {
+    font-family: "Inter", "Segoe UI", sans-serif;
+    background: #f7f8fa;
+    color: #222;
+    min-height: 100vh;
+  }
+
+  a {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  /* Header Bar (like 1stDibs top) */
+  .top-bar {
+    width: 100%;
+    background: #ffffff;
+    padding: 15px 30px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+  }
+
+  .top-bar h1 {
+    font-size: 24px;
+    color: #222;
+    font-weight: 600;
+  }
+
+  .top-bar .auth-buttons button {
+    margin-left: 10px;
+    padding: 8px 16px;
+    border: 1px solid #ccc;
+    background: #fff;
+    font-weight: 500;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  .top-bar .auth-buttons button:hover {
+    background: #f0f0f0;
+  }
+
+  /* Welcome Section */
+  .welcome {
     text-align: center;
     padding: 40px 20px 20px;
   }
 
-  h1, h2 {
-    font-weight: 700;
-    color: #0033a1;
+  .welcome h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #003366;
     margin-bottom: 10px;
   }
 
-  button {
+  .welcome p {
     font-size: 16px;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 20px;
-    cursor: pointer;
-    font-weight: 600;
-    background: linear-gradient(145deg, #0055ff, #00ccff);
-    color: #fff;
-    transition: transform 0.2s, background 0.3s;
-    box-shadow: 0 6px 12px rgba(0, 85, 255, 0.3);
+    color: #555;
   }
 
-  button:hover {
-    transform: translateY(-2px);
-    background: linear-gradient(145deg, #0033cc, #00aaff);
-  }
-
+  /* Feature Buttons */
   .features {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 20px;
-    margin: 40px 20px;
-    width: 100%;
-    max-width: 900px;
+    max-width: 1000px;
+    margin: 30px auto 60px;
+    padding: 0 20px;
   }
 
   .feature-btn {
-    background: #ffffffd9;
-    color: #003366;
-    border: 1px solid #d0d8f0;
-    border-radius: 12px;
-    padding: 15px 10px;
-    box-shadow: 0 4px 10px rgba(100, 120, 150, 0.1);
+    padding: 18px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 10px;
     font-size: 16px;
     font-weight: 500;
+    color: #003366;
+    cursor: pointer;
+    text-align: center;
     transition: all 0.3s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.05);
   }
 
   .feature-btn:hover {
-    background: #f4f7ff;
-    color: #002288;
+    background: #f4f7fc;
+    color: #001a4d;
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   }
 
+  /* Error Message */
   .error-msg {
+    text-align: center;
     color: #cc0000;
     font-weight: 600;
-    margin-top: 15px;
     font-size: 15px;
+    margin-top: 15px;
   }
+
+  /* User Display and Auth Section */
+  #userDisplay {
+    font-size: 18px;
+    font-weight: 500;
+    color: #003366;
+  }
+
+  #logoutBtn, #loginRedirectBtn {
+    margin-top: 10px;
+    padding: 8px 20px;
+    font-size: 14px;
+    background: #003366;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  #logoutBtn:hover, #loginRedirectBtn:hover {
+    background: #001a4d;
+  }
+    
+
+  
 
 
 </style>
