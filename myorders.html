@@ -2,120 +2,127 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Orders - MACX Marketplace</title>
+  <title>My Orders</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: sans-serif;
       margin: 0;
       padding: 20px;
-      background: #f4f4f4;
+      background: #f0f0f0;
     }
-
-    h1 {
-      text-align: center;
+    .container {
+      max-width: 900px;
+      margin: auto;
     }
-
-    .order {
+    .order-box {
       background: #fff;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-left: 5px solid teal;
+      padding: 15px;
       border-radius: 10px;
-      box-shadow: 0 0 5px #ccc;
+      box-shadow: 0 0 10px #ccc;
+      margin-bottom: 20px;
     }
-
-    .order h2 {
+    .order-box h3 {
       margin-top: 0;
     }
-
-    .item {
-      margin-left: 15px;
+    .order-box ul {
+      padding-left: 20px;
     }
-
-    .label {
-      font-weight: bold;
-    }
-
-    .status-paid {
-      color: green;
-      font-weight: bold;
-    }
-
-    .status-pending {
-      color: orange;
-      font-weight: bold;
-    }
-
-    .logout-btn {
-      float: right;
-      margin-top: -40px;
-      background: crimson;
+    .order-box button {
+      margin-right: 10px;
+      padding: 5px 10px;
+      background: #d9534f;
       color: white;
       border: none;
-      padding: 8px 15px;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
+    }
+    .order-box button.cancel {
+      background: #f0ad4e;
+    }
+    .order-box button:hover {
+      opacity: 0.9;
+    }
+    .empty-msg {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 50px;
+      color: gray;
     }
   </style>
 </head>
 <body>
-  <h1>My Orders</h1>
-  <button class="logout-btn" onclick="logout()">Logout</button>
-  <div id="ordersContainer">Loading your orders...</div>
+  <div class="container">
+    <h1>My Orders</h1>
+    <div id="ordersContainer"></div>
+  </div>
 
   <script>
-    const username = localStorage.getItem("macx_loggedInUser");
     const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const orders = gun.get("macx_orders").get(username);
-    const container = document.getElementById("ordersContainer");
+    const username = localStorage.getItem("macx_loggedInUser");
+    const ordersRef = gun.get("macx_orders").get(username);
 
     if (!username) {
-      container.innerHTML = "<p>You are not logged in. <a href='login.html'>Login</a> to view your orders.</p>";
+      document.getElementById("ordersContainer").innerHTML =
+        "<p class='empty-msg'>Please log in to view your orders.</p>";
     } else {
+      loadOrders();
+    }
+
+    function loadOrders() {
+      const container = document.getElementById("ordersContainer");
       container.innerHTML = "";
-      orders.map().once((order, orderId) => {
+
+      ordersRef.map().once((order, id) => {
         if (!order || !order.items) return;
 
-        const div = document.createElement("div");
-        div.className = "order";
+        const box = document.createElement("div");
+        box.className = "order-box";
 
-        const paid = order.status === "Paid";
-        const statusClass = paid ? "status-paid" : "status-pending";
-        const paidInfo = paid
-          ? `<p><span class="label">Paid On:</span> ${new Date(order.paidAt).toLocaleString()}<br><span class="label">Razorpay ID:</span> ${order.razorpayPaymentId}</p>`
-          : "";
+        const orderTime = new Date(order.createdAt).toLocaleString();
+        const itemList = order.items
+          .map(i => `<li>${i.productName} - ₹${i.price} × ${i.quantity}</li>`)
+          .join("");
 
-        const itemList = order.items.map(i => `
-          <div class="item">🔹 ${i.productName} - ₹${i.price} × ${i.quantity}</div>
-        `).join("");
-
-        const shipping = order.shipping || {};
-        const shippingInfo = `
-          <p><span class="label">Shipping To:</span><br>
-          ${shipping.name}, ${shipping.phone}<br>
-          ${shipping.email}<br>
-          ${shipping.address}, ${shipping.country} - ${shipping.pincode}</p>
+        box.innerHTML = `
+          <h3>Order ID: ${id}</h3>
+          <p><strong>Status:</strong> ${order.status}</p>
+          <p><strong>Total:</strong> ₹${order.total}</p>
+          <p><strong>Placed on:</strong> ${orderTime}</p>
+          <h4>Items:</h4>
+          <ul>${itemList}</ul>
+          <button class="cancel" onclick="cancelOrder('${id}')">Cancel</button>
+          <button onclick="deleteOrder('${id}')">Delete</button>
         `;
 
-        div.innerHTML = `
-          <h2>🧾 Order #${orderId}</h2>
-          <p><span class="label">Status:</span> <span class="${statusClass}">${order.status}</span></p>
-          <p><span class="label">Total:</span> ₹${order.total}</p>
-          <p><span class="label">Date:</span> ${new Date(order.createdAt).toLocaleString()}</p>
-          ${itemList}
-          ${shippingInfo}
-          ${paidInfo}
-        `;
+        container.appendChild(box);
+      });
 
-        container.appendChild(div);
+      // Show message if no orders after delay
+      setTimeout(() => {
+        if (!container.innerHTML.trim()) {
+          container.innerHTML = "<p class='empty-msg'>No orders found.</p>";
+        }
+      }, 2000);
+    }
+
+    function cancelOrder(orderId) {
+      ordersRef.get(orderId).once(order => {
+        if (order && order.status !== "Cancelled") {
+          ordersRef.get(orderId).put({ ...order, status: "Cancelled" });
+          alert("Order cancelled.");
+          loadOrders();
+        }
       });
     }
 
-    function logout() {
-      localStorage.removeItem("macx_loggedInUser");
-      location.reload();
+    function deleteOrder(orderId) {
+      if (confirm("Are you sure you want to delete this order?")) {
+        ordersRef.get(orderId).put(null);
+        alert("Order deleted.");
+        loadOrders();
+      }
     }
   </script>
 </body>
