@@ -4,135 +4,285 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Home</title>
-  <link rel="stylesheet" href="style.css">
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(to right, #fefefe, #f0f6ff);
-  min-height: 100vh;
-  color: #1e2a38;
-  font-size: 13px;
-  overflow-x: hidden;
-}
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #ffffff, #f0f8ff);
+      color: #1e2a38;
+      font-size: 13px;
+      min-height: 100vh;
+    }
 
-/* Container for alignment */
-.container {
-  max-width: 100%;
-  margin: 0 auto;
-  padding: 20px;
-  text-align: center;
-}
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 20px;
+      text-align: center;
+    }
 
-/* Status Section - centered top */
-#notLoggedIn,
-#loggedInSection {
-  display: inline-block;
-  background: #ffffff;
-  padding: 10px 16px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
-  text-align: center;
-  font-size: 13px;
-}
+    /* Header */
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
 
-#userDisplay {
-  font-weight: bold;
-  font-size: 14px;
-  color: #003366;
-}
+    .header img {
+      height: 60px;
+    }
 
-#logoutBtn,
-#loginRedirectBtn {
-  background-color: #003366;
-  color: #fff;
-  padding: 6px 12px;
-  border: none;
-  border-radius: 6px;
-  font-size: 12px;
-  margin-left: 8px;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
+    .header h1 {
+      font-size: 28px;
+      color: #003366;
+      font-weight: bold;
+    }
 
-#logoutBtn:hover,
-#loginRedirectBtn:hover {
-  background-color: #001d3d;
-}
+    .header p {
+      font-size: 14px;
+      color: #555;
+    }
 
-/* Features section - horizontal line */
-.features {
-  display: flex;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  gap: 12px;
-  justify-content: center;
-  padding: 10px 0;
-  margin-top: 10px;
-}
+    /* Login Status */
+    #notLoggedIn, #loggedInSection {
+      display: inline-block;
+      background: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      margin-bottom: 20px;
+    }
 
-.feature-btn {
-  flex: 0 0 auto;
-  background: #ffffff;
-  border: 1px solid #ddd;
-  padding: 10px 14px;
-  font-size: 12px;
-  font-weight: 500;
-  color: #003366;
-  border-radius: 8px;
-  min-width: 100px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
+    #userDisplay {
+      font-weight: bold;
+      font-size: 14px;
+      color: #003366;
+    }
 
-.feature-btn:hover {
-  background: #eef6ff;
-  transform: translateY(-2px);
-}
+    #logoutBtn, #loginRedirectBtn {
+      background-color: #003366;
+      color: #fff;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      margin-left: 8px;
+      cursor: pointer;
+    }
 
-/* Error Message */
-.error-msg {
-  color: #d60000;
-  text-align: center;
-  font-size: 12px;
-  margin-top: 14px;
-}
+    #logoutBtn:hover, #loginRedirectBtn:hover {
+      background-color: #001d3d;
+    }
 
-</style>
+    /* Features Bar */
+    .features {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      justify-content: center;
+      padding: 10px 0;
+      margin-bottom: 30px;
+    }
+
+    .feature-btn {
+      background: #ffffff;
+      border: 1px solid #ddd;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #003366;
+      border-radius: 8px;
+      min-width: 100px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      cursor: pointer;
+    }
+
+    .feature-btn:hover {
+      background: #eef6ff;
+      transform: translateY(-2px);
+    }
+
+    /* Product Cards */
+    .products-section {
+      padding: 20px 0;
+    }
+
+    .products-section h2 {
+      margin-bottom: 10px;
+      font-size: 20px;
+      color: #003366;
+    }
+
+    .product-grid {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .product-card {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      width: 160px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.03);
+    }
+
+    .product-card img {
+      width: 100%;
+      border-radius: 8px;
+      height: 120px;
+      object-fit: cover;
+    }
+
+    .product-card h3 {
+      font-size: 13px;
+      margin: 8px 0;
+      color: #003366;
+    }
+
+    .product-card button {
+      background: #003366;
+      color: #fff;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .product-card button:hover {
+      background: #002244;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 20px;
+      margin-top: 30px;
+      background: #f4f4f4;
+      color: #666;
+      font-size: 12px;
+    }
+
+    .error-msg {
+      color: red;
+      font-size: 12px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      .feature-btn, .product-card {
+        min-width: 120px;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <div id="notLoggedIn" style="display: none;">
-  <h2>You are not logged in.</h2>
-  <button id="loginRedirectBtn">Login First</button>
-</div>
 
-<div id="loggedInSection" style="display: none;">
-  <h1 id="userDisplay">Welcome, User</h1>
-  <button id="logoutBtn">Logout</button>
-  <p>You are now logged in. User-only content can go here.</p>
-</div>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <img src="img/macx-logo.png" alt="MACX Logo" />
+      <h1>MACX Marketplace</h1>
+      <p>Experience luxury. Redefined for the digital world.</p>
+    </div>
+
+    <!-- Status -->
+    <div id="notLoggedIn" style="display: none;">
+      <h2>You are not logged in.</h2>
+      <button id="loginRedirectBtn">Login First</button>
+    </div>
+
+    <div id="loggedInSection" style="display: none;">
+      <h1 id="userDisplay">Welcome, User</h1>
+      <button id="logoutBtn">Logout</button>
+    </div>
+
+    <!-- Features -->
+    <div class="features">
+      <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
+      <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
+      <button class="feature-btn" onclick="openFeature('myorders.html')">Orders</button>
+      <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
+      <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
+    </div>
+
+    <div id="featureError" class="error-msg"></div>
+
+    <!-- Featured Products -->
+    <div class="products-section">
+      <h2>Featured Products</h2>
+      <div class="product-grid">
+        <div class="product-card">
+          <img src="img/serum1.jpg" alt="Serum">
+          <h3>Luxury Face Serum</h3>
+          <button onclick="viewProduct('product1.html')">View Product</button>
+        </div>
+        <div class="product-card">
+          <img src="img/elixir1.jpg" alt="Elixir">
+          <h3>Hydrating Elixir</h3>
+          <button onclick="viewProduct('product2.html')">View Product</button>
+        </div>
+        <!-- Add more product cards as needed -->
+      </div>
+    </div>
   </div>
 
-<div class="features">
-  <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
-  <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
-  <button class="feature-btn" onclick="openFeature('myorders.html')">Your Orders</button>
-  <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
-  <button class="feature-btn" onclick="openFeature('marketplace.html')">Shop Marketplace</button>
-</div>
+  <footer>
+    © 2025 MACX Marketplace. All rights reserved.
+  </footer>
 
-<div id="featureError" class="error-msg"></div>
-  
- </body>
+  <script>
+    const username = localStorage.getItem("macx_loggedInUser");
+
+    function showStatus() {
+      const loggedIn = document.getElementById("loggedInSection");
+      const notLoggedIn = document.getElementById("notLoggedIn");
+
+      if (username) {
+        document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
+        loggedIn.style.display = "block";
+        notLoggedIn.style.display = "none";
+      } else {
+        loggedIn.style.display = "none";
+        notLoggedIn.style.display = "block";
+      }
+    }
+
+    function openFeature(page) {
+      if (!username) {
+        document.getElementById("featureError").textContent = "Please login to access features.";
+      } else {
+        window.location.href = page;
+      }
+    }
+
+    function viewProduct(productPage) {
+      if (!username) {
+        alert("Please login first to view this product.");
+      } else {
+        window.location.href = productPage;
+      }
+    }
+
+    document.getElementById("loginRedirectBtn")?.addEventListener("click", () => {
+      window.location.href = "login.html";
+    });
+
+    document.getElementById("logoutBtn")?.addEventListener("click", () => {
+      localStorage.removeItem("macx_loggedInUser");
+      location.reload();
+    });
+
+    document.addEventListener("DOMContentLoaded", showStatus);
+  </script>
+</body>
 </html>
