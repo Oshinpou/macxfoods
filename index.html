@@ -3,155 +3,173 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>MACX Home</title>
+  <title>MACX Marketplace</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to right top, #fceabb, #f8b500, #ffe29f);
-      color: #1e2a38;
-      font-size: 13px;
-      min-height: 100vh;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to right, #fdfbfa, #eef3f9);
+      color: #1c1c1c;
+      overflow-x: hidden;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      padding: 20px;
+    header {
       text-align: center;
+      padding: 30px 20px 10px;
     }
 
-    /* Header */
-    .header {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 20px;
+    .logo {
+      width: 80px;
+      margin-bottom: 10px;
     }
 
-    .header img {
-      height: 60px;
-    }
-
-    .header h1 {
-      font-size: 28px;
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 36px;
       color: #003366;
-      font-weight: bold;
+      font-weight: 600;
     }
 
-    .header p {
-      font-size: 14px;
-      color: #333;
+    .subtitle {
+      font-size: 16px;
+      color: #555;
+      margin-top: 5px;
     }
 
-    /* Login Status */
-    #notLoggedIn, #loggedInSection {
+    #loggedInSection, #notLoggedIn {
       display: inline-block;
-      background: #ffffff;
-      padding: 10px 16px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-      margin-bottom: 20px;
+      background: #fff;
+      padding: 14px 20px;
+      border-radius: 10px;
+      margin-top: 20px;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.05);
     }
 
     #userDisplay {
       font-weight: bold;
-      font-size: 14px;
-      color: #003366;
+      font-size: 15px;
     }
 
     #logoutBtn, #loginRedirectBtn {
-      background-color: #003366;
+      margin-top: 10px;
+      background: #003366;
       color: #fff;
-      padding: 6px 12px;
       border: none;
+      padding: 8px 14px;
       border-radius: 6px;
-      font-size: 12px;
-      margin-left: 8px;
       cursor: pointer;
+      font-size: 13px;
     }
 
     #logoutBtn:hover, #loginRedirectBtn:hover {
-      background-color: #001d3d;
+      background: #001d3d;
     }
 
-    /* Features Bar */
     .features {
-      display: flex;
-      gap: 10px;
-      overflow-x: auto;
-      justify-content: center;
-      padding: 10px 0;
-      margin-bottom: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 14px;
+      margin: 40px 20px;
     }
 
     .feature-btn {
       background: #ffffff;
       border: 1px solid #ddd;
-      padding: 10px 14px;
-      font-size: 12px;
+      border-radius: 10px;
+      padding: 12px;
+      text-align: center;
+      font-size: 13px;
       font-weight: 500;
       color: #003366;
-      border-radius: 8px;
-      min-width: 100px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
       cursor: pointer;
+      transition: 0.3s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.03);
     }
 
     .feature-btn:hover {
-      background: #eef6ff;
-      transform: translateY(-2px);
+      background: #f0f6ff;
+      transform: translateY(-3px);
     }
 
-    /* Product Cards */
-    .products-section {
-      padding: 20px 0;
+    .error-msg {
+      text-align: center;
+      color: crimson;
+      font-size: 14px;
+      margin-top: 20px;
     }
 
-    .products-section h2 {
+    .hero {
+      margin: 30px 0;
+      text-align: center;
+      background: linear-gradient(135deg, #f5faff, #fefefe);
+      padding: 30px 20px;
+      border-radius: 12px;
+    }
+
+    .hero h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 26px;
+      color: #002244;
       margin-bottom: 10px;
-      font-size: 20px;
-      color: #003366;
+    }
+
+    .hero p {
+      color: #555;
+      font-size: 15px;
+      max-width: 700px;
+      margin: auto;
+    }
+
+    .products-section {
+      padding: 30px 20px;
+      background: #fafafa;
+    }
+
+    .products-section h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 24px;
+      color: #002244;
+      margin-bottom: 20px;
+      text-align: center;
     }
 
     .product-grid {
-      display: flex;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 20px;
-      flex-wrap: wrap;
-      justify-content: center;
     }
 
     .product-card {
       background: #fff;
-      border: 1px solid #e0e0e0;
       border-radius: 10px;
-      width: 160px;
       padding: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.05);
       text-align: center;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.03);
     }
 
     .product-card img {
       width: 100%;
       border-radius: 8px;
-      height: 120px;
-      object-fit: cover;
     }
 
-    .product-card h3 {
-      font-size: 13px;
-      margin: 8px 0;
+    .product-card h4 {
+      font-size: 14px;
+      margin: 10px 0 5px;
       color: #003366;
     }
 
     .product-card button {
+      padding: 6px 10px;
       background: #003366;
       color: #fff;
-      padding: 5px 10px;
       border: none;
       border-radius: 6px;
       font-size: 12px;
@@ -159,101 +177,112 @@
     }
 
     .product-card button:hover {
-      background: #002244;
+      background: #001d3d;
     }
 
-    /* Footer */
     footer {
+      margin: 40px 0 20px;
       text-align: center;
-      padding: 20px;
-      margin-top: 30px;
-      background: #f4f4f4;
-      color: #666;
-      font-size: 12px;
-    }
-
-    .error-msg {
-      color: red;
-      font-size: 12px;
-      margin-top: 10px;
+      color: #777;
+      font-size: 13px;
     }
 
     @media (max-width: 600px) {
-      .feature-btn, .product-card {
-        min-width: 120px;
+      .title {
+        font-size: 26px;
+      }
+      .subtitle {
+        font-size: 14px;
+      }
+      .product-card h4 {
+        font-size: 13px;
       }
     }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <!-- Header -->
-    <div class="header">
-      <img src="macxi.png" alt="MACX Logo" />
-      <h1>MACX Marketplace</h1>
-      <p>Experience luxury. Redefined for the digital world.</p>
-    </div>
+  <header>
+    <img src="macx-logo.png" class="logo" alt="MACX Logo">
+    <h1 class="title">MACX Marketplace</h1>
+    <p class="subtitle">Where High-Class Beauty Meets Maximum Power</p>
 
-    <!-- Status -->
     <div id="notLoggedIn" style="display: none;">
-      <h2>You are not logged in.</h2>
+      <p>You are not logged in.</p>
       <button id="loginRedirectBtn">Login First</button>
     </div>
 
     <div id="loggedInSection" style="display: none;">
-      <h1 id="userDisplay">Welcome, User</h1>
+      <p id="userDisplay">Welcome, User</p>
       <button id="logoutBtn">Logout</button>
     </div>
+  </header>
 
-    <!-- Features -->
-    <div class="features">
-      <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
-      <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
-      <button class="feature-btn" onclick="openFeature('myorders.html')">Orders</button>
-      <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
-      <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
-    </div>
+  <!-- Hero Section -->
+  <section class="hero">
+    <h2>Discover Iconic Elegance</h2>
+    <p>Explore elite skincare, cosmetics, furniture and accessories — crafted for those who demand perfection in every detail.</p>
+  </section>
 
-    <div id="featureError" class="error-msg"></div>
+  <!-- Feature Buttons -->
+  <section class="features">
+    <button class="feature-btn" onclick="openFeature('accounts.html')">Accounts</button>
+    <button class="feature-btn" onclick="openFeature('cart.html')">Cart</button>
+    <button class="feature-btn" onclick="openFeature('myorders.html')">Your Orders</button>
+    <button class="feature-btn" onclick="openFeature('marketplace.html')">Marketplace</button>
+    <button class="feature-btn" onclick="openFeature('luxury.html')">Luxury</button>
+    <button class="feature-btn" onclick="openFeature('offers.html')">Offers</button>
+    <button class="feature-btn" onclick="openFeature('membership.html')">Membership</button>
+    <button class="feature-btn" onclick="openFeature('read.html')">Read</button>
+    <button class="feature-btn" onclick="openFeature('contact.html')">Contact</button>
+    <button class="feature-btn" onclick="openFeature('support.html')">Support</button>
+    <button class="feature-btn" onclick="openFeature('chocolates.html')">Chocolates</button>
+    <button class="feature-btn" onclick="openFeature('cosmetics.html')">Cosmetics</button>
+    <button class="feature-btn" onclick="openFeature('jewelry.html')">Jewelry</button>
+    <button class="feature-btn" onclick="openFeature('accessories.html')">Accessories</button>
+    <button class="feature-btn" onclick="openFeature('about.html')">About Us</button>
+    <button class="feature-btn" onclick="openFeature('faq.html')">FAQs</button>
+    <button class="feature-btn" onclick="openFeature('reviews.html')">Reviews</button>
+    <button class="feature-btn" onclick="openFeature('giftcards.html')">Gift Cards</button>
+    <button class="feature-btn" onclick="openFeature('returns.html')">Returns</button>
+    <button class="feature-btn" onclick="openFeature('shipping.html')">Shipping</button>
+  </section>
 
-    <!-- Featured Products -->
-    <div class="products-section">
-      <h2>Featured Products</h2>
-      <div class="product-grid">
-        <div class="product-card">
-          <img src="img/serum1.jpg" alt="Serum">
-          <h3>Luxury Face Serum</h3>
-          <button onclick="viewProduct('product1.html')">View Product</button>
-        </div>
-        <div class="product-card">
-          <img src="img/elixir1.jpg" alt="Elixir">
-          <h3>Hydrating Elixir</h3>
-          <button onclick="viewProduct('product2.html')">View Product</button>
-        </div>
+  <div id="featureError" class="error-msg"></div>
+
+  <!-- Product Showcase -->
+  <section class="products-section">
+    <h3>Featured Products</h3>
+    <div class="product-grid">
+      <div class="product-card">
+        <img src="product1.jpg" alt="Product 1">
+        <h4>Iconic Face Cream</h4>
+        <button onclick="checkLogin('product1.html')">View Product</button>
+      </div>
+      <div class="product-card">
+        <img src="product2.jpg" alt="Product 2">
+        <h4>Mulberry Silk Serum</h4>
+        <button onclick="checkLogin('product2.html')">View Product</button>
+      </div>
+      <div class="product-card">
+        <img src="product3.jpg" alt="Product 3">
+        <h4>Luxury Sofa</h4>
+        <button onclick="checkLogin('product3.html')">View Product</button>
       </div>
     </div>
-  </div>
+  </section>
 
   <footer>
-    © 2025 MACX Marketplace. All rights reserved.
+    © 2025 MACX Marketplace · Crafted with Luxury · All rights reserved.
   </footer>
 
   <script>
     const username = localStorage.getItem("macx_loggedInUser");
 
     function showStatus() {
-      const loggedIn = document.getElementById("loggedInSection");
-      const notLoggedIn = document.getElementById("notLoggedIn");
-
-      if (username) {
-        document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
-        loggedIn.style.display = "block";
-        notLoggedIn.style.display = "none";
-      } else {
-        loggedIn.style.display = "none";
-        notLoggedIn.style.display = "block";
-      }
+      document.getElementById("loggedInSection").style.display = username ? "inline-block" : "none";
+      document.getElementById("notLoggedIn").style.display = username ? "none" : "inline-block";
+      if (username) document.getElementById("userDisplay").textContent = `Welcome, ${username}`;
     }
 
     function openFeature(page) {
@@ -264,11 +293,11 @@
       }
     }
 
-    function viewProduct(productPage) {
+    function checkLogin(page) {
       if (!username) {
         alert("Please login first to view this product.");
       } else {
-        window.location.href = productPage;
+        window.location.href = page;
       }
     }
 
