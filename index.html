@@ -7,147 +7,176 @@
   <link rel="stylesheet" href="style.css">
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script defer src="home.js"></script>
-<style>
-
+<script>
+  
   * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-  html, body {
-    width: 100%;
-    min-height: 100vh;
-    font-family: "Segoe UI", sans-serif;
-    background-color: #f9f9fc;
-    color: #222;
-    overflow-x: hidden;
-  }
+html, body {
+  width: 100%;
+  min-height: 100vh;
+  font-family: "Segoe UI", sans-serif;
+  background-color: #fefefe;
+  color: #222;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
 
-  a {
-    text-decoration: none;
-    color: inherit;
-  }
+/* Top Navigation Bar */
+.top-bar {
+  width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #ffffff;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+}
 
-  /* Top Bar */
+.top-bar h1 {
+  font-size: 22px;
+  font-weight: bold;
+  color: #003366;
+}
+
+.auth-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.auth-buttons button {
+  padding: 8px 14px;
+  font-size: 14px;
+  border: none;
+  border-radius: 6px;
+  background-color: #003366;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.auth-buttons button:hover {
+  background-color: #001d3d;
+}
+
+/* Main Container */
+.container {
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Welcome Section */
+.welcome {
+  text-align: center;
+  padding: 20px 10px;
+}
+
+.welcome h2 {
+  font-size: 26px;
+  color: #002244;
+  margin-bottom: 10px;
+}
+
+.welcome p {
+  font-size: 16px;
+  color: #666;
+}
+
+/* Feature Grid */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 20px;
+  padding: 20px 0;
+}
+
+.feature-btn {
+  background-color: #ffffff;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #003366;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+}
+
+.feature-btn:hover {
+  background-color: #f0f4ff;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+}
+
+.error-msg {
+  text-align: center;
+  color: #d10000;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
   .top-bar {
-    position: sticky;
-    top: 0;
-    z-index: 999;
-    background-color: #ffffff;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    border-bottom: 1px solid #ddd;
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .top-bar h1 {
-    font-size: 22px;
-    color: #003366;
-    font-weight: 600;
     margin-bottom: 10px;
   }
 
-  .top-bar .auth-buttons {
-    display: flex;
-    gap: 10px;
+  .auth-buttons {
     flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .top-bar .auth-buttons button {
-    padding: 8px 14px;
-    background-color: #003366;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-  }
-
-  .top-bar .auth-buttons button:hover {
-    background-color: #002244;
-  }
-
-  /* Welcome Section */
-  .welcome {
-    padding: 30px 20px 10px;
-    text-align: center;
-  }
-
-  .welcome h2 {
-    font-size: 26px;
-    margin-bottom: 10px;
-    color: #002244;
-  }
-
-  .welcome p {
-    font-size: 15px;
-    color: #555;
-  }
-
-  /* Features Grid */
   .features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 20px;
-    padding: 20px;
-    max-width: 1000px;
-    margin: auto;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   }
 
   .feature-btn {
-    background-color: #fff;
-    padding: 16px;
-    border-radius: 10px;
-    border: 1px solid #e0e0e0;
-    text-align: center;
-    font-size: 16px;
-    font-weight: 500;
-    color: #003366;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    transition: 0.3s;
-    cursor: pointer;
+    font-size: 15px;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .top-bar {
+    padding: 10px;
   }
 
-  .feature-btn:hover {
-    background-color: #f4f8ff;
-    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
-    transform: translateY(-2px);
+  .top-bar h1 {
+    font-size: 18px;
   }
 
-  .error-msg {
-    color: red;
-    text-align: center;
-    margin-top: 20px;
-    font-weight: bold;
+  .auth-buttons button {
+    font-size: 13px;
+    padding: 7px 12px;
   }
 
-  /* Responsive Utility */
-  @media (max-width: 600px) {
-    .top-bar {
-      flex-direction: column;
-      align-items: flex-start;
-    }
-
-    .top-bar h1 {
-      margin-bottom: 10px;
-    }
-
-    .features {
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    }
-
-    .feature-btn {
-      font-size: 14px;
-      padding: 12px;
-    }
+  .welcome h2 {
+    font-size: 22px;
   }
+
+  .welcome p {
+    font-size: 14px;
+  }
+}
 </style>
-
 </head>
 <body>
   <div class="container">
