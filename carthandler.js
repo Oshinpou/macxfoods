@@ -1,56 +1,122 @@
-// carthandler.js
-
-const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']); const username = localStorage.getItem("macx_loggedInUser"); const cartRef = gun.get('macx_cart').get(username); const ordersRef = gun.get("macx_orders").get(username); const adminOrders = gun.get("admin_orders");
+const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
+const username = localStorage.getItem("macx_loggedInUser");
+const cartRef = gun.get("macx_cart").get(username);
+const ordersRef = gun.get("macx_orders").get(username);
+const adminOrders = gun.get("admin_orders");
 
 let items = {};
 
-function startCartHandler() { if (!username) return alert("⚠️ Please login to proceed with checkout.");
+// 1. Start Handler
+async function startCartHandler() {
+  const cartItems = Object.values(items);
+  if (!cartItems.length) return alert("🛒 Cart is empty.");
 
-// Collect form data const get = id => document.getElementById(id)?.value.trim(); const [name, phone, email, address, country, pincode] = ["name","phone","email","address","country","pincode"].map(get);
+  const get = id => document.getElementById(id)?.value.trim();
+  const [name, phone, email, address, country, pincode] =
+    ["name", "phone", "email", "address", "country", "pincode"].map(get);
 
-if (![name, phone, email, address, country, pincode].every(Boolean)) { return alert("🚨 Please fill all shipping details."); }
+  if (![name, phone, email, address, country, pincode].every(Boolean)) {
+    return alert("🚨 Fill all shipping details.");
+  }
 
-// Prepare cart data const cartItems = Object.values(items); if (!cartItems.length) { return alert("🛒 Your cart is empty."); }
+  const totalAmount = cartItems.reduce((sum, i) =>
+    sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
+  const orderId = Date.now().toString();
 
-const totalAmount = cartItems.reduce((sum, i) => sum + (parseInt(i.price) || 0) * (parseInt(i.quantity) || 1), 0);
+  const order = {
+    orderId,
+    items: cartItems,
+    shipping: { name, phone, email, address, country, pincode },
+    total: totalAmount,
+    status: "Pending",
+    createdAt: Date.now()
+  };
 
-const orderId = Date.now().toString();
+  await Promise.all([
+    ordersRef.get(orderId).put(order),
+    adminOrders.get(orderId).put({ ...order, username })
+  ]);
 
-const newOrder = { items: cartItems, shipping: { name, phone, email, address, country, pincode }, total: totalAmount, status: "Pending", createdAt: Date.now() };
+  // Show "Order Created" message
+  const btn = document.getElementById("createOrderBtn");
+  const msg = document.createElement("div");
+  msg.textContent = "✅ Order Created. Redirecting to payment...";
+  msg.style.color = "green";
+  btn.parentNode.insertBefore(msg, btn.nextSibling);
 
-// Save to GunDB Promise.all([ ordersRef.get(orderId).put(newOrder), adminOrders.get(orderId).put({ ...newOrder, username }) ]).then(() => { // Message and delay before payment const btn = document.querySelector("button[onclick^='startCartHandler']"); const msg = document.createElement("div"); msg.style.marginTop = "10px"; msg.style.color = "green"; msg.textContent = "✅ Order Created. Redirecting to Razorpay Checkout..."; btn.insertAdjacentElement("afterend", msg);
+  setTimeout(() => {
+    msg.remove();
+    openRazorpayCheckout(orderId, totalAmount, { name, phone, email, address, country, pincode }, cartItems);
+  }, 1500);
+}
 
-setTimeout(() => beginPayment(orderId, totalAmount, name, phone, email, address, country, pincode, cartItems), 1500);
+// 2. Razorpay Integration
+function openRazorpayCheckout(orderId, totalAmount, shipping, cartItems) {
+  const summaryText = cartItems
+    .map(i => `${i.productName} x${i.quantity} (₹${i.price})`)
+    .join(" | ");
 
-}).catch(err => { alert("❌ Failed to create order."); console.error(err); }); }
+  const options = {
+    key: "rzp_live_ozWo08bXwqssx3", // replace with your key
+    amount: totalAmount * 100,
+    currency: "INR",
+    name: "MACX Marketplace",
+    description: `Order #${orderId}`,
+    prefill: {
+      name: shipping.name,
+      email: shipping.email,
+      contact: shipping.phone
+    },
+    notes: {
+      ...shipping,
+      cart_summary: summaryText
+    },
+    theme: { color: "#00c0b5" },
+    handler: function (response) {
+      const paidAt = Date.now();
+      const update = {
+        status: "Paid",
+        razorpayPaymentId: response.razorpay_payment_id,
+        paidAt
+      };
 
-function beginPayment(orderId, totalAmount, name, phone, email, address, country, pincode, cartItems) { const summaryText = cartItems.map(i => ${i.productName} (qty:${i.quantity}, price:₹${i.price})).join(" | ");
+      ordersRef.get(orderId).get("status").put("Paid");
+      ordersRef.get(orderId).get("razorpayPaymentId").put(response.razorpay_payment_id);
+      ordersRef.get(orderId).get("paidAt").put(paidAt);
 
-const options = { key: "rzp_live_ozWo08bXwqssx3", amount: totalAmount * 100, currency: "INR", name: "MACX Marketplace", description: Order #${orderId}, prefill: { name, email, contact: phone }, notes: { shipping_name: name, shipping_phone: phone, shipping_email: email, shipping_address: address, shipping_country: country, shipping_pincode: pincode, cart_items: JSON.stringify(cartItems), cart_summary: summaryText }, theme: { color: "#00c0b5" }, handler: function (response) { const paidAt = Date.now(); const paymentId = response.razorpay_payment_id;
+      adminOrders.get(orderId).get("status").put("Paid");
+      adminOrders.get(orderId).get("razorpayPaymentId").put(response.razorpay_payment_id);
+      adminOrders.get(orderId).get("paidAt").put(paidAt);
 
-ordersRef.get(orderId).once(existing => {
-    if (!existing) return alert("⚠️ Order not found.");
+      cartRef.map().once((_, id) => cartRef.get(id).put(null));
 
-    const updated = {
-      ...existing,
-      status: "Paid",
-      paidAt,
-      razorpayPaymentId: paymentId
-    };
+      alert("✅ Payment Success! Redirecting to My Orders...");
+      window.location.href = "myorders.html";
+    }
+  };
 
-    ordersRef.get(orderId).put(updated);
-    adminOrders.get(orderId).put({ ...updated, username });
+  new Razorpay(options).open();
+}
 
-    cartRef.map().once((_, id) => cartRef.get(id).put(null));
+// 3. Initialize from cart
+function listenToCart() {
+  const container = document.getElementById("cartItems");
+  items = {};
+  container.innerHTML = "";
 
-    alert("✅ Payment Successful! Redirecting to My Orders...");
-    window.location.href = "myorders.html";
+  cartRef.map().on((data, id) => {
+    if (!data || !data.productName) return;
+
+    items[id] = { ...data, id };
+    const node = document.createElement("div");
+    node.innerHTML = `<p>${data.productName} - ₹${data.price} × ${data.quantity}</p>`;
+    container.appendChild(node);
   });
 }
 
-};
-
-new Razorpay(options).open(); }
-
-// Export for use in cart.html window.startCartHandler = startCartHandler; window.setCartItems = function(newItems) { items = newItems; };
-
+// 4. Trigger on page load
+document.addEventListener("DOMContentLoaded", () => {
+  if (username) {
+    listenToCart();
+  }
+});
