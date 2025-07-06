@@ -25,50 +25,54 @@
     }
 
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #111;
-      padding: 10px 20px;
-      position: sticky;
-      top: 0;
-      z-index: 1000;
-      border-bottom: 1px solid gold;
-      flex-wrap: wrap;
-    }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  background: #111;
+  padding: 12px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 1px solid gold;
+}
 
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 
     .logo-image {
-      width: 36px;
-      height: 36px;
-      object-fit: contain;
-      border-radius: 5px;
-    }
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
 
     .logo-text {
-      font-size: 26px;
-      font-family: 'Great Vibes', cursive;
-      color: gold;
-      white-space: nowrap;
-    }
+  font-size: 26px;
+  font-family: 'Great Vibes', cursive;
+  color: gold;
+  white-space: nowrap;
+}
 
-    .burger {
-      font-size: 24px;
-      cursor: pointer;
-      color: gold;
-      display: none;
-    }
+
+  .burger {
+  font-size: 24px;
+  cursor: pointer;
+  color: gold;
+  display: block;
+}
+
 
     .top-right {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
     }
 
     .search-input {
@@ -80,9 +84,10 @@
     }
 
     .cart-icon {
-      font-size: 20px;
-      color: gold;
-      text-decoration: none;
+  font-size: 22px;
+  color: gold;
+  text-decoration: none;
+  margin-left: 5px;
     }
 
     .container {
@@ -270,21 +275,19 @@
   </style>
 </head>
 <body>
-
-  <!-- Header -->
-  <header>
-    <div class="logo-container">
-      <img src="iconmacx.png" alt="MACX Logo" class="logo-image">
-      <div class="logo-text">MACX Marketplace</div>
-    </div>
-    <div class="top-right">
-      <input type="text" id="searchInput" class="search-input" placeholder="Search page...">
-      <a href="cart.html" class="cart-icon">🛒</a>
-      <div class="burger" onclick="toggleMenu()">☰</div>
-    </div>
-  </header>
-
-  <!-- 🎥 Video Background -->
+<header>
+  <div class="logo-container">
+    <img src="iconmacx.png" alt="MACX Logo" class="logo-image">
+    <div class="logo-text">MACX Marketplace</div>
+  </div>
+  <div class="top-right">
+    <input type="text" id="searchInput" class="search-input" placeholder="Search page...">
+    <a href="cart.html" class="cart-icon" title="Cart">🛒</a>
+    <div class="burger" onclick="toggleMenu()" title="Menu">☰</div>
+  </div>
+</header>
+  
+ <!-- 🎥 Video Background -->
   <div class="video-container">
     <video autoplay muted loop playsinline>
       <source src="macxi.mp4" type="video/mp4">
