@@ -61,15 +61,17 @@ loginForm?.addEventListener('submit', (e) => {
   // ✅ Redirect to last opened page or fallback to index.html
   // ✅ Auto-redirect to last opened page after successful login
 setTimeout(() => {
-  const returnPage = localStorage.getItem("macx_returnPage");
+  let returnPage = localStorage.getItem("macx_returnPage");
 
-  if (returnPage && returnPage !== "login.html") {
+  // If returnPage exists and is not login.html
+  if (returnPage && !returnPage.includes("login.html")) {
     localStorage.removeItem("macx_returnPage");
-    window.location.href = returnPage;
+    location.replace(returnPage); // Faster & cleaner redirect
   } else {
-    window.location.href = "index.html"; // fallback
+    location.replace("index.html");
   }
 }, 1000);
+
 });
 
 // RECOVER
