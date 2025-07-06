@@ -204,6 +204,7 @@ label {
   </div>
 
   <script>
+  // Handle form switching (login, signup, etc.)
   function switchForm(form) {
     const forms = ['login', 'signup', 'recover', 'delete', 'change'];
     forms.forEach(f => {
@@ -238,10 +239,10 @@ label {
             return;
           }
 
-          // ✅ Save user login status
+          // ✅ Store login session
           localStorage.setItem("macx_loggedInUser", username);
 
-          // ✅ Redirect to return page if exists
+          // ✅ Redirect to last opened page or fallback to index
           const returnPage = localStorage.getItem("macx_returnPage");
           if (returnPage) {
             localStorage.removeItem("macx_returnPage");
