@@ -250,13 +250,39 @@
   height: auto;
   border-radius: 5px;
 }
+  
+ .macx-header {
+  display: flex;
+  align-items: center;
+  justify-content: center; /* or space-between if you add a nav/menu */
+  gap: 12px;
+  padding: 20px;
+  background: #000; /* Or your dark theme */
+  border-bottom: 1px solid #444;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.logo {
+  font-size: 26px;
+  font-family: 'Cursive', 'Georgia', serif;
+  color: gold;
+  letter-spacing: 1px;
+  margin: 0;
+} 
+  
   </style>
 </head>
 <body>
-<a href="index.html" class="logo-icon">
+
+  <header class="macx-header">
+   <a href="index.html" class="logo-icon">
   <img src="iconmacx.png" alt="MACX Logo" />
-    </a>
-  <header>
+    </a> 
     <div class="logo"> MACX Marketplace</div>
     <div class="top-right">
       <input type="text" id="searchInput" class="search-input" placeholder="Search page...">
