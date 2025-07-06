@@ -4,28 +4,127 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Marketplace</title>
-  <link rel="stylesheet" href="style.css" />
+
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 <style>
+  body {
+    margin: 0;
+    padding: 30px;
+    background: linear-gradient(to right, #000000, #1a1a1a);
+    font-family: 'Great Vibes', cursive;
+    color: gold;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    border: 1px solid gold;
+    box-shadow: 0 0 30px rgba(255, 215, 0, 0.08);
+  }
+
+  h1, h2, h3, p {
+    color: gold;
+    text-align: center;
+  }
+
+  button {
+    padding: 10px 20px;
+    background: gold;
+    color: #000;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+    transition: 0.3s;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  }
+
+  button:hover {
+    background: #ffcc00;
+  }
+
+  .products {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+  }
+
+  .product-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid gold;
+    border-radius: 14px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.05);
+  }
+
+  .product-card img {
+    width: 100px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+  }
+
+  .product-card h3 {
+    margin: 10px 0;
+    font-size: 20px;
+  }
+
+  .product-card p {
+    font-size: 18px;
+    margin-bottom: 15px;
+  }
 
   .qty-bar {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin: 5px 0;
-}
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
 
-.qty-bar button {
-  padding: 5px 10px;
-  font-size: 16px;
-  cursor: pointer;
-}
+  .qty-bar button {
+    font-size: 20px;
+    background: gold;
+    color: black;
+    padding: 5px 12px;
+    border-radius: 8px;
+  }
 
-.qty-bar .qty-input {
-  width: 50px;
-  text-align: center;
-  font-size: 16px;
-}
+  .qty-bar .qty-input {
+    width: 60px;
+    text-align: center;
+    font-size: 16px;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid gold;
+    background: #1a1a1a;
+    color: gold;
+  }
+
+  #notLoggedIn, #loggedInSection {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      padding: 20px;
+    }
+
+    .product-card img {
+      width: 80px;
+    }
+
+    .qty-bar {
+      flex-direction: column;
+    }
+  }
 </style>
 
 </head>
