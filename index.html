@@ -272,20 +272,106 @@
         margin-top: 10px;
       }
     }
+
+
+    .macx-header {
+  width: 100%;
+  background: #111;
+  color: gold;
+  border-bottom: 1px solid gold;
+  padding: 10px 20px;
+  box-sizing: border-box;
+}
+
+.header-top {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.logo-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: 5px;
+}
+
+.logo-text {
+  font-family: 'Great Vibes', cursive;
+  font-size: 28px;
+  color: gold;
+  letter-spacing: 1px;
+}
+
+.header-bottom {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 150px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-family: Arial, sans-serif;
+}
+
+.cart-icon {
+  font-size: 22px;
+  color: gold;
+  text-decoration: none;
+}
+
+.burger {
+  font-size: 24px;
+  cursor: pointer;
+  color: gold;
+}
+
+@media (max-width: 600px) {
+  .logo-text {
+    font-size: 22px;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+
+  .header-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+  
   </style>
 </head>
 <body>
-<header>
-  <div class="logo-container">
-    <img src="iconmacx.png" alt="MACX Logo" class="logo-image">
-    <div class="logo-text">MACX Marketplace</div>
+<header class="macx-header">
+  <div class="header-top">
+    <div class="logo-wrapper">
+      <img src="iconmacx.png" alt="MACX Logo" class="logo-icon" />
+      <div class="logo-text">MACX Marketplace</div>
+    </div>
   </div>
-  <div class="top-right">
+  <div class="header-bottom">
     <input type="text" id="searchInput" class="search-input" placeholder="Search page...">
     <a href="cart.html" class="cart-icon" title="Cart">🛒</a>
     <div class="burger" onclick="toggleMenu()" title="Menu">☰</div>
   </div>
 </header>
+
   
  <!-- 🎥 Video Background -->
   <div class="video-container">
