@@ -59,15 +59,17 @@ loginForm?.addEventListener('submit', (e) => {
   showMessage("Login successful!", true);
 
   // ✅ Redirect to last opened page or fallback to index.html
-  setTimeout(() => {
-    const returnPage = localStorage.getItem("macx_returnPage");
-    if (returnPage) {
-      localStorage.removeItem("macx_returnPage");
-      window.location.href = returnPage;
-    } else {
-      window.location.href = "index.html";
-    }
-  }, 1000);
+  // ✅ Auto-redirect to last opened page after successful login
+setTimeout(() => {
+  const returnPage = localStorage.getItem("macx_returnPage");
+
+  if (returnPage && returnPage !== "login.html") {
+    localStorage.removeItem("macx_returnPage");
+    window.location.href = returnPage;
+  } else {
+    window.location.href = "index.html"; // fallback
+  }
+}, 1000);
 });
 
 // RECOVER
