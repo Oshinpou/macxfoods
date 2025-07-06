@@ -1,202 +1,91 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Login / Signup - Bobomacx</title>
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gun/sea.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.1/dist/pouchdb.min.js"></script>
-  <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
-    form { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    input, select, button { display: block; width: 100%; padding: 10px; margin: 10px 0; }
-    .error { color: red; }
-    .success { color: green; }
-    #status { font-weight: bold; }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MACX Cosmetics - Auth</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/pouchdb@7.2.2/dist/pouchdb.min.js"></script>
+  <script defer src="auth.js"></script>
 </head>
 <body>
-  <h2>Signup</h2>
-  <form id="signupForm">
-    <input type="text" id="signupUsername" placeholder="Username" required />
-    <input type="email" id="signupEmail" placeholder="Email" required />
-    <input type="tel" id="signupPhone" placeholder="Phone Number" required />
-    <select id="countryCode">
-      <option value="+91">+91 India</option>
-      <option value="+1">+1 USA</option>
-      <option value="+44">+44 UK</option>
-    </select>
-    <input type="password" id="signupPassword" placeholder="Password" required />
-    <input type="password" id="signupConfirmPassword" placeholder="Confirm Password" required />
-    <button type="submit">Create Account</button>
-    <div id="signupMessage"></div>
-  </form>
+  <div class="container">
+    <h1 class="title">Welcome to MACX Cosmetics</h1>
 
-  <h2>Login</h2>
-  <form id="loginForm">
-    <input type="text" id="loginUsername" placeholder="Username" required />
-    <input type="password" id="loginPassword" placeholder="Password" required />
-    <button type="submit">Login</button>
-    <div id="loginMessage"></div>
-  </form>
+    <div class="message" id="message"></div>
 
-  <h2>Recover Password</h2>
-  <form id="recoverPasswordForm">
-    <input type="text" id="recoverUsername" placeholder="Username" required />
-    <input type="email" id="recoverEmail" placeholder="Email" required />
-    <input type="tel" id="recoverPhone" placeholder="Phone Number" required />
-    <select id="recoverCountryCode">
-      <option value="+91">+91 India</option>
-      <option value="+1">+1 USA</option>
-      <option value="+44">+44 UK</option>
-    </select>
-    <button type="submit">Recover Password</button>
-    <div id="recoverPasswordMessage"></div>
-  </form>
+    <!-- LOGIN -->
+    <form id="loginForm">
+      <h2>Login</h2>
+      <input id="loginUsername" type="text" placeholder="Username" required />
+      <input id="loginPassword" type="password" placeholder="Password" required />
+      <button type="submit">Login</button>
+    </form>
 
-  <h2>Recover Username</h2>
-  <form id="recoverUsernameForm">
-    <input type="email" id="usernameEmail" placeholder="Email" required />
-    <input type="tel" id="usernamePhone" placeholder="Phone Number" required />
-    <input type="password" id="knownPassword" placeholder="Known Password" required />
-    <select id="recoverUsernameCountryCode">
-      <option value="+91">+91 India</option>
-      <option value="+1">+1 USA</option>
-      <option value="+44">+44 UK</option>
-    </select>
-    <button type="submit">Recover Username</button>
-    <div id="recoverUsernameMessage"></div>
-  </form>
+    <!-- SIGNUP -->
+    <form id="signupForm" style="display:none;">
+      <h2>Sign Up</h2>
+      <input id="signupUsername" type="text" placeholder="Choose Username" required />
+      <input id="signupEmail" type="email" placeholder="Enter Email" required />
+      <input id="signupPassword" type="password" placeholder="Create Password" required />
+      <button type="submit">Sign Up</button>
+    </form>
 
-  <div id="status"></div>
-  <button onclick="logout()">Logout</button>
+    <!-- RECOVER -->
+    <form id="recoverForm" style="display:none;">
+      <h2>Recover Account</h2>
+      <input id="recoverUsername" type="text" placeholder="Username" required />
+      <input id="recoverEmail" type="email" placeholder="Registered Email" required />
+      <button type="submit">Recover Password</button>
+    </form>
+
+    <!-- DELETE ACCOUNT -->
+    <form id="deleteForm" class="auth-form" style="display:none;">
+      <h2>Delete Account</h2>
+      <input type="text" id="deleteUsername" placeholder="Username" required>
+      <input type="email" id="deleteEmail" placeholder="Email" required>
+      <input type="password" id="deletePassword" placeholder="Password" required>
+      <label><input type="checkbox" id="confirmDelete1"> I confirm I want to delete this account</label>
+      <label><input type="checkbox" id="confirmDelete2"> I understand this is permanent</label>
+      <label><input type="checkbox" id="confirmDelete3"> I accept my data will be lost</label>
+      <button type="submit">Delete Account</button>
+    </form>
+
+   <!-- CHANGE PASSWORD -->
+    <form id="changeForm" style="display:none;">
+      <h2>Change Password</h2>
+      <input id="changeUsername" type="text" placeholder="Username" required />
+      <input id="changeEmail" type="email" placeholder="Registered Email" required />
+      <input id="changeOldPassword" type="password" placeholder="Old Password" required />
+      <input id="changeNewPassword" type="password" placeholder="New Password" required />
+      <button type="submit">Change Password</button>
+    </form>
+    
+    <!-- Switch Forms -->
+    <div class="form-switch">
+      <button onclick="switchForm('login')">Login</button>
+      <button onclick="switchForm('signup')">Sign Up</button>
+      <button onclick="switchForm('recover')">Recover Password</button>
+      <button onclick="switchForm('delete')">Delete Account</button>
+<button onclick="switchForm('change')">Change Password</button>    
+    </div>
+
+    <p class="admin-link">needSupport? <a href="supportout.html">Click here</a></p>
+  </div>
 
   <script>
-    const gun = Gun(['https://gun-manhattan.herokuapp.com/gun']);
-    const db = new PouchDB('bobomacx');
-    const user = gun.user();
-    const ISTOffset = 5.5 * 60 * 60 * 1000;
-
-    function setStatus(msg, color='green') {
-      document.getElementById('status').textContent = msg;
-      document.getElementById('status').style.color = color;
-    }
-
-    function logout() {
-      const session = localStorage.getItem('bobomacxSession');
-      if (!session) return setStatus("You're not logged in", 'red');
-      user.leave();
-      localStorage.removeItem('bobomacxSession');
-      gun.get('bobomacx').get('sessions').get(JSON.parse(session).username).put({ active: false });
-      setStatus("Logged out successfully");
-    }
-
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = signupUsername.value.trim();
-      const email = signupEmail.value.trim().toLowerCase();
-      const phone = signupPhone.value.trim();
-      const code = countryCode.value;
-      const password = signupPassword.value;
-      const confirm = signupConfirmPassword.value;
-      const createdAt = new Date(Date.now() + ISTOffset).toISOString();
-
-      if (password !== confirm) return signupMessage.textContent = 'Passwords do not match';
-
-      // Check for duplicate phone number with same country code
-      let duplicatePhone = false;
-      let duplicateEmail = false;
-      await gun.get('bobomacx').get('accounts').map().once((data) => {
-        if (data) {
-          if (data.phone === `${code} ${phone}`) duplicatePhone = true;
-          if (data.email.toLowerCase() === email) duplicateEmail = true;
-        }
-      });
-
-      if (duplicatePhone) return signupMessage.textContent = 'Phone number already in use with this country code';
-      if (duplicateEmail) return signupMessage.textContent = 'Email already registered';
-
-      user.create(username, password, async (ack) => {
-        if (ack.err) return signupMessage.textContent = ack.err;
-
-        gun.get('bobomacx').get('accounts').get(username).put({
-          email, phone: `${code} ${phone}`, createdAt, password,
-          status: 'active', deleted: false
-        });
-
-        await db.put({ _id: username, email, phone: `${code} ${phone}`, password, createdAt });
-
-        signupMessage.textContent = 'Account created successfully!';
-      });
+    
+  function switchForm(form) {
+    const forms = ['login', 'signup', 'recover', 'delete', 'change'];
+    forms.forEach(f => {
+      const el = document.getElementById(f + 'Form');
+      if (el) el.style.display = 'none';
     });
+    const target = document.getElementById(form + 'Form');
+    if (target) target.style.display = 'block';
+  }
 
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const username = loginUsername.value.trim();
-      const password = loginPassword.value;
-
-      const session = JSON.parse(localStorage.getItem('bobomacxSession'));
-      if (session && session.username === username) return loginMessage.textContent = "You're already logged in";
-
-      gun.get('bobomacx').get('accounts').get(username).once((data) => {
-        if (!data || data.deleted) return loginMessage.textContent = 'Account not found or deleted';
-        if (data.status === 'deactivated') return loginMessage.textContent = 'Your account is deactivated';
-
-        user.auth(username, password, (ack) => {
-          if (ack.err) return loginMessage.textContent = ack.err;
-          localStorage.setItem('bobomacxSession', JSON.stringify({ username, id: user.is.pub }));
-          gun.get('bobomacx').get('sessions').get(username).put({ active: true, lastLogin: new Date().toISOString() });
-          loginMessage.textContent = 'Login successful';
-          setStatus(`Logged in as ${username} (${user.is.pub})`);
-        });
-      });
-    });
-
-    document.getElementById('recoverPasswordForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const userId = recoverUsername.value;
-      const email = recoverEmail.value.toLowerCase();
-      const phone = `${recoverCountryCode.value} ${recoverPhone.value}`;
-
-      gun.get('bobomacx').get('accounts').get(userId).once(data => {
-        if (!data) return recoverPasswordMessage.textContent = 'User not found';
-        if (data.email.toLowerCase() === email && data.phone === phone) {
-          recoverPasswordMessage.textContent = 'Password: ' + data.password;
-        } else {
-          recoverPasswordMessage.textContent = 'Information does not match';
-        }
-      });
-    });
-
-    document.getElementById('recoverUsernameForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const email = usernameEmail.value.toLowerCase();
-      const phone = `${recoverUsernameCountryCode.value} ${usernamePhone.value}`;
-      const password = knownPassword.value;
-
-      gun.get('bobomacx').get('accounts').map().once((data, key) => {
-        if (data && data.email.toLowerCase() === email && data.phone === phone && data.password === password) {
-          recoverUsernameMessage.textContent = 'Username: ' + key;
-        }
-      });
-    });
-
-    window.onload = () => {
-      const session = JSON.parse(localStorage.getItem('bobomacxSession'));
-      if (session && session.username) {
-        gun.get('bobomacx').get('sessions').get(session.username).once((s) => {
-          if (s && s.active) {
-            setStatus(`Active session for ${session.username} (${session.id})`);
-          } else {
-            setStatus("Session expired or inactive. Please login again.", 'red');
-            localStorage.removeItem('bobomacxSession');
-          }
-        });
-      }
-    };
- 
-  
   </script>
 </body>
 </html>
