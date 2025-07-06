@@ -5,12 +5,126 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>MACX Cart (Debug)</title>
 
-  <style>
-    /* same styles as before… */
-    .container { max-width:800px; margin:auto; padding:20px; font-family:sans-serif }
-    /* … */
-  </style>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
+  body {
+    background: linear-gradient(to right, #0f0f0f, #1c1c1c);
+    font-family: "Lucida Handwriting", cursive;
+    color: #d4af37; /* Gold metallic text */
+    min-height: 100vh;
+    padding: 20px;
+    background-attachment: fixed;
+    background-size: cover;
+    background-position: center;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: auto;
+    padding: 20px;
+    background: rgba(30, 30, 30, 0.8);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.1);
+  }
+
+  h1, h2, h3 {
+    color: #ffd700;
+    font-family: "Lucida Handwriting", cursive;
+    margin-bottom: 15px;
+  }
+
+  #userDisplay {
+    font-size: 22px;
+    margin-bottom: 10px;
+  }
+
+  button {
+    background-color: #d4af37;
+    color: #000;
+    font-weight: bold;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    font-family: "Lucida Handwriting", cursive;
+  }
+
+  button:hover {
+    background-color: #ffcc00;
+    color: #000;
+  }
+
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    background: #2d2d2d;
+    border: 1px solid #555;
+    color: #ffd700;
+    font-family: "Lucida Handwriting", cursive;
+    border-radius: 6px;
+  }
+
+  #cartItems {
+    margin-bottom: 20px;
+    background: #1b1b1b;
+    border: 1px solid #444;
+    padding: 10px;
+    border-radius: 8px;
+    color: #fff;
+  }
+
+  #grandTotal {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffa500;
+    margin-bottom: 20px;
+  }
+
+  #notLoggedIn {
+    background-color: #222;
+    padding: 20px;
+    border-radius: 10px;
+    color: #ffd700;
+    text-align: center;
+  }
+
+  #notLoggedIn button {
+    margin-top: 10px;
+  }
+
+  #cartSummary {
+    background: #292929;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    margin-bottom: 20px;
+  }
+
+  ::placeholder {
+    color: #caa93d;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 600px) {
+    .container {
+      padding: 15px;
+    }
+
+    input, button {
+      font-size: 13px;
+    }
+  }
+</style>
+
+  
   <!-- Gun + SEA -->
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gun/sea.min.js"></script>
