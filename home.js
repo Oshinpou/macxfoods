@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
         localStorage.removeItem("macx_loggedInUser");
-        window.location.replace("login.html");
+        window.location.replace("index.html");
       });
     }
   } else {
@@ -24,11 +24,10 @@ document.addEventListener("DOMContentLoaded", () => {
     if (notLoggedIn) notLoggedIn.style.display = "block";
 
     if (loginRedirectBtn) {
-  loginRedirectBtn.addEventListener("click", () => {
-    localStorage.setItem("macx_returnPage", window.location.href);
-    window.location.href = "login.html";
-  });
-}
+      loginRedirectBtn.addEventListener("click", () => {
+        window.location.href = "index.html";
+      });
+    }
   }
 });
 
