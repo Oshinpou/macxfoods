@@ -10,40 +10,36 @@
   <script defer src="auth.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
   
-  <style>
-/* Trillion-Dollar MACX UI Light Theme */
-
+ <style>
 body {
   margin: 0;
   padding: 0;
-  background: #f4f6f9;
-  font-family: "Inter", sans-serif;
-  color: #222;
+  background: linear-gradient(to right, #000000, #1a1a1a);
+  font-family: 'Great Vibes', cursive;
+  color: gold;
 }
 
 .container {
   max-width: 500px;
   margin: 60px auto;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
   padding: 40px 30px;
   border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
   text-align: center;
-  transition: all 0.3s ease-in-out;
+  border: 1px solid gold;
 }
 
 h1.title {
-  font-size: 30px;
-  font-weight: 700;
-  color: #0055ff;
+  font-size: 32px;
   margin-bottom: 30px;
+  color: gold;
 }
 
 h2 {
-  font-size: 22px;
+  font-size: 24px;
   margin-bottom: 18px;
-  color: #333;
-  font-weight: 600;
+  color: gold;
 }
 
 form {
@@ -53,43 +49,48 @@ form {
 
 input {
   width: 100%;
-  padding: 14px 15px;
+  padding: 12px 15px;
   margin: 10px 0 20px;
   border-radius: 10px;
-  border: 1px solid #dfe4ea;
-  font-size: 15px;
-  background: #fafbfc;
-  transition: border 0.3s;
+  border: 1px solid gold;
+  background: #111;
+  color: gold;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+}
+
+input::placeholder {
+  color: #ccc;
 }
 
 input:focus {
-  border-color: #0055ff;
+  border-color: gold;
   outline: none;
-  background: #fff;
+  background: #1a1a1a;
 }
 
 button {
   width: 100%;
-  padding: 14px;
-  background: linear-gradient(90deg, #0055ff, #00d4ff);
+  padding: 12px;
+  background: gold;
   border: none;
   border-radius: 10px;
   font-size: 16px;
-  color: #fff;
+  color: black;
   font-weight: bold;
-  transition: all 0.3s;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(0, 85, 255, 0.2);
+  font-family: Arial, sans-serif;
+  transition: background 0.3s ease;
 }
 
 button:hover {
-  opacity: 0.9;
+  background: #e6c200;
 }
 
 .message {
   margin-bottom: 20px;
-  color: #ff4d4f;
-  font-weight: 500;
+  color: #ff6666;
+  font-weight: bold;
 }
 
 .form-switch {
@@ -99,39 +100,41 @@ button:hover {
 }
 
 .form-switch button {
-  background: #f0f3f7;
-  color: #222;
-  border: 1px solid #ccc;
+  background: rgba(255, 215, 0, 0.1);
+  color: gold;
+  border: 1px solid gold;
+  font-family: 'Arial', sans-serif;
 }
 
 .form-switch button:hover {
-  background: #e6ecf2;
+  background: gold;
+  color: black;
 }
 
 label {
   display: block;
-  font-size: 14px;
+  font-size: 13px;
   margin: 10px 0;
-  color: #666;
+  color: #ddd;
+  font-family: 'Arial', sans-serif;
   text-align: left;
 }
 
 .admin-link {
   font-size: 14px;
-  color: #666;
+  color: #ccc;
   margin-top: 30px;
 }
 
 .admin-link a {
-  color: #0055ff;
+  color: gold;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: bold;
 }
 
 .admin-link a:hover {
   text-decoration: underline;
 }
-
 </style>
 
 </head>
