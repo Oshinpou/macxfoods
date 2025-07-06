@@ -67,9 +67,7 @@ setTimeout(() => {
   if (returnPage && !returnPage.includes("login.html")) {
     localStorage.removeItem("macx_returnPage");
     location.replace(returnPage); // Faster & cleaner redirect
-  } else {
-    location.replace("index.html");
-  }
+  } 
 }, 1000);
 
 });
