@@ -35,10 +35,25 @@
       border-bottom: 1px solid gold;
     }
 
-    .logo {
-      font-size: 30px;
-      color: gold;
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-image {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      border-radius: 5px;
+    }
+
+    .logo-text {
+      font-size: 26px;
       font-family: 'Great Vibes', cursive;
+      color: gold;
+      letter-spacing: 1px;
+      white-space: nowrap;
     }
 
     .burger {
@@ -182,6 +197,48 @@
       border-top: 1px solid gold;
     }
 
+    .video-container {
+      position: relative;
+      width: 100%;
+      height: 60vh;
+      overflow: hidden;
+      margin-bottom: 40px;
+      border-bottom: 2px solid gold;
+    }
+
+    .video-container video {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100vw;
+      height: auto;
+      min-height: 100%;
+      transform: translate(-50%, -50%);
+      object-fit: cover;
+      z-index: -1;
+    }
+
+    .video-overlay-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: gold;
+      text-align: center;
+      z-index: 2;
+      font-family: 'Great Vibes', cursive;
+    }
+
+    .video-overlay-text h1 {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+
+    .video-overlay-text p {
+      font-size: 20px;
+      font-family: 'Arial', sans-serif;
+    }
+
     @media (max-width: 768px) {
       .burger {
         display: block;
@@ -191,120 +248,16 @@
         align-items: center;
       }
     }
-  
-  .video-container {
-  position: relative;
-  width: 100%;
-  height: 60vh;
-  overflow: hidden;
-  margin-bottom: 40px;
-  border-bottom: 2px solid gold;
-}
-
-.video-container video {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 100vw;
-  height: auto;
-  min-height: 100%;
-  transform: translate(-50%, -50%);
-  object-fit: cover;
-  z-index: -1;
-}
-
-.video-overlay-text {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: gold;
-  text-align: center;
-  z-index: 2;
-  font-family: 'Great Vibes', cursive;
-}
-
-.video-overlay-text h1 {
-  font-size: 48px;
-  margin-bottom: 10px;
-}
-
-.video-overlay-text p {
-  font-size: 20px;
-  font-family: 'Arial', sans-serif;
-}
-     
-  .logo-icon {
-  position: fixed;
-  bottom: 20px;         /* You can change to top: 20px; */
-  right: 20px;          /* You can change to left: 20px; */
-  width: 50px;
-  height: auto;
-  opacity: 0.6;         /* Slight transparency */
-  z-index: 9999;        /* Always on top */
-  pointer-events: none; /* Prevents blocking clicks */
-  }
-
-.logo-icon img {
-  width: 100px;
-  height: auto;
-  border-radius: 5px;
-}
-  
- .macx-header {
-  display: flex;
-  align-items: center;
-  justify-content: center; /* or space-between if you add a nav/menu */
-  gap: 12px;
-  padding: 20px;
-  background: #000; /* Or your dark theme */
-  border-bottom: 1px solid #444;
-}
-
-.logo-icon {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.logo {
-  font-size: 26px;
-  font-family: 'Cursive', 'Georgia', serif;
-  color: gold;
-  letter-spacing: 1px;
-  margin: 0;
-} 
-  
-  .logo-container {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo-image {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  border-radius: 5px;
-}
-
-.logo-text {
-  font-size: 26px;
-  font-family: 'Great Vibes', cursive;
-  color: gold;
-  letter-spacing: 1px;
-  white-space: nowrap;
-}
-  
   </style>
 </head>
 <body>
 
-  <header class="macx-header">
-  <div class="logo-container">
-    <img src="iconmacx.png" alt="MACX Logo" class="logo-image" />
-    <div class="logo-text">MACX Marketplace</div>
-  </div>
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <img src="iconmacx.png" alt="MACX Logo" class="logo-image">
+      <div class="logo-text">MACX Marketplace</div>
+    </div>
     <div class="top-right">
       <input type="text" id="searchInput" class="search-input" placeholder="Search page...">
       <a href="cart.html" class="cart-icon">🛒</a>
@@ -312,19 +265,18 @@
     </div>
   </header>
 
- <!-- 🎥 Video Background -->
-<div class="video-container">
-  <video autoplay muted loop playsinline>
-    <source src="macxi.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <div class="video-overlay-text">
-    <h1>Elevate Your Life</h1>
-    <p>Experience the MACX luxury universe with iconic products and timeless elegance.</p>
+  <!-- Hero Video -->
+  <div class="video-container">
+    <video autoplay muted loop playsinline>
+      <source src="macxi.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <div class="video-overlay-text">
+      <h1>Elevate Your Life</h1>
+      <p>Experience the MACX luxury universe with iconic products and timeless elegance.</p>
+    </div>
   </div>
-</div>
-  
-  
+
   <div class="container">
     <p class="description">Discover the premium world of elite beauty, futuristic luxury, and ultra performance. Only at MACX Marketplace.</p>
 
@@ -356,42 +308,21 @@
         <div class="product-title">Iconic Face Cream</div>
         <button class="view-btn" onclick="viewProduct('product1.html')">View Product</button>
       </div>
-     <!-- 🎥 Video Background -->
-<div class="video-container">
-  <video autoplay muted loop playsinline>
-    <source src="macx1.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <div class="video-overlay-text">
-    <h1>Elevate Your Beauty</h1>
-    <p>Experience the MACX luxury universe with iconic products and timeless elegance.</p>
-  </div>
-</div>
-      
+
       <div class="product-card">
         <img src="img/product2.jpg" alt="Product 2">
         <div class="product-title">Silk Skin Serum</div>
         <button class="view-btn" onclick="viewProduct('product2.html')">View Product</button>
       </div>
-     <!-- 🎥 Video Background -->
-<div class="video-container">
-  <video autoplay muted loop playsinline>
-    <source src="macx2.mp4" type="video/mp4">
-    Your browser does not support the video tag.
-  </video>
-  <div class="video-overlay-text">
-    <h1>Elevate Your Beauty</h1>
-    <p>Experience the MACX luxury universe with iconic products and timeless elegance.</p>
-  </div>
-</div>
-
     </div>
   </div>
 
+  <!-- Footer -->
   <footer>
     <p>© 2025 MACX Marketplace · Crafted with excellence · All Rights Reserved</p>
   </footer>
 
+  <!-- Script -->
   <script>
     const username = localStorage.getItem("macx_loggedInUser");
 
