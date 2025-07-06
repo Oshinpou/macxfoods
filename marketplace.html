@@ -4,167 +4,188 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>MACX Marketplace</title>
-
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
   <script defer src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-<style>
-  body {
-    margin: 0;
-    padding: 30px;
-    background: linear-gradient(to right, #000000, #1a1a1a);
-    font-family: 'Great Vibes', cursive;
-    color: gold;
-  }
 
-  .container {
-    max-width: 1200px;
-    margin: auto;
-    padding: 30px;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 16px;
-    border: 1px solid gold;
-    box-shadow: 0 0 30px rgba(255, 215, 0, 0.08);
-  }
-
-  h1, h2, h3, p {
-    color: gold;
-    text-align: center;
-  }
-
-  button {
-    padding: 10px 20px;
-    background: gold;
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    font-weight: bold;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-    transition: 0.3s;
-    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-  }
-
-  button:hover {
-    background: #ffcc00;
-  }
-
-  .products {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 30px;
-    margin-top: 30px;
-  }
-
-  .product-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid gold;
-    border-radius: 14px;
-    padding: 20px;
-    text-align: center;
-    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.05);
-  }
-
-  .product-card img {
-    width: 100px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-  }
-
-  .product-card h3 {
-    margin: 10px 0;
-    font-size: 20px;
-  }
-
-  .product-card p {
-    font-size: 18px;
-    margin-bottom: 15px;
-  }
-
-  .qty-bar {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 10px;
-  }
-
-  .qty-bar button {
-    font-size: 20px;
-    background: gold;
-    color: black;
-    padding: 5px 12px;
-    border-radius: 8px;
-  }
-
-  .qty-bar .qty-input {
-    width: 60px;
-    text-align: center;
-    font-size: 16px;
-    padding: 6px;
-    border-radius: 6px;
-    border: 1px solid gold;
-    background: #1a1a1a;
-    color: gold;
-  }
-
-  #notLoggedIn, #loggedInSection {
-    text-align: center;
-    margin-bottom: 30px;
-  }
-
-  @media (max-width: 600px) {
+  <style>
     body {
-      padding: 20px;
+      margin: 0;
+      padding: 30px;
+      background: linear-gradient(to right, #000000, #1a1a1a);
+      font-family: 'Great Vibes', cursive;
+      color: gold;
+    }
+
+    .container {
+      max-width: 1300px;
+      margin: auto;
+      padding: 30px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 16px;
+      border: 1px solid gold;
+      box-shadow: 0 0 30px rgba(255, 215, 0, 0.08);
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: gold;
+    }
+
+    button {
+      padding: 8px 14px;
+      background: gold;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+      margin-top: 8px;
+      transition: 0.3s;
+      box-shadow: 0 3px 10px rgba(255, 215, 0, 0.2);
+    }
+
+    button:hover {
+      background: #ffcc00;
+    }
+
+    .products {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .product-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid gold;
+      border-radius: 12px;
+      padding: 15px;
+      text-align: center;
+      width: 45%;
+      min-width: 250px;
+      box-shadow: 0 3px 15px rgba(255, 215, 0, 0.1);
     }
 
     .product-card img {
-      width: 80px;
+      width: 90px;
+      height: 90px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .product-card h3 {
+      margin: 10px 0;
+      font-size: 18px;
+    }
+
+    .product-card p {
+      font-size: 16px;
+      margin-bottom: 8px;
     }
 
     .qty-bar {
-      flex-direction: column;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
     }
-  }
-</style>
 
+    .qty-bar button {
+      font-size: 16px;
+      padding: 4px 10px;
+    }
+
+    .qty-bar .qty-input {
+      width: 50px;
+      text-align: center;
+      font-size: 16px;
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid gold;
+      background: #1a1a1a;
+      color: gold;
+    }
+
+    #searchBar {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      margin-bottom: 30px;
+      border-radius: 10px;
+      border: 1px solid gold;
+      background: #1a1a1a;
+      color: gold;
+    }
+
+    #notLoggedIn, #loggedInSection {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    @media (max-width: 600px) {
+      .product-card {
+        width: 100%;
+      }
+
+      .qty-bar {
+        flex-direction: column;
+      }
+
+      #searchBar {
+        font-size: 14px;
+      }
+    }
+  </style>
 </head>
+
 <body>
   <div class="container">
     <div id="notLoggedIn" style="display: none;">
       <h2>You are not logged in.</h2>
       <button id="loginRedirectBtn">Login First</button>
     </div>
+
     <div id="loggedInSection" style="display: none;">
       <h1 id="userDisplay">Welcome, User</h1>
       <button id="logoutBtn">Logout</button>
     </div>
 
-    <div class="products">
-      <div class="product-card">
-        <img src="product1.jpg" alt="Luxury Serum" width="100">
+    <input type="text" id="searchBar" placeholder="Search product by name...">
+
+    <div class="products" id="productList">
+      <!-- Product 1 -->
+      <div class="product-card" data-name="Luxury Serum">
+        <img src="product1.jpg" alt="Luxury Serum">
         <h3>Luxury Serum</h3>
         <p>₹1800</p>
         <button onclick="viewProduct('product1.html')">View Product</button>
-       <div class="qty-bar">
-  <button onclick="changeQty(this, -1)">−</button>
-  <input type="number" value="1" min="1" class="qty-input">
-  <button onclick="changeQty(this, 1)">+</button>
-</div>
-        <button onclick="addToCart('p01', 'Luxury Serum', 0, 'product1.jpg')">Add to Cart</button>
+        <div class="qty-bar">
+          <button onclick="changeQty(this, -1)">−</button>
+          <input type="number" value="1" min="1" class="qty-input">
+          <button onclick="changeQty(this, 1)">+</button>
+        </div>
+        <button onclick="addToCart('p01', 'Luxury Serum', 1800, 'product1.jpg')">Add to Cart</button>
       </div>
 
-      <div class="product-card">
-        <img src="product2.jpg" alt="Anti-Aging Cream" width="100">
+      <!-- Product 2 -->
+      <div class="product-card" data-name="Anti-Aging Cream">
+        <img src="product2.jpg" alt="Anti-Aging Cream">
         <h3>Anti-Aging Cream</h3>
         <p>₹2500</p>
         <button onclick="viewProduct('product2.html')">View Product</button>
         <div class="qty-bar">
-  <button onclick="changeQty(this, -1)">−</button>
-  <input type="number" value="1" min="1" class="qty-input">
-  <button onclick="changeQty(this, 1)">+</button>
-</div>
+          <button onclick="changeQty(this, -1)">−</button>
+          <input type="number" value="1" min="1" class="qty-input">
+          <button onclick="changeQty(this, 1)">+</button>
+        </div>
         <button onclick="addToCart('p02', 'Anti-Aging Cream', 2500, 'product2.jpg')">Add to Cart</button>
       </div>
+
+      <!-- Add more product cards here -->
     </div>
   </div>
 
@@ -192,10 +213,26 @@
           window.location.href = "login.html";
         };
       }
+
+      // Product Search
+      document.getElementById("searchBar").addEventListener("input", function () {
+        const searchValue = this.value.toLowerCase();
+        document.querySelectorAll(".product-card").forEach(card => {
+          const name = card.dataset.name.toLowerCase();
+          card.style.display = name.includes(searchValue) ? "block" : "none";
+        });
+      });
     });
 
     function viewProduct(url) {
       window.location.href = url;
+    }
+
+    function changeQty(btn, delta) {
+      const input = btn.parentElement.querySelector(".qty-input");
+      let value = parseInt(input.value) || 1;
+      value = Math.max(1, value + delta);
+      input.value = value;
     }
 
     function addToCart(productId, productName, price, image) {
@@ -205,69 +242,32 @@
         return;
       }
 
+      const cards = document.querySelectorAll(".product-card");
+      let quantity = 1;
+
+      cards.forEach(card => {
+        if (card.innerHTML.includes(productName)) {
+          const qtyInput = card.querySelector(".qty-input");
+          if (qtyInput) quantity = parseInt(qtyInput.value) || 1;
+        }
+      });
+
       const gun = Gun();
       const cartRef = gun.get("macx_cart").get(username);
-      const cartItemId = productId + '_' + Date.now();
-      const item = {
+
+      const cartItem = {
         productId,
         productName,
         price,
-        quantity: 1,
         image,
+        quantity,
         timestamp: Date.now()
       };
 
-      cartRef.get(cartItemId).put(item, (ack) => {
-        if (ack.err) {
-          alert("Error adding to cart");
-        } else {
-          alert("Added to cart!");
-        }
-      });
+      const cartItemId = productId + "_" + Date.now();
+      cartRef.get(cartItemId).put(cartItem);
+      alert(`Added ${quantity} of ${productName} to cart.`);
     }
- 
-  function changeQty(btn, delta) {
-  const input = btn.parentElement.querySelector(".qty-input");
-  let value = parseInt(input.value) || 1;
-  value = Math.max(1, value + delta);
-  input.value = value;
-}
-
-function addToCart(productId, productName, price, image) {
-  const username = localStorage.getItem("macx_loggedInUser");
-  if (!username) {
-    alert("Please login first to add to cart.");
-    return;
-  }
-
-  // Find corresponding quantity input next to the button clicked
-  const cards = document.querySelectorAll(".product-card");
-  let quantity = 1;
-
-  cards.forEach(card => {
-    if (card.innerHTML.includes(productName)) {
-      const qtyInput = card.querySelector(".qty-input");
-      if (qtyInput) quantity = parseInt(qtyInput.value) || 1;
-    }
-  });
-
-  const gun = Gun();
-  const cartRef = gun.get("macx_cart").get(username);
-
-  const cartItem = {
-    productId,
-    productName,
-    price,
-    image,
-    quantity,
-    timestamp: Date.now()
-  };
-
-  const cartItemId = productId + "_" + Date.now();
-  cartRef.get(cartItemId).put(cartItem);
-  alert(`Added ${quantity} of ${productName} to cart.`);
-}
-  
   </script>
 </body>
 </html>
