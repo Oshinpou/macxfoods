@@ -15,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
         localStorage.removeItem("macx_loggedInUser");
-        window.location.replace("index.html");
+        window.location.replace("login.html");
       });
     }
   } else {
