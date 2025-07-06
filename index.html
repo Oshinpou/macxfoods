@@ -236,7 +236,14 @@
      
   .logo-icon {
   position: fixed;
-}
+  bottom: 20px;         /* You can change to top: 20px; */
+  right: 20px;          /* You can change to left: 20px; */
+  width: 50px;
+  height: auto;
+  opacity: 0.6;         /* Slight transparency */
+  z-index: 9999;        /* Always on top */
+  pointer-events: none; /* Prevents blocking clicks */
+  }
 
 .logo-icon img {
   width: 100px;
