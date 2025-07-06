@@ -204,7 +204,6 @@ label {
   </div>
 
   <script>
-    
   function switchForm(form) {
     const forms = ['login', 'signup', 'recover', 'delete', 'change'];
     forms.forEach(f => {
@@ -214,6 +213,46 @@ label {
     const target = document.getElementById(form + 'Form');
     if (target) target.style.display = 'block';
   }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const loginForm = document.getElementById("loginForm");
+
+    if (loginForm) {
+      loginForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        const username = document.getElementById("loginUsername").value.trim();
+        const password = document.getElementById("loginPassword").value;
+
+        const gun = Gun();
+        const userRef = gun.get("macx_users").get(username);
+
+        userRef.once((data) => {
+          if (!data) {
+            alert("User not found.");
+            return;
+          }
+
+          if (data.password !== password) {
+            alert("Incorrect password.");
+            return;
+          }
+
+          // ✅ Save user login status
+          localStorage.setItem("macx_loggedInUser", username);
+
+          // ✅ Redirect to return page if stored
+          const returnPage = localStorage.getItem("macx_returnPage");
+          if (returnPage) {
+            localStorage.removeItem("macx_returnPage");
+            window.location.href = returnPage;
+          } else {
+            window.location.href = "index.html"; // fallback
+          }
+        });
+      });
+    }
+  });
 </script>
 
 <script defer src="home.js"></script>
