@@ -52,24 +52,12 @@ loginForm?.addEventListener('submit', (e) => {
   if (!username || !password) return showMessage("Login fields required");
 
   users.get(username).once((data) => {
-  if (!data) return showMessage("Account does not exist");
-  if (data.password !== password) return showMessage("Incorrect password");
-
-  localStorage.setItem('macx_loggedInUser', username);
-  showMessage("Login successful!", true);
-
-  // ✅ Redirect to last opened page or fallback to index.html
-  // ✅ Auto-redirect to last opened page after successful login
-setTimeout(() => {
-  let returnPage = localStorage.getItem("macx_returnPage");
-
-  // If returnPage exists and is not login.html
-  if (returnPage && !returnPage.includes("login.html")) {
-    localStorage.removeItem("macx_returnPage");
-    location.replace(returnPage); // Faster & cleaner redirect
-  } 
-}, 1000);
-
+    if (!data) return showMessage("Account does not exist");
+    if (data.password !== password) return showMessage("Incorrect password");
+    localStorage.setItem('macx_loggedInUser', username);
+    showMessage("Login successful!", true);
+    setTimeout(() => window.location.href = "home.html", 1000);
+  });
 });
 
 // RECOVER
