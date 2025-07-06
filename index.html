@@ -233,12 +233,28 @@
   font-size: 20px;
   font-family: 'Arial', sans-serif;
 }
-      </style>
+     
+  .logo-icon {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 999;
+}
+
+.logo-icon img {
+  width: 40px;
+  height: auto;
+  border-radius: 5px;
+}
+  </style>
 </head>
 <body>
 
   <header>
-    <div class="logo">MACX Marketplace</div>
+    
+    <div class="logo"> <a href="index.html" class="logo-icon">
+  <img src="macx-icon.png" alt="MACX Logo" />
+    </a> MACX Marketplace</div>
     <div class="top-right">
       <input type="text" id="searchInput" class="search-input" placeholder="Search page...">
       <a href="cart.html" class="cart-icon">🛒</a>
