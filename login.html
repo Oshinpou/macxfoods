@@ -241,14 +241,7 @@ label {
           // ✅ Save user login status
           localStorage.setItem("macx_loggedInUser", username);
 
-          // ✅ Redirect to return page if stored
-          const returnPage = localStorage.getItem("macx_returnPage");
-          if (returnPage) {
-            localStorage.removeItem("macx_returnPage");
-            window.location.href = returnPage;
-          } else {
-            window.location.href = "index.html"; // fallback
-          }
+
         });
       });
     }
