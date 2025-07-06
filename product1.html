@@ -6,27 +6,151 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="style.css" />
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
+  
   <style>
-    body { font-family: sans-serif; margin: 0; padding: 0; background: #f8f8f8; }
-    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px #ccc; }
+  /* Universal Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-    .slider { display: flex; overflow-x: auto; gap: 10px; margin-bottom: 20px; }
-    .slider img { height: 200px; border-radius: 10px; }
+body {
+  background: linear-gradient(to right, #000000, #1a1a1a);
+  color: gold;
+  font-family: 'Poppins', sans-serif;
+  padding: 20px;
+  line-height: 1.6;
+}
 
-    h2, h3 { margin-bottom: 10px; }
-    p { color: #444; }
+/* Container Box */
+.container {
+  max-width: 900px;
+  margin: auto;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  padding: 30px;
+  border: 1px solid gold;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.08);
+}
 
-    .qty-controls { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
-    .qty-controls button { padding: 5px 10px; font-size: 18px; }
-    .qty-controls input { width: 60px; text-align: center; font-size: 16px; }
+/* Title + Headings */
+h1, h2, h3, h4 {
+  font-family: 'Great Vibes', cursive;
+  color: gold;
+  margin-bottom: 10px;
+}
 
-    textarea, input[type=text], input[type=number] { width: 100%; padding: 8px; margin: 5px 0 15px; border-radius: 5px; border: 1px solid #ccc; }
+/* Paragraphs */
+p {
+  color: #f5eec0;
+  font-size: 15px;
+  margin-bottom: 10px;
+}
 
-    .review-item { background: #f0f0f0; padding: 10px; border-left: 4px solid teal; margin-bottom: 10px; border-radius: 5px; }
+/* Image Slider */
+.slider {
+  display: flex;
+  overflow-x: auto;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+.slider img {
+  height: 200px;
+  border-radius: 12px;
+  border: 2px solid gold;
+}
 
-    .hidden { display: none; }
+/* Quantity Control */
+.qty-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 15px 0;
+}
+.qty-controls button {
+  padding: 6px 12px;
+  font-size: 18px;
+  background: gold;
+  color: black;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.qty-controls input {
+  width: 60px;
+  text-align: center;
+  font-size: 16px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid gold;
+  background: #1a1a1a;
+  color: gold;
+}
+
+/* Inputs & Textareas */
+input[type="text"],
+input[type="number"],
+textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border: 1px solid gold;
+  background: #111;
+  color: gold;
+  font-size: 14px;
+}
+
+/* Buttons */
+button {
+  padding: 10px 20px;
+  background: gold;
+  color: #000;
+  border: none;
+  border-radius: 10px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 3px 12px rgba(255, 215, 0, 0.2);
+  transition: background 0.3s ease;
+}
+button:hover {
+  background: #ffcc00;
+}
+
+/* Review Section */
+.review-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 12px;
+  border-left: 4px solid gold;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+.review-item strong {
+  display: block;
+  margin-bottom: 4px;
+  color: gold;
+}
+
+/* Login Display */
+.hidden {
+  display: none;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .slider img {
+    height: 160px;
+  }
+  .qty-controls {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
   </style>
-</head>
+  </head>
 <body>
   <div class="container">
     <!-- Login Section -->
