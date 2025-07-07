@@ -25,8 +25,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (loginRedirectBtn) {
   loginRedirectBtn.addEventListener("click", () => {
-    localStorage.setItem("macx_returnPage", window.location.href);
-    window.location.href = "login.html";
+    window.history.back();
+  });
+    }
   });
     }
       });
