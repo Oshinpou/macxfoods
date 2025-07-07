@@ -24,8 +24,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (notLoggedIn) notLoggedIn.style.display = "block";
 
     if (loginRedirectBtn) {
-      loginRedirectBtn.addEventListener("click", () => {
-        window.location.href = "login.html";
+  loginRedirectBtn.addEventListener("click", () => {
+    localStorage.setItem("macx_returnPage", window.location.href);
+    window.location.href = "login.html";
+  });
+    }
       });
     }
   }
