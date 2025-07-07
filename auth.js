@@ -56,7 +56,15 @@ loginForm?.addEventListener('submit', (e) => {
     if (data.password !== password) return showMessage("Incorrect password");
     localStorage.setItem('macx_loggedInUser', username);
     showMessage("Login successful!", true);
-    setTimeout(() => window.location.href = "index.html", 1000);
+    setTimeout(() => {
+  const returnPage = localStorage.getItem("macx_returnPage");
+  if (returnPage) {
+    localStorage.removeItem("macx_returnPage");
+    window.location.href = returnPage;
+  } else {
+    window.location.href = "index.html"; // fallback if nothing saved
+  }
+}, 1000);
   });
 });
 
