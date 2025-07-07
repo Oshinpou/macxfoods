@@ -370,8 +370,9 @@ footer {
     });
 
     document.getElementById("loginRedirectBtn")?.addEventListener("click", () => {
-      window.location.href = "login.html";
-    });
+  localStorage.setItem("macx_returnPage", window.location.href);
+  window.location.href = "login.html";
+});
 
     document.getElementById("logoutBtn")?.addEventListener("click", () => {
       localStorage.removeItem("macx_loggedInUser");
