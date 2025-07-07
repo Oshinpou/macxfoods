@@ -60,28 +60,10 @@ loginForm?.addEventListener('submit', (e) => {
   const returnPage = localStorage.getItem("macx_returnPage");
 
   if (returnPage) {
-    // Create "Go Back" button
-    const goBackBtn = document.createElement("button");
-    goBackBtn.textContent = "Go Back to Last Page";
-    goBackBtn.style.padding = "20px 30px";
-    goBackBtn.style.fontSize = "22px";
-    goBackBtn.style.background = "gold";
-    goBackBtn.style.color = "black";
-    goBackBtn.style.border = "none";
-    goBackBtn.style.borderRadius = "10px";
-    goBackBtn.style.cursor = "pointer";
-    goBackBtn.style.display = "block";
-    goBackBtn.style.margin = "50px auto";
-    goBackBtn.style.boxShadow = "0 0 20px gold";
-    goBackBtn.onclick = () => {
-      localStorage.removeItem("macx_returnPage");
-      window.location.href = returnPage;
-    };
-
-    // Append to body
-    document.body.appendChild(goBackBtn);
+    localStorage.removeItem("macx_returnPage");
+    window.history.back();  // ⬅️ Simply go back to the previous page
   } else {
-    window.location.href = "index.html"; // fallback if no returnPage
+    window.location.href = "index.html"; // Fallback if no returnPage
   }
 }, 1000);
   });
