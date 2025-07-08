@@ -1,4 +1,4 @@
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/ipmgnhor/public_html/macxfoods
+    - export DEPLOYPATH=/home/ipmgnhor/repositories/macxfoods
     - /bin/rsync -av --exclude='.git' . $DEPLOYPATH
