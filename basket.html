@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MACX Basket</title>
+  <style>
+    body {
+      background: #1c1c1c;
+      color: #ffd700;
+      font-family: "Lucida Handwriting", cursive;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: rgba(40, 40, 40, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+    }
+    h1, h2 {
+      color: #ffa500;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #d4af37;
+      color: #000;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #ffc107;
+    }
+    .item {
+      background: #2a2a2a;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .item img {
+      height: 60px;
+      margin-right: 10px;
+    }
+    input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      background: #333;
+      color: #ffd700;
+      border: 1px solid #555;
+      border-radius: 5px;
+    }
+    #grandTotal {
+      margin-top: 10px;
+      font-size: 18px;
+      color: #ffa500;
+    }
+  </style>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>MACX Basket</h1>
+    <div id="basketItems"></div>
+    <div id="grandTotal">Grand Total: ₹0</div><h2>Shipping Details</h2>
+<form id="shippingForm">
+  <input id="name" placeholder="Full Name" required />
+  <input id="phone" placeholder="Phone Number" required />
+  <input id="email" placeholder="Email" required />
+  <input id="address" placeholder="Shipping Address" required />
+  <input id="country" placeholder="Country" required />
+  <input id="pincode" placeholder="PIN Code" required />
+  <button type="submit">Pay & Place Order</button>
+</form>
+
+  </div>  <script>
+    let basket = JSON.parse(localStorage.getItem("macx_basket")) || [];
+
+    function renderBasket() {
+      const container = document.getElementById("basketItems");
+      container.innerHTML = "";
+      let total = 0;
+
+      basket.forEach((item, index) => {
+        const sub = item.price * item.quantity;
+        total += sub;
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `
+          <div>
+            <img src="${item.image}" alt="${item.name}" />
+            <strong>${item.name}</strong><br>
+            ₹${item.price} × ${item.quantity} = ₹${sub}
+          </div>
+          <button onclick="removeFromBasket(${index})">Remove</button>
+        `;
+        container.appendChild(div);
+      });
+
+      document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
+    }
+
+    function removeFromBasket(index) {
+      basket.splice(index, 1);
+      localStorage.setItem("macx_basket", JSON.stringify(basket));
+      renderBasket();
+    }
+
+    document.getElementById("shippingForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      if (basket.length === 0) return alert("Basket is empty.");
+
+      const totalAmount = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const name = document.getElementById("name").value.trim();
+      const phone = document.getElementById("phone").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const address = document.getElementById("address").value.trim();
+      const country = document.getElementById("country").value.trim();
+      const pincode = document.getElementById("pincode").value.trim();
+
+      const razorpay = new Razorpay({
+        key: "rzp_live_ozWo08bXwqssx3",
+        amount: totalAmount * 100,
+        currency: "INR",
+        name: "MACX Basket Order",
+        description: "Basket Purchase",
+        prefill: { name, email, contact: phone },
+        notes: {
+          address,
+          country,
+          pincode,
+          items: JSON.stringify(basket)
+        },
+        handler: function(response) {
+          alert("Payment successful! Redirecting to Thank You page...");
+          localStorage.removeItem("macx_basket");
+          window.location.href = "thankyou.html";
+        }
+      });
+
+      razorpay.open();
+    });
+
+    renderBasket();
+  </script></body>
+</html>
