@@ -157,9 +157,34 @@ button:hover {
   }
 }
 
-  </style>
+    #basket-icon {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: gold;
+    color: black;
+    font-size: 28px;
+    padding: 12px 16px;
+    border-radius: 50%;
+    text-align: center;
+    text-decoration: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 9999;
+    transition: background 0.3s;
+  }
+
+  #basket-icon:hover {
+    background: orange;
+  }
+</style>
+  
   </head>
 <body>
+<!-- Sticky Basket Icon -->
+<a href="basket.html" id="basket-icon" title="View Basket">
+  🛒
+</a>
+
   <div class="container">
     <!-- Login Section -->
     <div id="loginStatus" style="margin-bottom: 20px;">
