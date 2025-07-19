@@ -1,84 +1,46 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MACX Basket</title>
   <style>
-    body {
-      background: #1c1c1c;
-      color: #ffd700;
-      font-family: "Lucida Handwriting", cursive;
-      padding: 20px;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: rgba(40, 40, 40, 0.9);
-      padding: 20px;
-      border-radius: 10px;
-    }
-    h1, h2 {
-      color: #ffa500;
-      margin-bottom: 15px;
-    }
-    button {
-      background: #d4af37;
-      color: #000;
-      padding: 10px 16px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: bold;
-    }
-    button:hover {
-      background: #ffc107;
-    }
-    .item {
-      background: #2a2a2a;
-      padding: 15px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .item img {
-      height: 60px;
-      margin-right: 10px;
-    }
-    input, select {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      background: #333;
-      color: #ffd700;
-      border: 1px solid #555;
-      border-radius: 5px;
-    }
-    #grandTotal {
-      margin-top: 10px;
-      font-size: 18px;
-      color: #ffa500;
-    }
+    body { background: #1c1c1c; color: #ffd700; font-family: Arial, sans-serif; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: rgba(40,40,40,0.9); padding: 20px; border-radius:10px; }
+    h1,h2 { color: #ffa500; margin-bottom: 15px; }
+    .item { background: #2a2a2a; padding:15px; margin-bottom:10px; border-radius:6px; display:flex; align-items:center; }
+    .item img { height:60px; margin-right:10px; }
+    .info { flex:1; }
+    .qty-controls { margin-top:8px; }
+    .qty-controls button { background:#ffd700; color:#000; border:none; padding:5px 10px; margin:0 5px; cursor:pointer; }
+    .qty-controls input { width:40px; text-align:center; background:#333; color:#ffd700; border:1px solid #555; border-radius:4px; }
+    .remove-btn { background:red; color:white; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; }
+    #grandTotal { margin-top:10px; font-size:18px; color:#ffa500; }
+    input,select { width:100%; padding:8px; margin:5px 0; background:#333; color:#ffd700; border:1px solid #555; border-radius:5px; }
+    button.place-order { width:100%; padding:14px; background:#ffd700; color:#000; border:none; font-size:16px; font-weight:bold; border-radius:8px; margin-top:10px; cursor:pointer; }
+    .empty { text-align:center; color:#bbb; padding:40px; }
   </style>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </head>
 <body>
   <div class="container">
-    <h1>MACX Basket</h1>
+    <h1>Your Basket</h1>
     <div id="basketItems"></div>
-    <div id="grandTotal">Grand Total: ₹0</div><h2>Shipping Details</h2>
-<form id="shippingForm">
-  <input id="name" placeholder="Full Name" required />
-  <input id="phone" placeholder="Phone Number" required />
-  <input id="email" placeholder="Email" required />
-  <input id="address" placeholder="Shipping Address" required />
-  <input id="country" placeholder="Country" required />
-  <input id="pincode" placeholder="PIN Code" required />
-  <button type="submit">Pay & Place Order</button>
-</form>
+    <div id="grandTotal">Grand Total: ₹0</div>
 
-  </div>  <script>
+    <h2>Shipping Details</h2>
+    <form id="shippingForm">
+      <input id="name" placeholder="Full Name" required />
+      <input id="phone" placeholder="Phone Number" required />
+      <input id="email" placeholder="Email" required />
+      <input id="address" placeholder="Shipping Address" required />
+      <input id="country" placeholder="Country" required />
+      <input id="pincode" placeholder="PIN Code" required />
+      <button type="submit" class="place-order">Pay & Place Order</button>
+    </form>
+  </div>
+
+  <script>
     let basket = JSON.parse(localStorage.getItem("macx_basket")) || [];
 
     function renderBasket() {
@@ -86,18 +48,30 @@
       container.innerHTML = "";
       let total = 0;
 
-      basket.forEach((item, index) => {
+      if (!basket.length) {
+        container.innerHTML = '<div class="empty">🧺 Your basket is empty.</div>';
+        document.getElementById("grandTotal").textContent = "Grand Total: ₹0";
+        return;
+      }
+
+      basket.forEach((item, i) => {
         const sub = item.price * item.quantity;
         total += sub;
         const div = document.createElement("div");
         div.className = "item";
         div.innerHTML = `
-          <div>
-            <img src="${item.image}" alt="${item.name}" />
+          <img src="${item.image}" alt="${item.name}">
+          <div class="info">
             <strong>${item.name}</strong><br>
-            ₹${item.price} × ${item.quantity} = ₹${sub}
+            ₹${item.price} × 
+            <div class="qty-controls">
+              <button onclick="changeQty(${i}, -1)">−</button>
+              <input type="number" value="${item.quantity}" min="1" onchange="setQty(${i}, this)">
+              <button onclick="changeQty(${i}, 1)">+</button>
+            </div>
+            Subtotal: ₹${sub}
           </div>
-          <button onclick="removeFromBasket(${index})">Remove</button>
+          <button class="remove-btn" onclick="removeItem(${i})">Remove</button>
         `;
         container.appendChild(div);
       });
@@ -105,48 +79,67 @@
       document.getElementById("grandTotal").textContent = `Grand Total: ₹${total}`;
     }
 
-    function removeFromBasket(index) {
-      basket.splice(index, 1);
+    function changeQty(i, delta) {
+      basket[i].quantity = Math.max(1, basket[i].quantity + delta);
+      saveAndRender();
+    }
+
+    function setQty(i, input) {
+      const val = parseInt(input.value);
+      if (val > 0) basket[i].quantity = val;
+      saveAndRender();
+    }
+
+    function removeItem(i) {
+      basket.splice(i, 1);
+      saveAndRender();
+    }
+
+    function saveAndRender() {
       localStorage.setItem("macx_basket", JSON.stringify(basket));
       renderBasket();
     }
 
     document.getElementById("shippingForm").addEventListener("submit", function(e) {
       e.preventDefault();
+      if (!basket.length) return alert("Basket is empty.");
 
-      if (basket.length === 0) return alert("Basket is empty.");
+      const s = ["name","phone","email","address","country","pincode"]
+        .map(id => document.getElementById(id).value.trim());
+      if (s.some(v => !v)) return alert("Please fill all shipping details.");
 
-      const totalAmount = basket.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const name = document.getElementById("name").value.trim();
-      const phone = document.getElementById("phone").value.trim();
-      const email = document.getElementById("email").value.trim();
-      const address = document.getElementById("address").value.trim();
-      const country = document.getElementById("country").value.trim();
-      const pincode = document.getElementById("pincode").value.trim();
+      const totalAmount = basket.reduce((sum,i) => sum + i.price * i.quantity, 0);
+      const itemsInfo = basket.map(i =>
+        `${i.name} ×${i.quantity} = ₹${i.price * i.quantity}`).join(" | ");
 
-      const razorpay = new Razorpay({
+      const options = {
         key: "rzp_live_ozWo08bXwqssx3",
         amount: totalAmount * 100,
         currency: "INR",
-        name: "MACX Basket Order",
+        name: "MACX Marketplace",
         description: "Basket Purchase",
-        prefill: { name, email, contact: phone },
+        prefill: { name: s[0], email: s[2], contact: s[1] },
         notes: {
-          address,
-          country,
-          pincode,
-          items: JSON.stringify(basket)
+          shipping_name: s[0],
+          shipping_phone: s[1],
+          shipping_email: s[2],
+          shipping_address: s[3],
+          shipping_country: s[4],
+          shipping_pincode: s[5],
+          items: JSON.stringify(basket),
+          summary: itemsInfo
         },
-        handler: function(response) {
-          alert("Payment successful! Redirecting to Thank You page...");
+        theme: { color: "#ffd700" },
+        handler: function(res) {
+          alert("✅ Payment successful!");
           localStorage.removeItem("macx_basket");
           window.location.href = "thankyou.html";
         }
-      });
-
-      razorpay.open();
+      };
+      new Razorpay(options).open();
     });
 
     renderBasket();
-  </script></body>
+  </script>
+</body>
 </html>
