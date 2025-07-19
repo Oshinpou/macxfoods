@@ -183,7 +183,35 @@ button:hover {
     <h2>MACX NATURALS exotic breakfast spread </h2>
     <p><strong>Price:</strong> ₹3500</p>
 
-   <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_Qq97wAjwIhcQ5l" async> </script> </form>
+  <!-- Quantity input (min 1) -->
+<input type="number" id="product-qty" value="1" min="1" style="width: 60px; margin-right: 10px;">
+
+<!-- Add to Basket button -->
+<button onclick="addToBasket({
+  name: 'macx naturals exotic breakfast spread',
+  price: 3500,
+  image: 'mn1.png'
+})">Add to Basket</button>
+
+<script>
+  function addToBasket(item) {
+    const qtyInput = document.getElementById("product-qty");
+    let quantity = parseInt(qtyInput.value);
+    
+    if (isNaN(quantity) || quantity < 1) {
+      quantity = 1;
+    }
+
+    item.quantity = quantity;
+
+    let basket = JSON.parse(localStorage.getItem("macx_basket")) || [];
+    basket.push(item);
+    localStorage.setItem("macx_basket", JSON.stringify(basket));
+    alert(`Added ${quantity} to basket!`);
+  }
+</script> 
+    
+    <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_Qq97wAjwIhcQ5l" async> </script> </form>
     
     <div class="qty-controls">
       <button onclick="changeQty(-1)">-</button>
