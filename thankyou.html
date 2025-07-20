@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MACX Order Confirmed</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: black;
+      overflow: hidden;
+      font-family: 'Brush Script MT', cursive;
+    }
+
+    canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: 0;
+    }
+
+    .content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: gold;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .content h1 {
+      font-size: 3em;
+      font-weight: bold;
+      text-shadow: 0 0 5px #FFD700, 0 0 10px #FFDF00;
+    }
+
+    .content p {
+      font-size: 1.2em;
+      color: #f2cd5d;
+      margin-top: 20px;
+    }
+
+    .contact-info {
+      margin-top: 30px;
+      font-size: 1em;
+      color: #ffffff;
+    }
+
+    .contact-info strong {
+      color: gold;
+    }
+  </style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+
+<div class="content">
+  <h1>💛 Thank you for shopping 🛍️ with MACX</h1>
+  <p>Your order is confirmed and placed!</p>
+  <div class="contact-info">
+    📦 For tracking your order, contact:<br>
+    📞 <strong>+91 84529 39172</strong><br>
+    📧 <strong>macxyy12@gmail.com</strong><br>
+    📧 <strong>macxyy35@gmail.com</strong>
+  </div>
+</div>
+
+<script>
+  // Particle animation background
+  const canvas = document.getElementById("bg");
+  const ctx = canvas.getContext("2d");
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  let particles = [];
+  const particleCount = 100;
+
+  function createParticles() {
+    particles = [];
+    for (let i = 0; i < particleCount; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 2 + 1,
+        speedX: (Math.random() - 0.5) * 1,
+        speedY: (Math.random() - 0.5) * 1,
+        opacity: Math.random()
+      });
+    }
+  }
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = "rgba(255, 215, 0, 0.8)";
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255, 215, 0, ${p.opacity})`;
+      ctx.fill();
+
+      p.x += p.speedX;
+      p.y += p.speedY;
+
+      // bounce particles back from edges
+      if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+    });
+
+    requestAnimationFrame(drawParticles);
+  }
+
+  createParticles();
+  drawParticles();
+
+  window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    createParticles();
+  });
+</script>
+
+</body>
+</html>
