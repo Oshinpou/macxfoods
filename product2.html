@@ -8,6 +8,12 @@
   <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
 </head>
 <body>
+  <!-- Sticky Basket Icon -->
+<a href="basket.html" id="basket-icon" title="View Basket">
+  🛒
+</a>
+ 
+  
   <div class="container">
     <!-- Login Status -->
     <div id="loginStatus" style="margin-bottom: 20px;">
@@ -31,7 +37,33 @@
     <h2>MACX NATURALS exotic caviar gel spread</h2>
     <p><strong>Price:</strong> ₹7600</p>
 
-   <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_Qq9gLRLUasQGiI" async> </script> </form>
+  <!-- Add to Basket button -->
+<button onclick="addToBasket({
+  name: 'macx naturals caviar exotic breakfast spread',
+  price: 7600,
+  image: 'mn2.png'
+})">Add to Basket</button>
+
+<script>
+  function addToBasket(item) {
+    const qtyInput = document.getElementById("product-qty");
+    let quantity = parseInt(qtyInput.value);
+    
+    if (isNaN(quantity) || quantity < 1) {
+      quantity = 1;
+    }
+
+    item.quantity = quantity;
+
+    let basket = JSON.parse(localStorage.getItem("macx_basket")) || [];
+    basket.push(item);
+    localStorage.setItem("macx_basket", JSON.stringify(basket));
+    alert(`Added ${quantity} to basket!`);
+  }
+</script> 
+    
+    
+    <form><script src="https://checkout.razorpay.com/v1/payment-button.js" data-payment_button_id="pl_Qq9gLRLUasQGiI" async> </script> </form>
     
     <div class="qty-controls">
       <button onclick="changeQty(-1)">-</button>
